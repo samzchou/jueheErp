@@ -95,8 +95,23 @@ export default {
                             data:reqData
                         }
                     }).then(result=>{
+                        loadingMask.close();
                         console.log('submitForm',result)
                         this.loadingSubmit = false;
+                        if(result){
+                            this.$store.commit('UPDATE_USER', result);
+                            this.$cookies.set('token', result.token, '1m', '/');
+                            if(this.prev_path && this.prev_path.indexOf('http') === 0){
+                                location.href = this.prev_path;
+                            }else{
+                                this.$router.replace(this.prev_path);
+                            }
+                        }else{
+                            this.loginErrNum++;
+                            if(this.loginErrNum > 2){
+                                this.updateImgCode();
+                            }
+                        }
                     })
                     
                 }
@@ -119,6 +134,17 @@ export default {
         h3{
             line-height: 40px;
             text-align: center;
+        }
+        .captcha-content{
+            /deep/ .el-form-item__content{
+                display: flex;
+                align-items: center;
+                span.el-tooltip{
+                    height: 36px;
+                    //border: 1px solid #DDD;
+                    margin-left:10px;
+                }
+            }
         }
     }
 </style>

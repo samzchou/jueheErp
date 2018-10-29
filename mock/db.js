@@ -3,12 +3,13 @@
  */
 
 const mongoDB = require('../config/db/connect');
-const dbConfig = require('../config/db'); 
+//const dbConfig = require('../config/db'); 
 const crypto = require('crypto');
 const _ = require('lodash');
 const tokenPrefix = 'samz.com';
 const jwt = require('jsonwebtoken');
 const svgCaptcha = require('svg-captcha');
+//const Cookies = require('js-cookie');
 
 const dbFun = {
     /*--------列出数据--------*/
@@ -115,22 +116,30 @@ const dbFun = {
         if(data.password){
             data.password = this._setHash(data.password);
         }
-        console.log('login condisti', data);
-
         let result =  await mongoDB[tn].findOne(data);
+        /* Cookies.set('token','2342353453453465')
+        console.log('cookies', Cookies.get('token')) */
 
-        console.log('login',result)
+        //cookies.set('token',token)
+        if(result){
+            result.token = token;
+            this.updateData({collectionName:tn,data:result})
+            //cookies.set('token',token)
+        }
+        return {
+            success:result?true:false,
+            msgDesc:result?'':'登录失败',
+            response:result
+        }
     },
     async logout(){
 
     }
-
 }
 
 module.exports = ({data}) => {
     return new Promise((resolve, reject)=>{
         dbFun[data.type](data).then(result=>{
-            //console.log('result',result);
             resolve(result);
         });     
     });

@@ -45,10 +45,10 @@ export const actions = {
 	async nuxtServerInit ({ commit }, {req, app}) {
         let user = null;
         if (req.cookies.token) {
-            user = await this.$axios.$post('/mock/db', {
+            user = await this.$axios.$post('mock/db', {
                 data: { 
                     type: 'getData',
-                    collectionName: 'users',
+                    collectionName: 'user',
                     data:{
                         token:req.cookies.token
                     }

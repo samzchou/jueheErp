@@ -1,7 +1,7 @@
 //const pkg = require('./package');
 //const server_url = `${pkg.hrssc_env.PORTAL_ORIGIN}/hrssc-platform-portal/`;
 //const serverConfig = require('./config');
-const server_url = 'http://192.168.16.151:8081/hrssc-platform-portal/';
+const server_url = 'http://127.0.0.1/';
 
 module.exports = {
 	mode: 'universal',
