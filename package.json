@@ -40,7 +40,8 @@
     "vue-echarts": "^3.0.7",
     "vue-i18n": "^7.6.0",
     "vue-quill-editor": "^3.0.6",
-    "vuedraggable": "^2.16.0"
+    "vuedraggable": "^2.16.0",
+    "xlsx": "^0.14.0"
   },
   "devDependencies": {
     "@kazupon/vue-i18n-loader": "^0.3.0",

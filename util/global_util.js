@@ -160,9 +160,9 @@ export default {
 			case 2: 
 				return parseInt(Math.random()*(maxNum-minNum+1)+minNum,10); 
 			break; 
-				default: 
-					return 0; 
-				break; 
+			default: 
+				return 0; 
+			break; 
 		} 
 	}
 }

@@ -96,7 +96,7 @@ export default {
                         }
                     }).then(result=>{
                         loadingMask.close();
-                        console.log('submitForm',result)
+                        //console.log('submitForm',result)
                         this.loadingSubmit = false;
                         if(result){
                             this.$store.commit('UPDATE_USER', result);

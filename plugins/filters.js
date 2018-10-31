@@ -2,7 +2,7 @@ import Vue from 'vue'
 
 const digitsRE = /(\d{3})(?=\d)/g;
 
-Vue.filter('currency', (value, currency = '$', decimals = 2) => {
+Vue.filter('currency', (value, currency = '￥', decimals = 2) => {
   value = parseFloat(value);
   if (!isFinite(value) || (!value && value !== 0)) return '';
   let stringified = Math.abs(value).toFixed(decimals);

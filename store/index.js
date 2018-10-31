@@ -1,9 +1,13 @@
 
-//import storage from 'good-storage';
-
+import VueCookies from 'vue-cookies';
 export const state = () => ({
     //user: this.app.$storage.session.get('user')?this.app.$storage.session.get('user'):null,
+    user:null,
     lang:'zh-cn',
+    sidebar: {
+        opened: process.server ? true : !+VueCookies.get('sidebarStatus'),
+        withoutAnimation: false
+    },
     /* role : storage.session.get('data_role')?storage.session.get('data_role'):[],
     org:storage.session.get('data_org')?storage.session.get('data_org'):[],
     pos:storage.session.get('data_pos')?storage.session.get('data_pos'):[],
@@ -25,20 +29,29 @@ export const state = () => ({
 export const mutations = {
     UPDATE_USER(state, data) {
         state.user = data;
-        console.log('UPDATE_USER', data);
+        //console.log('UPDATE_USER', data);
         //this.app.$storage.session.set('user', data);
     },
-    /* 
-    UPDATE_CUSTOMER:(state, data)=>{
-        state.customer = data;
+    SET_MENU_ACTIVE(state, index){
+        state.menuActive = index;
     },
-    UPDATE_LANG:(state, lang)=>{
-        state.lang = lang;
+    UPDATE_LANGUAGE(state, lans) {
+        state.lang = lans;
     },
-    UPDATE_DATA:(state, data)=>{
-        this.app.$storage.session.set('data_'+data.name, data.list);
-        state[data.name]= data.list;
-    }, */
+    TOGGLE_SIDEBAR: state => {
+        if (state.sidebar.opened) {
+            VueCookies.set('sidebarStatus', 1)
+        } else {
+            VueCookies.set('sidebarStatus', 0)
+        }
+        state.sidebar.opened = !state.sidebar.opened;
+        state.sidebar.withoutAnimation = false;
+    },
+    CLOSE_SIDEBAR: (state, withoutAnimation) => {
+        VueCookies.set('sidebarStatus', 1);
+        state.sidebar.opened = false;
+        state.sidebar.withoutAnimation = withoutAnimation;
+    },
 };
 
 export const actions = {
@@ -56,11 +69,13 @@ export const actions = {
             });
             commit('UPDATE_USER', user);
         }
+		//this.$axios.$post('mock/db',{data:{type:'initDB'}});
     },
     INIT(state){
 		if(!process.server){
 			console.log('storage',this.$storage)  
 		}
+		
 	},
 
 };

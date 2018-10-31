@@ -1,17 +1,71 @@
 /**
  * mongoDB数据处理后台接口
  */
-
+const dbServer = require('../config/db/');
 const mongoDB = require('../config/db/connect');
+const mongoose = require('mongoose');
 //const dbConfig = require('../config/db'); 
 const crypto = require('crypto');
 const _ = require('lodash');
 const tokenPrefix = 'samz.com';
 const jwt = require('jsonwebtoken');
 const svgCaptcha = require('svg-captcha');
-//const Cookies = require('js-cookie');
 
 const dbFun = {
+    async initDB(){
+        // 列出所有集合
+        let cols = await mongoose.connection.db.collections();
+        let colStrArr = [];
+        for(let c of cols){
+            colStrArr.push(c.s.name);
+        }
+        var keys = Object.keys(dbServer.collections);
+        for(var i=0; i<keys.length; i++){
+            let tn = keys[i];
+            let counters =  await mongoDB.counters.findOne({'model':tn});
+            if(!colStrArr.includes(tn) && !counters){ // 如果不存则创建集合
+                //let res = await mongoose.connection.db.createCollection(tn);
+                await mongoDB.counters.create({'model':tn, 'count':0});
+            }
+        }
+        return {
+            success:true
+        }
+    },
+    /**
+     * --------多表联合查询数据--------
+     * aggregate:[
+                    {
+                        $lookup:{// 左连接
+                            from: "orgs", // // 关联到的表
+                            localField: "orgId", //主表关联的字段
+                            foreignField: "id", //外联表关联的字段
+                            as: "org" // 隐射到特定字段
+                        }
+                    },
+                    {
+                        $unwind: { // 拆分子数组
+                            path: "$org", //隐射的特定字段
+                            preserveNullAndEmptyArrays: true // 空的数组也拆分
+                        }
+                    }
+                ]
+     *  */
+    async aggregate(params){
+        const tn = params.collectionName;
+        let condition = params.data || {};
+        //console.log('aggregate',params.aggregate)
+        let total = await mongoDB[tn].find(condition).countDocuments();
+        let list = await mongoDB[tn].aggregate(params.aggregate);
+        return {
+            success:true,
+            response:{
+                total:total,
+                list : list
+            }
+        }
+    },
+
     /*--------列出数据--------*/
     async listData(params){
         const tn = params.collectionName;
@@ -25,7 +79,12 @@ const dbFun = {
         sortCondition[sortby] = ascby;
 
         let total = await mongoDB[tn].find(condition).countDocuments();
-        let list =  await mongoDB[tn].find(condition).sort(sortCondition).skip(skips).limit(pagesize);
+        let list = [];
+        if(pagesize){
+            list =  await mongoDB[tn].find(condition).sort(sortCondition).skip(skips).limit(pagesize);
+        }else{
+            list =  await mongoDB[tn].find(condition).sort(sortCondition);
+        }
         return {
             success:true,
             response:{
@@ -34,11 +93,36 @@ const dbFun = {
             }
         }
     },
+    /*--------批量添加数据--------*/
+    async addPatch(params){
+        let tn = params.collectionName;
+        let data = params.data;
+        let result = mongoDB[tn].insertMany(data);
+        //console.log('addPatch',result)
+        let counters =  await mongoDB.counters.findOne({'model':tn});
+        await mongoDB.counters.findOneAndUpdate({_id: counters._id}, {$inc:{count:data.length}});
+
+        return {
+            success:true,
+            msgDesc:'数据导入成功',
+            response:result
+        }
+    },
     /*--------添加数据--------*/
     async addData(params){
         let tn = params.collectionName;
         let data = params.data;
+        if(data.password){
+            data.password = this._setHash(data.password);
+        }
+        // 计数器
+        let counters =  await mongoDB.counters.findOne({'model':tn});
+        data.id = counters.count + 1;
+        //console.log('addData', data);
         let result =  await mongoDB[tn].create(data);
+        if(result){
+            await mongoDB.counters.findOneAndUpdate({_id: counters._id}, {$inc:{count:1}});
+        }
         return {
             success:true,
             msgDesc:'数据添加成功',
@@ -50,16 +134,28 @@ const dbFun = {
         let tn = params.collectionName;
         let data = params.data;
         let condition = {id:data.id};
+        if(params.updateDate){
+            data.updateDate = new Date();
+        }
         let update = {$set : data};
         let options = {upsert : true};
-        let total = await mongoDB[tn].count(condition);
+        let total = await mongoDB[tn].countDocuments(condition);
         let result = null;
         if(total){
-            result =  await mongoDB[tn].update(condition, update, options);
+            // updateMany
+            result =  await mongoDB[tn].updateOne(condition, update, options);
         }
         return {
             success:result?true:false,
             msgDesc:result?'数据更新成功':'数据更新失败'
+        }
+    },
+    /*--------获取数据最后的ID--------*/
+    async getId(params){
+        let result =  await mongoDB.counters.findOne(params.data);
+        return {
+            success:true,
+            response:result.count
         }
     },
     /*--------获取单条数据--------*/
@@ -117,14 +213,9 @@ const dbFun = {
             data.password = this._setHash(data.password);
         }
         let result =  await mongoDB[tn].findOne(data);
-        /* Cookies.set('token','2342353453453465')
-        console.log('cookies', Cookies.get('token')) */
-
-        //cookies.set('token',token)
         if(result){
             result.token = token;
             this.updateData({collectionName:tn,data:result})
-            //cookies.set('token',token)
         }
         return {
             success:result?true:false,
