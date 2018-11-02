@@ -8,6 +8,9 @@ export const state = () => ({
         opened: process.server ? true : !+VueCookies.get('sidebarStatus'),
         withoutAnimation: false
     },
+	warningCount:1,
+	storeSource:[{id:1,name:'货品采购'},{id:2,name:'产品入库'}],
+    storeTarget:[{id:1,name:'车间生产'},{id:2,name:'出厂销售'},{id:3,name:'报废售卖'}],
     /* role : storage.session.get('data_role')?storage.session.get('data_role'):[],
     org:storage.session.get('data_org')?storage.session.get('data_org'):[],
     pos:storage.session.get('data_pos')?storage.session.get('data_pos'):[],

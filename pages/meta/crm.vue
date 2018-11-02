@@ -278,9 +278,6 @@ export default {
                         }
                         this.dataId = undefined;
                     });
-                } else {
-                    this.$message.error('保存失败！请联系管理员');
-                    return false;
                 }
             });
         },

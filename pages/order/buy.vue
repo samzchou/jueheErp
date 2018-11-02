@@ -2,48 +2,53 @@
     <section>
         <div class="page-title">
             <div>
-                <span>采购订单列表</span>
+                <span>
+                    {{!isEdit?'采购订单列表':'采购订单编辑'}}
+                </span>
             </div>
             <div>
-                <el-button @click="handleAdd" type="text" size="medium" :icon="!isEdit?'el-icon-plus':'el-icon-close'">{{!isEdit?'新增采购订单':'取消返回'}}</el-button>
-            </div>
+                <el-button v-if="!isEdit" @click="handleAdd" type="text" size="medium" icon="el-icon-plus">新增采购订单</el-button>
+                <el-button v-else @click="isEdit=false" type="text" size="medium" icon="el-icon-close">取消返回</el-button>
+               </div>
         </div>
         <div class="grid-container" v-if="!isEdit">
             <div class="search-content">
                 <el-form :inline="true" label-width="100px" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
                     <el-form-item label="订单编号：" prop="serial">
-                        <el-input v-model="searchForm.serial" clearable  style="width:120px"/>
+                        <el-input v-model="searchForm.serial" clearable  style="width:150px"/>
                     </el-form-item>
                     <el-form-item label="产品名称：" prop="productName">
-                        <el-input v-model="searchForm.productName" clearable  style="width:120px"/>
+                        <el-input v-model="searchForm.productName" clearable  style="width:150px"/>
                     </el-form-item>
                     <el-form-item label="项目号：" prop="projectNo">
-                        <el-input v-model="searchForm.projectNo" clearable  style="width:120px"/>
+                        <el-input v-model="searchForm.projectNo" clearable  style="width:150px"/>
                     </el-form-item>
                     <el-form-item label="箱号：" prop="boxNo">
-                        <el-input v-model="searchForm.boxNo" clearable  style="width:120px"/>
+                        <el-input v-model="searchForm.boxNo" clearable  style="width:150px"/>
                     </el-form-item>
                     <el-form-item label="型号/梯号：" prop="modelNo">
-                        <el-input v-model="searchForm.modelNo" clearable  style="width:120px"/>
+                        <el-input v-model="searchForm.modelNo" clearable  style="width:150px"/>
                     </el-form-item>
                     <el-form-item label="物料号/版本号：" prop="materialNo">
-                        <el-input v-model="searchForm.materialNo" clearable  style="width:120px"/>
+                        <el-input v-model="searchForm.materialNo" clearable  style="width:150px"/>
                     </el-form-item>
                     <el-form-item label="交付日期：" prop="deliveryDate">
-                        <el-date-picker v-model="searchForm.deliveryDate" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels/>
+                        <el-date-picker v-model="searchForm.deliveryDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels/>
                     </el-form-item>
                     <el-form-item>
                         <el-button type="primary" @click="submitSearch">搜索</el-button>
                     </el-form-item>
                 </el-form>
             </div>
-
             <el-table v-loading="listLoading" 
             :data="gridList" 
             border fit highlight-current-row 
-            size="mini" 
-            style="width: 100%">
-                <el-table-column label="No." width="50px" align="center" type="index"></el-table-column>
+            size="mini" height="400">
+                <el-table-column label="No." width="70px" align="center">
+                    <template slot-scope="scope">
+                        <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="isuse" label="流程状态">
                     <template slot-scope="scope">
                         <span>{{parseFlow(scope.row.flowStateId)}}</span>
@@ -62,12 +67,13 @@
                 </el-table-column>
                 <el-table-column prop="model" label="规格/梯型" width="100px"></el-table-column>
                 <el-table-column prop="modelNo" label="型号/梯号" width="100px"></el-table-column>
+                <el-table-column prop="boxNo" label="箱号" width="100px"></el-table-column>
                 <el-table-column prop="projectName" label="项目名称" width="150px"></el-table-column>
                 <el-table-column prop="projectNo" label="项目号" width="150px"></el-table-column>
                 <el-table-column prop="materialNo" label="物料号/版本号" width="150px"></el-table-column>
                 <el-table-column prop="caselNo" label="图号/版本号" width="150px"></el-table-column>
                 <el-table-column prop="crmName" label="客户名称" width="150px"></el-table-column>
-                <el-table-column prop="productName" label="订单产品名称" width="150px"></el-table-column>
+                <el-table-column prop="productName" label="订单产品名称" width="200px"></el-table-column>
                 <el-table-column prop="count" label="订单数量"></el-table-column>
                 <el-table-column prop="util" label="单位"></el-table-column>
                 <el-table-column prop="price" label="单价" width="100px">
@@ -82,6 +88,11 @@
                 </el-table-column>
                 <el-table-column prop="content" label="备注说明" width="250px"></el-table-column>
                 <el-table-column prop="createByUser" label="创建人"></el-table-column>
+                <el-table-column prop="updateDate" label="最后更新" width="150px">
+                    <template slot-scope="scope">
+                        <span>{{parseDate(scope.row.updateDate, 'YYYY-MM-DD hh:mm:ss')}}</span>
+                    </template>
+                </el-table-column>
                 <el-table-column label="操作" fixed="right" align="center" width="100">
                     <template slot-scope="scope">
                         <el-button size="mini" type="text" @click="handleUpdate(scope.row)">编辑</el-button>
@@ -90,17 +101,24 @@
                 </el-table-column>
             </el-table>
             <div class="page-container" style="padding: 10px 0;">
-                <el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200]" :page-size="query.pagesize" layout="sizes, prev, pager, next" :total="total">
+                <el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total">
                 </el-pagination>
             </div>
         </div>
         <div class="form-container" v-else>
-            <div>
+            <div v-if="!editRow">
                 <upload-excel-component @saveData="saveData" :on-success="handleSuccess" :before-upload="beforeUpload"/>
             </div>
             <div v-if="tableData.length">
-                <el-table size="mini" :data="uploadList" border highlight-current-row style="width: 100%;margin-top:20px;" height="400">
-                    <el-table-column label="No." width="100px" align="center" type="index"/>
+                <el-table size="mini" 
+                :data="tableData.slice((queryUpload.page-1)*queryUpload.pagesize, queryUpload.page*queryUpload.pagesize)" 
+                border highlight-current-row 
+                style="width: 100%;margin-top:20px;" height="400">
+                    <el-table-column label="No." width="70px" align="center">
+                        <template slot-scope="scope">
+                            <span>{{scope.$index+(queryUpload.page - 1) * queryUpload.pagesize + 1}} </span>
+                        </template>
+                    </el-table-column>
                     <el-table-column v-for="item of tableHeader" :prop="item" :label="item" :key="item" width="300"/>
                 </el-table>
                 <div class="page-container" style="padding: 10px 0;">
@@ -127,16 +145,19 @@
                     </el-input>
                 </el-form-item>
                 <el-form-item label="制单日期" prop="orderDate">
-                    <el-date-picker v-model="ruleForm.orderDate" type="date" placeholder="选择日期"/>
+                    <el-date-picker v-model="ruleForm.orderDate" value-format="timestamp" type="date" placeholder="选择日期"/>
                 </el-form-item>
                 <el-form-item label="交付日期" prop="deliveryDate">
-                    <el-date-picker v-model="ruleForm.deliveryDate" type="date" placeholder="选择日期"/>
+                    <el-date-picker v-model="ruleForm.deliveryDate" value-format="timestamp" type="date" placeholder="选择日期"/>
                 </el-form-item>
                 <el-form-item label="规格/梯型" prop="model">
                     <el-input v-model="ruleForm.model" placeholder="请输入"/>
                 </el-form-item>
                 <el-form-item label="型号/梯号" prop="modelNo">
                     <el-input v-model="ruleForm.modelNo" placeholder="请输入"/>
+                </el-form-item>
+                <el-form-item label="箱号" prop="boxNo">
+                    <el-input v-model="ruleForm.boxNo" placeholder="请输入"/>
                 </el-form-item>
                 <el-form-item label="项目名称" prop="projectName">
                     <el-input v-model="ruleForm.projectName" placeholder="请输入"/>
@@ -202,9 +223,13 @@ export default {
             dataId:undefined,
             editRow:null,
             searchForm:{
-                name:'',
-                typeId:'',
-                ptypeId:''
+                serial:'',
+                productName:'',
+                projectNo:'',
+                boxNo:'',
+                modelNo:'',
+                materialNo:'',
+                deliveryDate:''
             },
             ruleForm:{
                 typeId:1,
@@ -217,6 +242,7 @@ export default {
                 deliveryDate:'',
                 model:'',
                 modelNo:'',
+                boxNo:'',
                 projectName:'',
                 projectNo:'',
                 materialNo:'',
@@ -255,7 +281,6 @@ export default {
                 pagesize:20
             },
             lastId:0,
-            uploadList:[],
             tableData: [],
             tableHeader: []
         }
@@ -276,23 +301,13 @@ export default {
             this.tableData = results;
             this.tableHeader = header;
             this.uploadTotal = results.length;
-            this.setUploadData();
-        },
-        setUploadData(){
-            this.uploadList = [];
-            let s = (this.queryUpload.page - 1) * this.queryUpload.pagesize;
-            let e = this.queryUpload.page * this.queryUpload.pagesize;
-            for(let i=s; i<e; i++){
-                this.uploadList.push(this.tableData[i])
-            }
+            //this.setUploadData();
         },
         uploadSizeChange(val){
             this.queryUpload.pagesize = val;
-            this.setUploadData();
         },
         uploadCurrentChange(val){
             this.queryUpload.page = val;
-            this.setUploadData();
         },
         setPtype(ptypeId){
             this.ruleForm.productId = '';
@@ -326,6 +341,7 @@ export default {
             this.ruleForm.serial = Math.random().toString(36).substr(2).toLocaleUpperCase();
         },
         handleAdd(){
+            this._getLastId();
             this.tableData = [];
             this.tableHeader = [];
             this.isEdit = !this.isEdit;
@@ -341,6 +357,7 @@ export default {
                 deliveryDate:'',
                 model:'',
                 modelNo:'',
+                boxNo:'',
                 projectName:'',
                 projectNo:'',
                 materialNo:'',
@@ -355,11 +372,12 @@ export default {
             }
         },
         handleUpdate(row){
+            this.isEdit = true;
             this.editRow = row;
             this.dataId = row.id;
             this.ruleForm = {
-                typeId:1,
-                flowStateId:1,
+                typeId:row.typeId,
+                flowStateId:row.flowStateId,
                 ptypeId:row.ptypeId,
                 serial:row.serial,
                 productId:row.productId,
@@ -368,6 +386,7 @@ export default {
                 deliveryDate:row.deliveryDate,
                 model:row.model,
                 modelNo:row.modelNo,
+                boxNo:row.boxNo,
                 projectName:row.projectName,
                 projectNo:row.projectNo,
                 materialNo:row.materialNo,
@@ -408,8 +427,8 @@ export default {
             let flow = _.find(this.flowList, {'id':id});
             return flow.name;
         },
-        parseDate(date){
-            return moment(date).format('YYYY-MM-DD');
+        parseDate(date, format){
+            return moment(date).format(format||'YYYY-MM-DD');
         },
         parseMoney(row){
             return this.$options.filters['currency'](row.count*row.price);
@@ -445,7 +464,6 @@ export default {
                 {label:'项目名称',value:'projectName'},
                 {label:'备注',value:'content'}
             ]
-            console.log(this.tableData,this.tableHeader);
             let dataList = this.tableData.map((item, index)=>{
                 let id = this.lastId + index + 1;
                 let obj = {id:id,typeId:1,flowStateId:1,createByUser:this.$store.state.user.name};
@@ -459,7 +477,6 @@ export default {
                 };
                 return obj;
             });
-            console.log('dataList', dataList);
             let condition = {
                 type:'addPatch',
                 collectionName: 'order',
@@ -467,7 +484,7 @@ export default {
             }
             this.$axios.$post('mock/db', {data:condition}).then(result=>{
                 loadingMask.close();
-                //this.gridList.concat(dataList);
+                this.tableData = [];
                 this.isEdit = false;
                 this.query.page = 1;
                 this.getList();
@@ -476,9 +493,9 @@ export default {
         _setValue(key, value){
             switch(key){
                 case 'orderDate':
-                    return new Date(value);
+                    return new Date(value).getTime();
                 case 'deliveryDate':
-                    return new Date(value);
+                    return new Date(value).getTime();
                 case 'count':
                     return Number(value);
                 case 'price':
@@ -519,23 +536,11 @@ export default {
                 }
             });
         },
-        async changeIsUse(row){
-            let condition = {
-                type:'updateData',
-                collectionName: 'product',
-                updateDate:true,
-                data:{
-                    id:row.id,
-                    isuse:row.isuse
-                }
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-        },
         async getPtypeList(){
             let condition = {
                 type:'listData',
                 collectionName: 'ptype',
-                data:{}
+                data:{typeId:1}
             };
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.ptypeList = result.list;
@@ -577,13 +582,13 @@ export default {
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.crmList = result.list;
         },
-        submitSearch(){
+        submitSearch(flag){
             let params = {};
             for(let k in this.searchForm){
                 if(this.searchForm[k] != '' && this.searchForm[k]){
                     if(_.isNumber(this.searchForm[k])){
                         params[k] = Number(this.searchForm[k]);
-                    }else if(_.isArray(this.searchForm[k]) && _.isDate(this.searchForm[k][0])){
+                    }else if(_.isArray(this.searchForm[k]) && k==='deliveryDate'){
                         params[k] = {
                             $gte:this.searchForm[k][0],
                             $lte:this.searchForm[k][1]
@@ -595,22 +600,28 @@ export default {
                     }
                 }
             };
-            //console.log('submitSearch',params);
-            this.getList(params)
+            if(!flag){ // 不需要再做分页复位
+                this.query = {
+                    page:1,
+                    pagesize:20
+                }
+            }
+            this.getList(params);
         },
         handleSizeChange(val){
             this.query.pagesize = val;
-            this.submitSearch();
+            this.submitSearch(true);
         },
         handleCurrentChange(val){
             this.query.page = val;
-            this.submitSearch();
+            this.submitSearch(true);
         },
         async getList(match = {}){
             this.listLoading = true;
             let condition = {
                 type:'aggregate',
                 collectionName: 'order',
+                data:_.merge({typeId:1},match),
                 aggregate:[
                     {
                         $lookup:{
@@ -626,19 +637,16 @@ export default {
                             preserveNullAndEmptyArrays: true // 空的数组也拆分
                         }
                     },
+                    {$match:_.merge({typeId:1},match)},
                     {
                         $addFields: {flowStateName:"$flowState.name"}
                     },
-                    {$sort:{id:1}}
+                    {$sort:{id:-1}},
+                    {$skip:this.query.page-1},
+                    {$limit:this.query.pagesize}
                 ]
             };
-            if(!_.isEmpty(match)){
-                condition.aggregate.push({
-                    $match:match
-                })
-            }
             let result = await this.$axios.$post('mock/db', {data:condition});
-            //console.log('getList',result)
             this.total = result.total;
             this.gridList = result.list;
             this.listLoading = false;
@@ -651,7 +659,6 @@ export default {
                 }
             }
             let result = await this.$axios.$post('mock/db', {data:condition});
-            console.log('_getLastId',result);
             if(result){
                 this.lastId = result;
             }
@@ -663,8 +670,7 @@ export default {
         this.getProductList();
         this.getTypeList();
         this.getFlowList();
-
-        this._getLastId()
+        //this._getLastId()
     },
     mounted(){
         this.getList();

@@ -74,4 +74,8 @@ exports.product = connect.model('product', productScheme);
 var orderScheme = new Schema(dbServer.collections.order);
 exports.order = connect.model('order', orderScheme);
 
+/*---------仓库数据-----------*/
+var storeScheme = new Schema(dbServer.collections.store);
+exports.store = connect.model('store', storeScheme);
+
 exports.connect = connect;

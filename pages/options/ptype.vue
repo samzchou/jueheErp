@@ -14,9 +14,10 @@
             border fit highlight-current-row 
             size="mini" 
             style="width: 100%">
-                <el-table-column label="No." width="50px" align="center" type="index"></el-table-column>
-                <el-table-column prop="name" label="产品分类名称" width="200px"></el-table-column>
-                <el-table-column prop="content" label="描述"></el-table-column>
+                <el-table-column label="No." width="50px" align="center" type="index"/>
+				<el-table-column prop="typeName" label="业务类别" width="100px"/>
+                <el-table-column prop="name" label="产品分类名称" width="200px"/>
+                <el-table-column prop="content" label="描述"/>
                 <el-table-column label="操作" fixed="right" align="center" width="100">
                     <template slot-scope="scope">
                         <el-button size="mini" type="text" @click="handleUpdate(scope.row)">编辑</el-button>
@@ -27,7 +28,14 @@
         </div>
         <div class="form-container" v-else>
             <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" size="mini">
-                <el-form-item label="分类名称" prop="name">
+                <el-form-item label="业务分类" prop="typeId">
+                    <el-radio-group v-model="ruleForm.typeId">
+                        <el-radio v-for="(type,idx) in typeList" :label="type.id" :key="idx">
+                            {{type.name}}
+                        </el-radio>
+                    </el-radio-group>
+                </el-form-item>
+				<el-form-item label="分类名称" prop="name">
                     <el-input v-model="ruleForm.name" style="width:120px"/>
                 </el-form-item>
                 <el-form-item label="描述内容" prop="content">
@@ -49,9 +57,11 @@ export default {
             isEdit:false,
             listLoading:false,
             query:{},
+			typeList:[],
             gridList:[],
             dataId:undefined,
             ruleForm:{
+				typeId:1,
                 name:'',
                 content:''
             },
@@ -66,6 +76,7 @@ export default {
         handleAdd(){
             this.isEdit = !this.isEdit;
             this.ruleForm = {
+				typeId:1,
                 name:'',
                 content:''
             }
@@ -73,6 +84,7 @@ export default {
         handleUpdate(row){
             this.dataId = row.id;
             this.ruleForm = {
+				typeId:row.typeId,
                 name:row.name,
                 content:row.content
             }
@@ -116,11 +128,12 @@ export default {
                     this.$axios.$post('mock/db', {data:condition}).then(result=>{
                         loadingMask.close();
                         this.isEdit = false;
+						let typeObj = {typeName:_.find(this.typeList,{id:this.ruleForm.typeId}).name};
                         if(this.dataId){
                             let index = _.findIndex(this.gridList, {id:this.dataId});
-                            this.$set(this.gridList, index, this.ruleForm)
+                            this.$set(this.gridList, index, _.merge(this.ruleForm, typeObj));
                         }else{
-                            this.gridList.push(result);
+                            this.gridList.push(_.merge(result, typeObj));
                         }
                         this.dataId = undefined;
                     });
@@ -131,12 +144,46 @@ export default {
                 }
             });
         },
+		async getTypeList(){
+            let condition = {
+                type:'listData',
+                collectionName: 'type',
+                data:{}
+            };
+            let result = await this.$axios.$post('mock/db', {data:condition});
+            this.typeList = result.list;
+        },
         async getList(){
             this.listLoading = true;
+			/*
             let condition = _.merge(this.query,{
                 type:'listData',
                 collectionName: 'ptype',
                 data:{}
+            });
+			*/
+			let condition = _.merge(this.query,{
+                type:'aggregate',
+                collectionName: 'ptype',
+                aggregate:[
+                    {
+                        $lookup:{
+                            from: "types",
+                            localField: "typeId",
+                            foreignField: "id",
+                            as: "type"
+                        }
+                    },
+                    {
+                        $unwind: { // 拆分子数组
+                            path: "$type",
+                            preserveNullAndEmptyArrays: true // 空的数组也拆分
+                        }
+                    },
+					{
+                        $addFields: {typeName:"$type.name"}
+                    },
+                ]
             });
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.total = result.total;
@@ -146,8 +193,11 @@ export default {
         }
     },
     created(){
-        this.getList();
-    }
+		this.getTypeList();
+    },
+	mounted(){
+		this.getList();
+	}
 }
 </script>
 

@@ -211,6 +211,14 @@ module.exports = {
                 sort:0,
                 notForm:true
             },
+            typeId : {
+                type: Number, 
+                default:0, 
+                label:'业务分类',
+                key:'typeId',
+                sort:0,
+                notForm:true
+            },
             name : {
                 type:String, 
                 widgetType:'input',
@@ -542,8 +550,8 @@ module.exports = {
                 sort:11
             },
             updateDate:{
-                type: Date, 
-                default:new Date(), 
+                type: Number, 
+                default:new Date().getTime(), 
                 widgetType:'date',
                 label:'更新日期',
                 notForm:true,
@@ -701,8 +709,8 @@ module.exports = {
                 sort:11
             },
             updateDate:{
-                type: Date, 
-                default:new Date(), 
+                type: Number, 
+                default:new Date().getTime(), 
                 widgetType:'date', 
                 label:'更新日期',
                 key:'updateDate',
@@ -719,6 +727,14 @@ module.exports = {
                 key:'id',
                 notForm:true,
                 sort:0
+            },
+            isPayed:{
+                type: Boolean,
+                default:false,
+                label:'是否已付款', 
+                key:'isPayed',
+                notForm:true,
+                sort:1
             },
             typeId:{
                 type: Number, 
@@ -929,17 +945,26 @@ module.exports = {
                 ],
                 sort:19
             },
+            releaseCount:{
+                type: Number, 
+                width:100,
+                default:'', 
+                widgetType:'number',
+                label:'实际数量',
+                key:'releaseCount',
+                sort:19
+            },
             orderDate:{
-                type: Date, 
-                default:new Date(), 
+                type: Number, 
+                default:new Date().getTime(), 
                 widgetType:'date', 
                 label:'制单日期',
                 key:'orderDate',
                 sort:20
             },
             deliveryDate:{
-                type: Date, 
-                default:new Date(), 
+                type: Number, 
+                default:new Date().getTime(), 
                 widgetType:'date', 
                 label:'交付日期',
                 key:'deliveryDate',
@@ -964,12 +989,174 @@ module.exports = {
                 sort:23
             },
             updateDate:{
-                type: Date, 
-                default:new Date(), 
+                type: Number, 
+                default:new Date().getTime(), 
                 label:'更新日期',
                 key:'updateDate',
                 notForm:true,
                 sort:24
+            }
+        },
+        /*----------仓库数据（入库出库）-----------*/
+        store : {
+            id:{
+                type: Number, 
+                default:0, 
+                label:'ID',
+                notForm:true,
+                sort:0
+            },
+            isPayed:{
+                type: Boolean,
+                default:false,
+                label:'是否已付款', 
+                key:'isPayed',
+                notForm:true,
+                sort:1         
+            },
+            typeId:{
+                type: Number, 
+                default:'', 
+                widgetType:'radio',
+                label:'订单',
+                key:'typeId',
+                valueSet:'type',
+                sort:2
+            },
+            orderId:{
+                type: Number, 
+                default:'', 
+                widgetType:'select',
+                multiple:false,
+                label:'订单',
+                key:'orderId',
+                valueSet:'order',
+                byId:'typeId',
+                rules:[
+                    {"required": true, "message": '请选择订单', "trigger": 'change'}
+                ],
+                sort:2
+            },
+            serial:{
+                type:String, 
+                widgetType:'input',
+                label:'订单编号',
+                key:'serial',
+                sort:3
+            },
+            productName:{
+                type:String, 
+                widgetType:'input',
+                label:'货品名称',
+                key:'productName',
+                sort:4
+            },
+            storeTypeId:{
+                type: Number, 
+                default:'', 
+                widgetType:'radio',
+                label:'入库分类', 
+                key:'storeTypeId',
+                valueSet:'storeType',
+                notForm:true,
+                sort:5
+            },
+            storeNoId:{
+                type: Number, 
+                default:'', 
+                widgetType:'select',
+                multiple:false,
+                label:'库位', 
+                key:'storeNoId',
+                valueSet:'storeNo',
+                rules:[
+                    {"required": true, "message": '请选择库位', "trigger": 'change'}
+                ],
+                inSearch:true,
+                sort:6
+            },
+            count:{
+                type: Number, 
+                default:0, 
+                widgetType:'number',
+                label:'入库数量',
+                min:1,
+                key:'count',
+                rules:[
+                    {"required": true, "message": '请输入数量', "trigger": 'blur'}
+                ],
+                sort:7
+            },
+            incount:{
+                type: Number, 
+                default:0, 
+                widgetType:'number',
+                label:'库存数量',
+                key:'incount',
+                sort:8
+            },
+            outcount:{
+                type: Number, 
+                default:0, 
+                widgetType:'number',
+                label:'出库数量',
+                key:'outcount',
+                sort:9
+            },
+            outTypeId:{
+                type: Number, 
+                default:'', 
+                widgetType:'radio',
+                label:'出库去向', 
+                key:'outTypeId',
+                notForm:true,
+                sort:10
+            },
+            content:{
+                type:String, 
+                widgetType:'input',
+                label:'备注说明',
+                key:'content',
+                sort:11
+            },
+            updateContent:{
+                type:String, 
+                widgetType:'input',
+                label:'出库备注说明',
+                key:'updateContent',
+                sort:11
+            },
+            createByUser:{
+                type: String, 
+                default:'', 
+                label:'创建者',
+                key:'createByUser',
+                notForm:true,
+                sort:12
+            },
+            createDate:{
+                type: Number, 
+                default:new Date().getTime(), 
+                label:'创建日期',
+                notForm:true,
+                key:'createDate',
+                sort:13
+            },
+            updateByUser:{
+                type: String, 
+                default:'', 
+                label:'出库者',
+                key:'updateByUser',
+                notForm:true,
+                sort:14
+            },
+            updateDate:{
+                type: Number, 
+                default:new Date().getTime(), 
+                label:'更新日期',
+                notForm:true,
+                key:'updateDate',
+                sort:15
             }
         },
     }

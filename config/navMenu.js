@@ -28,7 +28,16 @@ export default {
             "icon":"ils",
             "children":[
                 {"label":"采购", "icon":"list-ul", "path":"/order/buy"},
-                {"label":"销售", "icon":"pencil", "path":"/order/sale"},
+                {"label":"销售", "icon":"list-ul", "path":"/order/sale"}
+            ]
+        },
+        {
+            "label":"仓库",
+            "icon":"recycle",
+            "children":[
+                {"label":"入库", "icon":"list-ul", "path":"/store/in"},
+                {"label":"出库", "icon":"list-ul", "path":"/store/out"},
+                {"label":"库存盘点", "icon":"list-ul", "path":"/store/calc"}
             ]
         }
     ]

@@ -24,7 +24,7 @@ const dbFun = {
             let tn = keys[i];
             let counters =  await mongoDB.counters.findOne({'model':tn});
             if(!colStrArr.includes(tn) && !counters){ // 如果不存则创建集合
-                //let res = await mongoose.connection.db.createCollection(tn);
+                let res = await mongoose.connection.db.createCollection(tn);
                 await mongoDB.counters.create({'model':tn, 'count':0});
             }
         }
@@ -54,7 +54,7 @@ const dbFun = {
     async aggregate(params){
         const tn = params.collectionName;
         let condition = params.data || {};
-        //console.log('aggregate',params.aggregate)
+        //console.log('aggregate',params.aggregate['$match']['deliveryDate']['$gte']);
         let total = await mongoDB[tn].find(condition).countDocuments();
         let list = await mongoDB[tn].aggregate(params.aggregate);
         return {
@@ -95,18 +95,37 @@ const dbFun = {
     },
     /*--------批量添加数据--------*/
     async addPatch(params){
-        let tn = params.collectionName;
-        let data = params.data;
+        const tn = params.collectionName;
+        const data = params.data;
         let result = mongoDB[tn].insertMany(data);
-        //console.log('addPatch',result)
         let counters =  await mongoDB.counters.findOne({'model':tn});
-        await mongoDB.counters.findOneAndUpdate({_id: counters._id}, {$inc:{count:data.length}});
-
+        mongoDB.counters.findOneAndUpdate({_id: counters._id}, {$inc:{count:data.length}});
+        //console.log('params', params)
+        //console.log('result', result)
         return {
             success:true,
-            msgDesc:'数据导入成功',
-            response:result
-        }
+            msgDesc:'数据导入成功'
+        } 
+    },
+    /*--------批量更新数据--------*/
+    async updatePatch(params){
+        const tn = params.collectionName;
+        let result = await mongoDB[tn].updateMany(params.param, params.set);
+        //console.log('updatePatch', params, result);
+        return {
+            success:result.n?true:false,
+            msgDesc:result.n?'数据更新成功':'数据更新失败'
+        } 
+    },
+    /*--------批量删除数据--------*/
+    async removePatch(params){
+        const tn = params.collectionName;
+        const data = params.data;
+        let result = mongoDB[tn].deleteMany(data);
+        return {
+            success:true,
+            msgDesc:'数据删除成功'
+        } 
     },
     /*--------添加数据--------*/
     async addData(params){
@@ -118,7 +137,6 @@ const dbFun = {
         // 计数器
         let counters =  await mongoDB.counters.findOne({'model':tn});
         data.id = counters.count + 1;
-        //console.log('addData', data);
         let result =  await mongoDB[tn].create(data);
         if(result){
             await mongoDB.counters.findOneAndUpdate({_id: counters._id}, {$inc:{count:1}});
@@ -129,20 +147,37 @@ const dbFun = {
             response:result
         }
     },
+    /*--------更新一批数据--------*/
+    async updateArr(params){
+        const tn = params.collectionName;
+        let data = params.data;
+        for(let i=0; i<data.length; i++){
+            let condition = {id:data[i].id};
+            let set = data[i];
+            if(params.updateDate){
+                set.updateDate = new Date().getTime();
+            }
+            let result = await mongoDB[tn].updateOne(condition, set, {upsert:true});
+            console.log('updateArr',result);
+        }
+        return {
+            success:true,
+            msgDesc:'数据更新成功'
+        }
+    },
     /*--------更新数据--------*/
     async updateData(params){
-        let tn = params.collectionName;
+        const tn = params.collectionName;
         let data = params.data;
         let condition = {id:data.id};
         if(params.updateDate){
-            data.updateDate = new Date();
+            data.updateDate = new Date().getTime();
         }
         let update = {$set : data};
         let options = {upsert : true};
         let total = await mongoDB[tn].countDocuments(condition);
         let result = null;
         if(total){
-            // updateMany
             result =  await mongoDB[tn].updateOne(condition, update, options);
         }
         return {
@@ -232,6 +267,7 @@ module.exports = ({data}) => {
     return new Promise((resolve, reject)=>{
         dbFun[data.type](data).then(result=>{
             resolve(result);
-        });     
+        });
+          
     });
 }

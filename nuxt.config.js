@@ -46,6 +46,7 @@ module.exports = {
 		'~/plugins/axios',
 		'~plugins/filters.js',  //全局过滤器
 		'~/plugins/global.js',  //全局变量
+		'~/plugins/print',
 		{src: '~/plugins/storage',ssr:false},
 		{src: '~/plugins/echarts', ssr:false},
 		{src: '~/plugins/VDistpicker', ssr:false},

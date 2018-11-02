@@ -6,8 +6,8 @@
                 <el-button type="primary" size="mini" @click="$emit('saveData')">保存数据</el-button>
             </el-form-item>
             <el-form-item>
-                <el-button :loading="loading" size="mini" type="infor" @click="handleUpload">
-                    {{!loading?'选择文件上传':'正在上传处理中...'}}
+                <el-button :loading="loading" size="mini" type="danger" @click="handleUpload">
+                    {{!loading?'选择EXCEL文件上传':'正在上传处理中...'}}
                 </el-button>
             </el-form-item>
         </el-form>
@@ -73,9 +73,9 @@ export default {
                     const header = this.getHeaderRow(worksheet);
                     const results = XLSX.utils.sheet_to_json(worksheet);
                     this.generateData({ header, results });
-                    this.loading = false;
                     resolve();
                 }
+                this.loading = false;
                 reader.readAsArrayBuffer(rawFile);
             })
         },

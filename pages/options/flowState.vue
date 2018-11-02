@@ -14,14 +14,14 @@
             border fit highlight-current-row 
             size="mini" 
             style="width: 100%">
-                <el-table-column label="No." width="50px" align="center" type="index"></el-table-column>
-                <el-table-column prop="name" label="流程状态名称" width="200px"></el-table-column>
+				<el-table-column prop="id" label="状态ID" width="60px"/>
+                <el-table-column prop="name" label="流程状态名称" width="200px"/>
                 <el-table-column prop="typeId" label="所属业务分类" width="200px">
                     <template slot-scope="scope">
                         <span>{{parseType(scope.row)}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="content" label="描述"></el-table-column>
+                <el-table-column prop="content" label="描述"/>
                 <el-table-column label="操作" fixed="right" align="center" width="100">
                     <template slot-scope="scope">
                         <el-button size="mini" type="text" @click="handleUpdate(scope.row)">编辑</el-button>
@@ -36,9 +36,11 @@
                     <el-input v-model="ruleForm.name"></el-input>
                 </el-form-item>
                 <el-form-item label="业务分类" prop="orgId">
-                    <el-select v-model="ruleForm.typeId" placeholder="请选择所属业务分类">
-                        <el-option v-for="type in typeList" :key="type.id" :label="type.name" :value="type.id"/>
-                    </el-select>
+                    <el-radio-group v-model="ruleForm.typeId">
+                        <el-radio v-for="(type,idx) in typeList" :label="type.id" :key="idx">
+                            {{type.name}}
+                        </el-radio>
+                    </el-radio-group>
                 </el-form-item>
                 <el-form-item label="描述内容" prop="content">
                     <el-input v-model="ruleForm.content" type="textarea" :autosize="{ minRows: 2, maxRows: 6}" placeholder="请输入内容"></el-input>
@@ -79,7 +81,7 @@ export default {
             this.isEdit = !this.isEdit;
             this.ruleForm = {
                 name:'',
-                typeId:'',
+                typeId:1,
                 content:''
             }
         },

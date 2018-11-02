@@ -12,13 +12,13 @@
             <div class="search-content">
                 <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
                     <el-form-item label="业务分类：" prop="typeId">
-                        <el-select v-model="searchForm.typeId" placeholder="请选择" clearable  style="width:100px">
+                        <el-select v-model="searchForm.typeId" placeholder="请选择" clearable  style="width:100px" @change="filterPtype">
                             <el-option v-for="(type,idx) in typeList" :key="idx" :label="type.name" :value="type.id"/>
                         </el-select>
                     </el-form-item>
                     <el-form-item label="产品分类：" prop="ptypeId">
                         <el-select v-model="searchForm.ptypeId" placeholder="请选择" multiple clearable>
-                            <el-option v-for="(ptype,idx) in ptypeList" :key="idx" :label="ptype.name" :value="ptype.id"/>
+                            <el-option v-for="(ptype,idx) in pList" :key="idx" :label="ptype.name" :value="ptype.id"/>
                         </el-select>
                     </el-form-item>
                     <el-form-item label="产品名称：" prop="name">
@@ -47,7 +47,7 @@
                         {{parsePtype(scope.row.ptypeId)}}
                     </template>
                 </el-table-column>
-                <el-table-column prop="name" label="产品名称" width="150px"></el-table-column>
+                <el-table-column prop="name" label="产品名称" width="180px"></el-table-column>
                 <el-table-column prop="crmId" label="关联客户" width="150px">
                     <template slot-scope="scope">
                         {{parseCrm(scope.row.crmId)}}
@@ -75,7 +75,7 @@
         <div class="form-container" v-else>
             <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" size="mini">
                 <el-form-item label="业务分类" prop="typeId">
-                    <el-radio-group v-model="ruleForm.typeId">
+                    <el-radio-group v-model="ruleForm.typeId" @change="filterPtype">
                         <el-radio v-for="(type,idx) in typeList" :label="type.id" :key="idx">
                             {{type.name}}
                         </el-radio>
@@ -83,7 +83,7 @@
                 </el-form-item>
                 <el-form-item label="产品分类" prop="ptypeId">
                     <el-select v-model="ruleForm.ptypeId" placeholder="请选择">
-                        <el-option v-for="(ptype,idx) in ptypeList" :key="ptype.id" :label="ptype.name" :value="ptype.id"/>
+                        <el-option v-for="(ptype,idx) in pList" :key="ptype.id" :label="ptype.name" :value="ptype.id"/>
                     </el-select>
                 </el-form-item>
                 <el-form-item label="产品名称" prop="name">
@@ -137,6 +137,7 @@ export default {
             listLoading:false,
             typeList:[],
             ptypeList:[],
+			pList:[],
             crmList:[],
             query:{},
             gridList:[],
@@ -176,7 +177,6 @@ export default {
                 price: [
                     { required: true, message: '请输入单价', trigger: 'blur'},
                 ]
-
             }
         }
     },
@@ -185,7 +185,7 @@ export default {
             this.isEdit = !this.isEdit;
             this.editRow = null;
             this.ruleForm = {
-                typeId:this.typeList[0]['id'],
+                typeId:this.isEdit?this.typeList[0]['id']:'',
                 ptypeId:'',
                 crmId:'',
                 name:'',
@@ -196,7 +196,9 @@ export default {
                 util:'',
                 price:'',
                 content:''
-            }
+            };
+			this.searchForm.typeId = '';
+			this.filterPtype(this.isEdit?1:'');
         },
         handleUpdate(row){
             this.editRow = row;
@@ -247,6 +249,13 @@ export default {
             let crm = _.find(this.crmList, {'id':id});
             return crm.name;
         },
+		filterPtype(val){
+			if(val != ''){
+				this.pList = _.filter(this.ptypeList,{typeId:val})
+			}else{
+				this.pList = _.cloneDeep(this.ptypeList);
+			}
+		},
         submitForm(){
             this.$refs['ruleForm'].validate((valid) => {
                 if(valid) {
@@ -272,6 +281,7 @@ export default {
                             this.gridList.push(_.merge(result, typeObj));
                         }
                         this.dataId = undefined;
+						this.filterPtype('');
                     });
                 } else {
                     this.$message.error('保存失败！请联系管理员');
@@ -299,6 +309,7 @@ export default {
             };
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.ptypeList = result.list;
+			this.pList = _.cloneDeep(this.ptypeList);
         },
         async getTypeList(){
             let condition = {
