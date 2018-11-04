@@ -48,13 +48,14 @@
     </section>
 </template>
 <script>
+import settings from '@/config/files/dataList.json';
 export default {
     name:'role',
     data(){
         return {
             isEdit:false,
             listLoading:false,
-            orgList:[],
+            orgList:settings.org,
             query:{},
             gridList:[],
             dataId:undefined,
@@ -106,6 +107,7 @@ export default {
                     });
                     let index = _.findIndex(this.gridList, {id:row.id});
                     this.gridList.splice(index, 1);
+                    this.writeFile();
                 });
             }).catch();
         },
@@ -134,23 +136,25 @@ export default {
                             this.gridList.push(result);
                         }
                         this.dataId = undefined;
+                        this.writeFile();
                     });
                     
-                } else {
-                    this.$message.error('保存失败！请联系管理员');
-                    return false;
-                }
+                } 
             });
         },
-        async getOrgList(){
-            this.listLoading = true;
-            let condition = {
+        async writeFile(){
+            let params = {
                 type:'listData',
-                collectionName: 'org',
+                collectionName: 'pos',
                 data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.orgList = result.list;
+            }
+            let data = await this.$axios.$post('mock/db', {data:params});
+            let condition = {
+                type:'writeFile',
+                key:'pos',
+                data:data.list
+            }
+            await this.$axios.$post('mock/files', {data:condition});
         },
         async getList(){
             this.listLoading = true;
@@ -187,8 +191,6 @@ export default {
     },
     created(){
         this.getList();
-        this.getOrgList();
-        
     }
 }
 </script>

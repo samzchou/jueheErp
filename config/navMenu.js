@@ -27,8 +27,15 @@ export default {
             "label":"订单",
             "icon":"ils",
             "children":[
-                {"label":"采购", "icon":"list-ul", "path":"/order/buy"},
-                {"label":"销售", "icon":"list-ul", "path":"/order/sale"}
+                {"label":"产品采购", "icon":"list-ul", "path":"/order/buy"},
+                {"label":"生产销售", "icon":"list-ul", "path":"/order/sale"}
+            ]
+        },
+        {
+            "label":"生产",
+            "icon":"retweet",
+            "children":[
+                {"label":"订单生产", "icon":"list-ul", "path":"/produce/on"}
             ]
         },
         {
@@ -38,6 +45,14 @@ export default {
                 {"label":"入库", "icon":"list-ul", "path":"/store/in"},
                 {"label":"出库", "icon":"list-ul", "path":"/store/out"},
                 {"label":"库存盘点", "icon":"list-ul", "path":"/store/calc"}
+            ]
+        },
+        {
+            "label":"财务结算",
+            "icon":"rmb",
+            "children":[
+                {"label":"应付款", "icon":"list-ul", "path":"/finial/payout"},
+                {"label":"应收款", "icon":"list-ul", "path":"/finial/payin"}
             ]
         }
     ]

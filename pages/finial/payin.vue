@@ -3,11 +3,11 @@
         <div class="page-title">
             <div>
                 <span>
-                    {{!isEdit?'入库单列表':'入库单编辑'}}
+                    {{!isEdit?'应收款列表':'应收款编辑'}}
                 </span>
             </div>
             <div>
-                <el-button v-if="!isEdit" @click="handleAdd" type="text" size="medium" icon="el-icon-plus">新增入库单</el-button>
+                <el-button v-if="!isEdit" @click="handleAdd" type="text" size="medium" icon="el-icon-plus">新增应付款</el-button>
                 <el-button v-else @click="isEdit=false" type="text" size="medium" icon="el-icon-close">取消返回</el-button>
                </div>
         </div>
@@ -17,20 +17,16 @@
                     <el-form-item label="订单编号：" prop="serial">
                         <el-input v-model="searchForm.serial" clearable  style="width:120px"/>
                     </el-form-item>
-                    <el-form-item label="业务类型" prop="typeId">
-                        <el-select v-model="searchForm.typeId" placeholder="请选择" clearable style="width:100px">
-                            <el-option v-for="item in typeList" :key="item.id" :label="item.name" :value="item.id"/>
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item label="库位" prop="storeNoId">
-                        <el-select v-model="searchForm.storeNoId" placeholder="请选择" clearable style="width:100px">
-                            <el-option v-for="item in storeNoList" :key="item.id" :label="item.name" :value="item.id"/>
-                        </el-select>
+                    <el-form-item label="客户名称" prop="crmName">
+                        <el-input v-model="searchForm.crmName" clearable  style="width:120px"/>
                     </el-form-item>
                     <el-form-item label="货品名称：" prop="productName">
                         <el-input v-model="searchForm.productName" clearable  style="width:120px"/>
                     </el-form-item>
-                    <el-form-item label="入库日期：" prop="createDate">
+                    <el-form-item label="发票号：" prop="invoiceNumber">
+                        <el-input v-model="searchForm.invoiceNumber" clearable  style="width:120px"/>
+                    </el-form-item>                   
+                    <el-form-item label="收款日期：" prop="createDate">
                         <el-date-picker v-model="searchForm.createDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:220px"/>
                     </el-form-item>
                     <el-form-item>
@@ -38,61 +34,55 @@
                     </el-form-item>
                 </el-form>
             </div>
-            <el-table v-loading="listLoading" 
-            :data="gridList" 
-            border fit highlight-current-row 
-            size="mini" height="400">
+            <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" height="400">
                 <el-table-column label="No." width="70px" align="center">
                     <template slot-scope="scope">
                         <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="typeId" label="入库来源" width="70">
-                    <template slot-scope="scope">
-                        <span>{{parseType(scope.row.typeId)}}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="storeNoId" label="存放库位" width="80">
-                    <template slot-scope="scope">
-                        <span>{{parseStoreNo(scope.row.storeNoId)}}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column label="订单编号" width="120">
+                <el-table-column prop="serial" label="订单编号" width="120">
                     <template slot-scope="scope">
                         <span>{{scope.row.serial}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="货品名称">
+                <el-table-column prop="crmName" label="客户名称">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.crmName}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="productName" label="收款货品">
                     <template slot-scope="scope">
                         <span>{{scope.row.productName}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="单位" width="70">
+                <el-table-column prop="util" label="单位" width="70">
                     <template slot-scope="scope">
-                        <span>{{scope.row.order.util||''}}</span>
+                        <span>{{scope.row.util}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="单价" width="100">
+                <el-table-column prop="price" label="单价" width="100">
                     <template slot-scope="scope">
-                        <span>{{scope.row.order.price | currency}}</span>
+                        <span>{{scope.row.price | currency}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="订单量" width="70">
-                    <template slot-scope="scope">
-                        <span>{{scope.row.order.count}}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="count" label="入库量"  width="70">
+                <el-table-column prop="count" label="订单量" width="70">
                     <template slot-scope="scope">
                         <span>{{scope.row.count}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="createDate" label="入库日期" width="100">
+                <el-table-column label="合计金额" width="120">
+                    <template slot-scope="scope">
+                        <span>{{parseMoney(scope.row)}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="invoiceNumber" label="发票号"  width="120"/>
+                </el-table-column>
+                <el-table-column prop="createDate" label="创建日期" width="100">
                     <template slot-scope="scope">
                         <span>{{parseDate(scope.row.createDate)}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="createByUser" label="入库人员" width="70">
+                <el-table-column prop="createByUser" label="创建人员" width="70">
                     <template slot-scope="scope">
                         <span>{{scope.row.createByUser}}</span>
                     </template>
@@ -103,7 +93,8 @@
                     </template>
                 </el-table-column>
             </el-table>
-            <div class="page-container" style="padding: 10px 0;">
+            <div class="page-container">
+                <div>本页合计金额：{{totalMoney | currency}}</div>
                 <el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total">
                 </el-pagination>
             </div>
@@ -111,37 +102,29 @@
 
         <div v-else class="form-plit">
             <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="80px" size="mini">
-                <el-form-item label="入库来源" prop="ptypeId">
-                    <el-radio-group v-model="ruleForm.typeId" @change="filterPtype">
-                        <el-radio v-for="(type,idx) in typeList" :label="type.id" :key="idx">
-                            {{type.name}}
-                        </el-radio>
-                    </el-radio-group>
-                </el-form-item>
-                <el-form-item label="入库货品">
-                    <div style="color:#e45c5c;font-size:12px;">{{rowData.length?'已选'+rowData.length+'件货品，请确认实际入库量,可重新编辑数量':'请选择右侧订单货品'}}</div>
+                <el-form-item label="收款单列表">
+                    <div style="color:#e45c5c;font-size:12px;">{{rowData.length?'已选'+rowData.length+'件货品待收款':'请选择右侧待收款订单货品'}}</div>
                     <div class="form-plist">
                         <el-table :data="rowData" size="mini" style="width: 100%">
-                            <div slot="empty">暂无选中的货品</div>
-                            <el-table-column prop="productName" label="入库货品"/>
-                            <el-table-column prop="count" label="入库数量" width="70">
+                            <div slot="empty">暂无选中的待收款货品</div>
+                            <el-table-column prop="productName" label="订单货品名称"/>
+                            <el-table-column prop="count" label="数量" width="70"/>
+                            <el-table-column prop="price" label="单价" width="100">
                                 <template slot-scope="scope">
-                                    <div v-if="!scope.row.edit" class="edit-content" @click="scope.row.edit=true" title="点击编辑数量">
-                                        <span>{{scope.row.count}}</span>
-                                        <i class="el-icon-edit"/>
-                                    </div>
-                                    <div v-else class="edit-content">
-                                        <input v-model="scope.row.count" @blur="scope.row.edit=false"/>
-                                    </div>
+                                    <span>{{scope.row.price | currency}}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="收款金额" width="120">
+                                <template slot-scope="scope">
+                                    <span>{{parseMoney(scope.row)}}</span>
                                 </template>
                             </el-table-column>
                         </el-table>
+                        <div>总计收款金额：<span>{{payMoney | currency}}</span></div>
                     </div>
                 </el-form-item>
-                <el-form-item label="存放库位" prop="storeNoId">
-                    <el-select v-model="ruleForm.storeNoId">
-                        <el-option v-for="item in storeNoList" :key="item.id" :label="item.name" :value="item.id"/>
-                    </el-select>
+                <el-form-item prop="invoiceNumber" label="发票号">
+                    <el-input v-model="ruleForm.invoiceNumber"/>
                 </el-form-item>
                 <el-form-item label="备注说明">
                     <el-input v-model="ruleForm.content"/>
@@ -152,8 +135,9 @@
                 </el-form-item>
             </el-form>
             <div class="grid-list">
-                <h5>未入库<span>{{ruleForm.typeId==1?'采购':'销售'}}</span>订单列表</h5>
-                <el-table :data="orderList" border fit highlight-current-row  size="mini" height="400" @selection-change="selectionRow">
+                <h5>未收款订单列表</h5>
+                <el-table 
+                :data="orderList" border fit highlight-current-row  size="mini" height="400" @selection-change="selectionRow">
                     <el-table-column width="40px" type="selection"/>
                     <el-table-column prop="serial" label="订单编号" width="120px"/>
                     <el-table-column prop="deliveryDate" label="交付日期" width="100px">
@@ -161,23 +145,22 @@
                             <span>{{parseDate(scope.row.deliveryDate)}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="crmName" label="客户名称" width="200px"/>
+                    <el-table-column prop="crmName" label="客户名称" width="200px" sortable/>
                     <el-table-column prop="productName" label="货品名称" width="220px"/>
-                    <el-table-column prop="count" label="采购数量" width="80px"/>
+                    <el-table-column prop="count" label="供应数量" width="80px"/>
                     <el-table-column prop="util" label="单位" width="60px"/>
                     <el-table-column prop="price" label="单价" width="100px">
                         <template slot-scope="scope">
                             {{scope.row.price | currency}}
                         </template>
                     </el-table-column>
-                    <el-table-column label="总价" width="150px">
+                    <el-table-column label="合计" width="150px">
                         <template slot-scope="scope">
                             {{parseMoney(scope.row)}}
                         </template>
                     </el-table-column>
                 </el-table>
             </div>
-
         </div>
     </section>
 </template>
@@ -189,10 +172,6 @@ export default {
         return {
             listLoading:false,
             isEdit:false,
-            editRow:null,
-            flowStateList:[
-                {label:'待入库',value:1},{label:'已入库',value:2}
-            ],
             total:0,
             query:{
                 page:1,
@@ -205,26 +184,27 @@ export default {
             },
             typeList:settings.type,
             orderList:[],
-            storeNoList:settings.storeNo,
             gridList:[],
             rowData:[],
             lastId:0,
+            payMoney:0,
+            totalMoney:0,
             searchForm:{
                 serial:'',
-                typeId:'',
-                storeNoId:'',
+                invoiceNumber:'',
+                crmName:'',
                 productName:'',
                 createDate:'',
             },
             ruleForm:{
-                storeTypeId:1,
-                typeId:1,
-                storeNoId:'',
+                payType:2,
+                createByUser:'',
+                invoiceNumber:'',
                 content:''
             },
             rules:{
-                storeNoId: [
-                    { required: true, message: '请选择存放库位', trigger: 'change'},
+                invoiceNumber: [
+                    { required: true, message: '请输入发票号', trigger: 'blur'},
                 ]
             }
         }
@@ -248,60 +228,44 @@ export default {
         },
         selectionRow(selection){
             this.rowData = [];
+            this.payMoney = 0;
             selection.forEach(item=>{
                 this.rowData.push({
                     orderId:item.id,
                     serial:item.serial,
+                    crmName:item.crmName,
                     productName:item.productName,
+                    util:item.util,
                     count:item.count,
-                    edit:false
+                    price:item.price
                 });
+                this.payMoney += item.price * item.count;
             })
         },
         submitSave(){
-            let orderIds = [];
             let dataList = this.rowData.map((item,index)=>{
                 item = _.merge({},this.ruleForm, item);
-                item.count = parseInt(item.count);
-                item.incount = parseInt(item.count);
                 item.createByUser = this.$store.state.user.name;
                 item.id = this.lastId + index + 1;
-                orderIds.push(item.orderId);
-                delete item.edit;
                 return item;
             });
-            
+            //console.log('dataList', dataList)
             this.$refs['ruleForm'].validate((valid) => {
                 if(valid) {
                     let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
                     let condition = {
                         type:'addPatch',
-                        collectionName: 'store',
+                        collectionName: 'finance',
                         data:dataList
                     }
                     this.$axios.$post('mock/db', {data:condition}).then(result=>{
-                        /* loadingMask.close();
-                        this.clearData() */
-                    });
-
-                    // 更新订单流程状态
-                    let cn = {
-                        type:'updatePatch',
-                        collectionName: 'order',
-                        param:{'id':{$in:orderIds}},
-                        set:{$set:{'flowStateId':this.ruleForm.typeId==1?2:7}}
-                    }
-                    //console.log('submitSave', cn);
-                    this.$axios.$post('mock/db', {data:cn}).then(result=>{
                         loadingMask.close();
-                        this.clearData()
+                        this.updateOrderData();
                     });
-
                 }
             });
-            
         },
-        async clearData(){
+        async updateOrderData(){
             let ids = this.rowData.map(item=>{
                 return item.orderId;
             });
@@ -309,7 +273,7 @@ export default {
                 type:'updatePatch',
                 collectionName: 'order',
                 param:{'id':{$in:ids}},
-                set:{$set:{'flowStateId':this.ruleForm.typeId==1?2:6}}
+                set:{$set:{'isPayed':true}}
             }
             let reuslt = await this.$axios.$post('mock/db', {data:condition});
             this.isEdit = false;
@@ -361,17 +325,11 @@ export default {
         orderSizeChange(val){
             this.queryOrder.pagesize = val;
         },
-        filterPtype(val){
-            console.log(val);
-            this.rowData = [];
-            this.getOrderList({typeId:val,flowStateId:val==1?1:6});
-        },
-
         async getOrderList(params={}){
             let condition = {
                 type:'listData',
                 collectionName: 'order',
-                data:_.merge(params, {isPayed:false})
+                data:{typeId:2,flowStateId:8,isPayed:false}
             };
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.orderTotal = result.total;
@@ -381,38 +339,18 @@ export default {
         async getList(match={}){
             this.listLoading = true;
             let condition = {
-                type:'aggregate',
-                collectionName: 'store',
-                data:_.merge({storeTypeId:1},match),
-                aggregate:[
-                    {
-                        $lookup:{
-                            from: "order",
-                            localField: "orderId",
-                            foreignField: "id",
-                            as: "order"
-                        }
-                    },
-                    {
-                        $unwind: { // 拆分子数组
-                            path: "$order",
-                            preserveNullAndEmptyArrays: true // 空的数组也拆分
-                        }
-                    },
-                    {$match:_.merge({storeTypeId:1},match)},
-                    /* {
-                        $addFields: {flowStateName:"$order.name"}
-                    }, */
-                    {$sort:{id:-1}},
-                    {$skip:this.query.page-1},
-                    {$limit:this.query.pagesize}
-                ]
+                type:'listData',
+                collectionName: 'finance',
+                data:_.merge({payType:2},match),
             };
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.total = result.total;
             this.gridList = result.list;
-            console.log(this.gridList)
             this.listLoading = false;
+            this.totalMoney = 0;
+            result.list.forEach(item=>{
+                this.totalMoney += item.count*item.price;
+            })
         },
         async _getLastId(){
             let condition = {
@@ -495,5 +433,11 @@ export default {
                 border-radius: 3px;
             }
         }
+    }
+    .page-container{
+        padding: 10px 0; 
+        display:flex;
+        align-items: center;
+        justify-content: space-between;
     }
 </style>

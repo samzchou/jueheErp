@@ -72,7 +72,7 @@ export const actions = {
             });
             commit('UPDATE_USER', user);
         }
-		//this.$axios.$post('mock/db',{data:{type:'initDB'}});
+		this.$axios.$post('mock/db',{data:{type:'initDB'}});
     },
     INIT(state){
 		if(!process.server){

@@ -13,7 +13,7 @@
         </div>
         <div class="grid-container" v-if="!isEdit">
             <div class="search-content">
-                <el-form :inline="true" label-width="100px" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
+                <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
                     <el-form-item label="订单编号：" prop="serial">
                         <el-input v-model="searchForm.serial" clearable  style="width:150px"/>
                     </el-form-item>
@@ -50,7 +50,13 @@
                         <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="isuse" label="流程状态">
+                <el-table-column prop="id" label="ID" width="50px"/>
+                <el-table-column prop="isPayed" label="付款状态">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.isPayed?'已付款':'未付款'}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="isuse" label="流程状态" width="100">
                     <template slot-scope="scope">
                         <span>{{parseFlow(scope.row.flowStateId)}}</span>
                     </template>
@@ -130,7 +136,7 @@
             <el-form v-else :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" size="mini">
                 <el-form-item label="产品分类" prop="ptypeId">
                     <el-select v-model="ruleForm.ptypeId" placeholder="请选择" filterable clearable  @change="setPtype">
-                        <el-option v-for="(ptype,idx) in ptypeList" :key="ptype.id" :label="ptype.name" :value="ptype.id"/>
+                        <el-option v-for="ptype in ptypeList" :key="ptype.id" :label="ptype.name" :value="ptype.id"/>
                     </el-select>
                 </el-form-item>
                 <el-form-item label="产品名称" prop="productId">
@@ -201,6 +207,7 @@
     </section>
 </template>
 <script>
+import settings from '@/config/files/dataList.json';
 import UploadExcelComponent from '@/components/UploadExcel'
 export default {
     name:'role',
@@ -209,9 +216,9 @@ export default {
         return {
             isEdit:false,
             listLoading:false,
-            typeList:[],
+            typeList:settings.type,
             ptypeList:[],
-            flowList:[],
+            flowList:settings.flowState,
             crmList:[],
             productList:[],
             proList:[],
@@ -310,8 +317,16 @@ export default {
         uploadCurrentChange(val){
             this.queryUpload.page = val;
         },
+        initProduct(){
+            this.ptypeList = _.filter(settings.ptype,{typeId:2});
+            this.crmList = _.filter(settings.crm,{typeId:2});
+
+            this.productList = _.filter(settings.product, {typeId:2});
+            this.proList = {...this.productList};
+        },
         setPtype(ptypeId){
             this.ruleForm.productId = '';
+            this.ruleForm.crmId = '';
             if(ptypeId == ''){
                 this.proList = {...this.productList};
             }else{
@@ -326,8 +341,7 @@ export default {
                 modelNo:product.modelNo,
                 materialNo:product.materialNo,
                 util:product.util,
-                price:product.price,
-                crmId:product.crmId
+                price:product.price
             }
             this.getCrmName(product.crmId);
             this.ruleForm = _.merge({}, this.ruleForm, obj);
@@ -335,6 +349,8 @@ export default {
         },
         getCrmName(id){
             let crm = _.find(this.crmList, {id:id});
+            if(!crm) return;
+            this.ruleForm.crmId = id;
             this.ruleForm.crmName = crm.name;
             this.ruleForm.crmNo = crm.crmNo;
         },
@@ -346,7 +362,6 @@ export default {
             this.tableHeader = [];
             this.isEdit = true;
             this.editRow = null;
-            debugger
             this.ruleForm = {
                 typeId:2,
                 flowStateId:4,
@@ -371,6 +386,7 @@ export default {
                 price:'',
                 content:''
             }
+            this._getLastId();
         },
         handleUpdate(row){
             this.editRow = row;
@@ -379,9 +395,9 @@ export default {
             this.ruleForm = {
                 typeId:row.typeId,
                 flowStateId:row.flowStateId,
-                ptypeId:row.ptypeId,
+                ptypeId:row.ptypeId||'',
                 serial:row.serial,
-                productId:row.productId,
+                productId:row.productId||'',
                 productName:row.productName,
                 orderDate:row.orderDate,
                 deliveryDate:row.deliveryDate,
@@ -392,16 +408,16 @@ export default {
                 projectNo:row.projectNo,
                 materialNo:row.materialNo,
                 caselNo:row.caselNo,
-                crmId:row.crmId,
+                crmId:row.crmId||'',
                 crmName:row.crmName,
-                crmNo:row.crmNo,
+                crmNo:row.crmNo||'',
                 count:row.count,
                 util:row.util,
                 price:row.price,
                 content:row.content
             }
             this.isEdit = true;
-            this._getLastId();
+            
         },
         handleDelete(row){
             this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', {
@@ -411,7 +427,7 @@ export default {
             }).then(() => {
                 let condition = {
                     type:'removeData',
-                    collectionName: 'product',
+                    collectionName: 'order',
                     data:{id:row.id}
                 };
                 this.$axios.$post('mock/db', {data:condition}).then(result=>{
@@ -421,6 +437,7 @@ export default {
                     });
                     let index = _.findIndex(this.gridList, {id:row.id});
                     this.gridList.splice(index, 1);
+                    this.total -= 1;
                 });
             }).catch();
         },
@@ -455,7 +472,7 @@ export default {
                 {label:'箱号',value:'boxNo'},
                 {label:'制单日期',value:'orderDate'},
                 {label:'交货日期',value:'deliveryDate'},
-                {label:'客户名称',value:'crmName'},
+                {label:'供应商名称',value:'crmName'},
                 {label:'物料号/版本号',value:'materialNo'},
                 {label:'图号/版本号',value:'caselNo'},
                 {label:'产品名称',value:'productName'},
@@ -474,6 +491,19 @@ export default {
                     if(o){
                         let k = o.value;
                         let val = this._setValue(k, item[key]);
+                        if(k === 'productName'){
+                            let p = _.find(this.productList, {'name':val,'typeId':2});
+                            if(p){
+                                obj.ptypeId = p.ptypeId;
+                                obj.productId = p.id;
+                                obj.crmId = p.crmId;
+                            }else if(k === 'crmName'){
+                                let crm = _.find(this.crmList, {'name':val});
+                                if(crm){
+                                    obj.crmId = crm.id;
+                                }
+                            }
+                        }
                         obj[k] = val;
                     }
                 };
@@ -490,6 +520,7 @@ export default {
                 this.query.page = 1;
                 this.tableData = [];
                 this.getList();
+                this._getLastId();
             });
         },
         _setValue(key, value){
@@ -531,58 +562,10 @@ export default {
                             this.gridList.push(_.merge(result));
                         }
                         this.dataId = undefined;
+                        this._getLastId();
                     });
-                } else {
-                    this.$message.error('保存失败！请联系管理员');
-                    return false;
                 }
             });
-        },
-        async getPtypeList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'ptype',
-                data:{typeId:2}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.ptypeList = result.list;
-        },
-        async getTypeList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'type',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.typeList = result.list;
-        },
-        async getFlowList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'flowState',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.flowList = result.list;
-        },
-        async getProductList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'product',
-                data:{typeId:2}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.productList = result.list;
-            this.proList = {...this.productList};
-        },
-        async getCrmList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'crm',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.crmList = result.list;
         },
         submitSearch(flag){
             let params = {};
@@ -667,14 +650,7 @@ export default {
         }
     },
     created(){
-        this.getCrmList();
-        this.getPtypeList();
-        this.getProductList();
-        this.getTypeList();
-        this.getFlowList();
-        
-    },
-    mounted(){
+        this.initProduct();
         this.getList();
     }
 }

@@ -102,6 +102,7 @@ export default {
                             this.$store.commit('UPDATE_USER', result);
                             this.$cookies.set('token', result.token, '1m', '/');
                             if(this.prev_path && this.prev_path.indexOf('http') === 0){
+                                debugger
                                 location.href = this.prev_path;
                             }else{
                                 this.$router.replace(this.prev_path);

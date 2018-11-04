@@ -41,7 +41,7 @@
                         <el-switch size="mini" v-model="scope.row.isuse" @change="changeIsUse(scope.row)"/>
                     </template>
                 </el-table-column>
-                <el-table-column prop="typeName" label="业务分类" width="80px"></el-table-column>
+                <el-table-column prop="typeName" label="业务分类" width="80px"/>
                 <el-table-column prop="ptypeId" label="产品分类" width="150px">
                     <template slot-scope="scope">
                         {{parsePtype(scope.row.ptypeId)}}
@@ -83,7 +83,7 @@
                 </el-form-item>
                 <el-form-item label="产品分类" prop="ptypeId">
                     <el-select v-model="ruleForm.ptypeId" placeholder="请选择">
-                        <el-option v-for="(ptype,idx) in pList" :key="ptype.id" :label="ptype.name" :value="ptype.id"/>
+                        <el-option v-for="ptype in pList" :key="ptype.id" :label="ptype.name" :value="ptype.id"/>
                     </el-select>
                 </el-form-item>
                 <el-form-item label="产品名称" prop="name">
@@ -91,7 +91,7 @@
                 </el-form-item>
                 <el-form-item label="关联客户" prop="crmId">
                     <el-select v-model="ruleForm.crmId" placeholder="请选择">
-                        <el-option v-for="(crm,idx) in crmList" :key="crm.id" :label="crm.name" :value="crm.id"/>
+                        <el-option v-for="crm in crmList" :key="crm.id" :label="crm.name" :value="crm.id"/>
                     </el-select>
                 </el-form-item>
 
@@ -129,16 +129,17 @@
     </section>
 </template>
 <script>
+import settings from '@/config/files/dataList.json';
 export default {
     name:'role',
     data(){
         return {
             isEdit:false,
             listLoading:false,
-            typeList:[],
-            ptypeList:[],
+            typeList:settings.type,
+            ptypeList:settings.ptype,
 			pList:[],
-            crmList:[],
+            crmList:settings.crm,
             query:{},
             gridList:[],
             dataId:undefined,
@@ -167,6 +168,9 @@ export default {
                 ],
                 ptypeId: [
                     { required: true, message: '请选择产品分类', trigger: 'change'},
+                ],
+                crmId: [
+                    { required: true, message: '请选择客户', trigger: 'change'},
                 ],
                 name: [
                     { required: true, message: '请输入产品名称', trigger: 'blur'},
@@ -236,6 +240,7 @@ export default {
                     });
                     let index = _.findIndex(this.gridList, {id:row.id});
                     this.gridList.splice(index, 1);
+                    this.writeFile();
                 });
             }).catch();
         },
@@ -280,14 +285,27 @@ export default {
                         }else{
                             this.gridList.push(_.merge(result, typeObj));
                         }
+                        this.writeFile();
                         this.dataId = undefined;
-						this.filterPtype('');
+                        this.filterPtype('');
+                        
                     });
-                } else {
-                    this.$message.error('保存失败！请联系管理员');
-                    return false;
                 }
             });
+        },
+        async writeFile(){
+            let params = {
+                type:'listData',
+                collectionName: 'product',
+                data:{}
+            }
+            let data = await this.$axios.$post('mock/db', {data:params});
+            let condition = {
+                type:'writeFile',
+                key:'product',
+                data:data.list
+            }
+            await this.$axios.$post('mock/files', {data:condition});
         },
         async changeIsUse(row){
             let condition = {
@@ -300,34 +318,7 @@ export default {
                 }
             };
             let result = await this.$axios.$post('mock/db', {data:condition});
-        },
-        async getPtypeList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'ptype',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.ptypeList = result.list;
-			this.pList = _.cloneDeep(this.ptypeList);
-        },
-        async getTypeList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'type',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.typeList = result.list;
-        },
-        async getCrmList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'crm',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.crmList = result.list;
+            this.writeFile();
         },
         submitSearch(){
             let params = {};
@@ -358,7 +349,7 @@ export default {
                 aggregate:[
                     {
                         $lookup:{
-                            from: "types",
+                            from: "type",
                             localField: "typeId",
                             foreignField: "id",
                             as: "type"
@@ -389,11 +380,6 @@ export default {
         },
     },
     created(){
-        this.getCrmList();
-        this.getPtypeList();
-        this.getTypeList();
-    },
-    mounted(){
         this.getList();
     }
 }

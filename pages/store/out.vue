@@ -110,7 +110,14 @@
 
         <div v-else class="form-plit">
             <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="80px" size="mini">
-                  <el-form-item label="出库货品">
+                <el-form-item label="出库来源" prop="ptypeId">
+                    <el-radio-group v-model="ruleForm.typeId" @change="filterPtype">
+                        <el-radio v-for="(type,idx) in typeList" :label="type.id" :key="idx">
+                            {{type.name}}
+                        </el-radio>
+                    </el-radio-group>
+                </el-form-item>
+                <el-form-item label="出库货品">
                     <div style="color:#e45c5c;font-size:12px;">{{rowData.length?'已选'+rowData.length+'件货品':'请选择右侧库存货品'}}</div>
                     <div class="form-plist">
                         <el-table :data="rowData" size="mini" style="width: 100%">
@@ -130,7 +137,6 @@
                         </el-table>
                     </div>
                 </el-form-item>
-                
                 <el-form-item label="出库去向" prop="outTypeId">
                     <el-select v-model="ruleForm.outTypeId">
                         <el-option v-for="item in $store.state.storeTarget" :key="item.id" :label="item.name" :value="item.id"/>
@@ -174,6 +180,7 @@
 </template>
 
 <script>
+import settings from '@/config/files/dataList.json';
 export default {
     data(){
         return {
@@ -193,10 +200,9 @@ export default {
                 page:1,
                 pagesize:20
             },
-            typeList:[],
-            tList:[],
+            typeList:settings.type,
             storeList:[],
-            storeNoList:[],
+            storeNoList:settings.storeNo,
             gridList:[],
             rowData:[],
             searchForm:{
@@ -206,6 +212,7 @@ export default {
                 updateDate:'',
             },
             ruleForm:{
+                typeId:1,
                 outTypeId:'',
                 outcount:'',
                 updateContent:''
@@ -248,11 +255,9 @@ export default {
         selectionRow(selection){
             this.rowData = [];
             selection.forEach(item=>{
-                //let obj = _.merge({}, item, {outcount:item.incount,edit:false});
-                //delete obj.order;
-                //this.rowData.push(obj);
                 this.rowData.push({
                     id:item.id,
+                    orderId:item.orderId,
                     productName:item.productName,
                     incount:item.incount,
                     outcount:item.incount,
@@ -261,11 +266,13 @@ export default {
             })
         },
         submitSave(){
+            let orderIds = [];
             let dataList = this.rowData.map((item,index)=>{
                 item = _.merge({}, this.ruleForm, item);
                 item.outcount = parseInt(item.outcount);
                 item.incount -= item.outcount;
                 item.updateByUser = this.$store.state.user.name;
+                orderIds.push(item.orderId);
                 delete item.edit;
                 return item;
             });
@@ -277,8 +284,22 @@ export default {
                         collectionName: 'store',
                         data:dataList
                     }
-                    console.log('submitSave', condition);
+                    //console.log('submitSave', condition);
                     this.$axios.$post('mock/db', {data:condition}).then(result=>{
+                        /* loadingMask.close();
+                        this.isEdit = false;
+                        this.query.page = 1;
+                        this.getList(); */
+                    });
+                    // 更新订单流程状态
+                    let cn = {
+                        type:'updatePatch',
+                        collectionName: 'order',
+                        param:{'id':{$in:orderIds}},
+                        set:{$set:{'flowStateId':this.ruleForm.typeId==1?3:8}}
+                    }
+                    //console.log('submitSave', cn);
+                    this.$axios.$post('mock/db', {data:cn}).then(result=>{
                         loadingMask.close();
                         this.isEdit = false;
                         this.query.page = 1;
@@ -290,7 +311,7 @@ export default {
         },
         handleAdd(){
             this.isEdit = true;
-            this.getStoreList();
+            this.getStoreList({typeId:1});
         },
         handleSizeChange(val){
             this.query.pagesize = val;
@@ -300,6 +321,7 @@ export default {
             this.query.page = val;
             this.submitSearch(true);
         },
+        
         submitSearch(flag){
             let params = {};
             for(let k in this.searchForm){
@@ -326,14 +348,10 @@ export default {
             }
             this.getList(params);
         },
-        async getStoreNoList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'storeNo',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.storeNoList = result.list;
+        filterPtype(val){
+            //console.log(val);
+            this.rowData = [];
+            this.getStoreList({typeId:val});
         },
         async getStoreList(match={}){
             let condition = {
@@ -343,7 +361,7 @@ export default {
                 aggregate:[
                     {
                         $lookup:{
-                            from: "orders",
+                            from: "order",
                             localField: "orderId",
                             foreignField: "id",
                             as: "order"
@@ -361,15 +379,6 @@ export default {
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.storeList = result.list;
         },
-        async getTypeList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'type',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.typeList = result.list;
-        },
         
         async getList(match={}){
             this.listLoading = true;
@@ -380,7 +389,7 @@ export default {
                 aggregate:[
                     {
                         $lookup:{
-                            from: "orders",
+                            from: "order",
                             localField: "orderId",
                             foreignField: "id",
                             as: "order"
@@ -408,11 +417,6 @@ export default {
         },
     },
     created(){
-        //this.getOrderList({typeId:1, flowStateId:1});
-        this.getTypeList();
-        this.getStoreNoList();
-    },
-    mounted(){
         this.getList();
     }
 }
@@ -468,6 +472,9 @@ export default {
         //padding-right:25px; 
         box-sizing:border-box;
         .edit-content{
+            >span,>i{
+                pointer-events: none;
+            }
             i{
                 margin-left:5px;
                 color:#e85810;
@@ -478,6 +485,7 @@ export default {
                 padding: 3px 5px;
                 text-align: center;
                 border-radius: 3px;
+                
             }
         }
     }

@@ -50,6 +50,7 @@
     </section>
 </template>
 <script>
+import settings from '@/config/files/dataList.json';
 export default {
     name:'role',
     data(){
@@ -57,7 +58,7 @@ export default {
             isEdit:false,
             listLoading:false,
             query:{},
-			typeList:[],
+			typeList:settings.type,
             gridList:[],
             dataId:undefined,
             ruleForm:{
@@ -108,6 +109,7 @@ export default {
                     });
                     let index = _.findIndex(this.gridList, {id:row.id});
                     this.gridList.splice(index, 1);
+                    this.writeFile();
                 });
             }).catch();
         },
@@ -136,39 +138,36 @@ export default {
                             this.gridList.push(_.merge(result, typeObj));
                         }
                         this.dataId = undefined;
+                        this.writeFile();
                     });
                     
-                } else {
-                    this.$message.error('保存失败！请联系管理员');
-                    return false;
                 }
             });
         },
-		async getTypeList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'type',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.typeList = result.list;
-        },
-        async getList(){
-            this.listLoading = true;
-			/*
-            let condition = _.merge(this.query,{
+        async writeFile(){
+            let params = {
                 type:'listData',
                 collectionName: 'ptype',
                 data:{}
-            });
-			*/
+            }
+            let data = await this.$axios.$post('mock/db', {data:params});
+            let condition = {
+                type:'writeFile',
+                key:'ptype',
+                data:data.list
+            }
+            await this.$axios.$post('mock/files', {data:condition});
+        },
+		
+        async getList(){
+            this.listLoading = true;
 			let condition = _.merge(this.query,{
                 type:'aggregate',
                 collectionName: 'ptype',
                 aggregate:[
                     {
                         $lookup:{
-                            from: "types",
+                            from: "type",
                             localField: "typeId",
                             foreignField: "id",
                             as: "type"
@@ -189,15 +188,12 @@ export default {
             this.total = result.total;
             this.gridList = result.list;
             this.listLoading = false;
-            console.log('getList',this.gridList);
+            //console.log('getList',this.gridList);
         }
     },
     created(){
-		this.getTypeList();
-    },
-	mounted(){
 		this.getList();
-	}
+    }
 }
 </script>
 

@@ -33,7 +33,7 @@ export default function ({ $axios, redirect }) {
 		if(resp.success === false){
 			config.data = undefined;
 		}else if(resp.success === true){
-			config.data = resp.response || '';
+			config.data = resp.response!=undefined?resp.response:'';
 		}
 		// 不清楚后台接口的规范,以下逻辑是根据现有接口推测的
 		if((resp.success === true && resp.msgDesc && config.data === '') || resp.success === false){

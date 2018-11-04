@@ -1,32 +1,7 @@
-const Mock = require('mockjs');
 const fs = require("fs");
-const mongoose = require('mongoose');
-
 const filedFun = {
-    dbConnect(params, callback){
-        var condition = params.data;
-        var myUri = 'mongodb://'+condition.dataUrl+':'+condition.dataPort+'/'+condition.dataName;;
-        if(condition.username && condition.password){
-            myUri = myUri = 'mongodb://'+condition.username+':'+condition.password+'@'+condition.dataUrl+':'+condition.dataPort+'/'+condition.dataName;
-        }
-        const optionsMongoose = {
-            poolSize: 10, 
-            bufferMaxEntries: 0,
-            connectTimeoutMS: 3000, 
-            socketTimeoutMS: 4000,
-            family: 4,
-            useNewUrlParser: true
-        }; 
-        mongoose.connect(myUri, optionsMongoose, (error, res)=>{
-            if(error){
-                callback && callback({success:false,msgDesc:'mongoDB数据库连接失败',response:false});
-            }else{
-                callback && callback({success:true,msgDesc:'mongoDB数据库连接成功',response:true});
-            }
-        });
-    },
     getPath(path){
-        return './'+path;
+        return './config/files/dataList.json';
     },
     // 判断文件是否存在
     existsFile(path){
@@ -39,7 +14,7 @@ const filedFun = {
     },
     // 读取文件
     readFile(params){
-        let path = this.getPath(params.path);
+        let path = this.getPath();
 		if(this.existsFile(path) === false){
 			return  {
 				success:false,
@@ -47,7 +22,7 @@ const filedFun = {
 			};
 		}
         try{
-            let file = fs.readFileSync(params.path,'utf-8');
+            let file = fs.readFileSync(path,'utf-8');
 			return {
 				success:true,
 				response:file
@@ -61,16 +36,12 @@ const filedFun = {
     },
     // 写入文件
     writeFile(params){
-        let path = this.getPath(params.path);
-		if(this.existsFile(path) === false && !params.create){
-			return  {
-				success:false,
-				msgDesc:'文件不存在'
-			};
-        }
-        
+        let path = this.getPath();
+        let datas = this.readFile().response;
+        datas = JSON.parse(datas);
+        datas[params.key] = params.data;
         try{
-			fs.writeFileSync(path, params.data);
+			fs.writeFileSync(path, JSON.stringify(datas));
 			return  {
 				success:true,
 				msgDesc:'文件写入成功'
@@ -108,15 +79,7 @@ const filedFun = {
 
 module.exports = ({data}) => {
     return new Promise(function (resolve, reject) {
-        //let result = filedFun[data.type](data);
-        if(data.type === 'dbConnect'){
-            filedFun[data.type](data, (result)=>{
-                resolve(result);
-            })
-        }else{
-            let result = filedFun[data.type](data);
-            resolve(result);
-        }
-        
+        let result = filedFun[data.type](data);
+        resolve(result);
     });
 }

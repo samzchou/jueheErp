@@ -1159,6 +1159,140 @@ module.exports = {
                 sort:15
             }
         },
+        /*----------财务-----------*/
+        finance : {
+            id : {
+                type: Number, 
+                default:0, 
+                label:'ID',
+                key:'id',
+                notForm:true,
+                sort:0
+            },
+            payType : {
+                type: Number, 
+                default:0, 
+                label:'应收支类型',
+                key:'payType',
+                notForm:true,
+                sort:1
+            },
+            orderId : {
+                type: Number, 
+                default:0, 
+                label:'ID',
+                key:'orderId',
+                notForm:true,
+                sort:2
+            },
+            serial:{
+                type:String, 
+                default:'', 
+                widgetType:'input',
+                width:150,
+                subtype:'text',
+                label:'订单编号',
+                key:'serial',
+                notForm:true,
+                inSearch:true,
+                sort:2
+            },
+            crmName:{
+                type: String, 
+                widgetType:'input',
+                width:150,
+                subtype:'text',
+                label:'客户名称',
+                key:'crmName',
+                notForm:true,
+                inSearch:true,
+                sort:3
+            },
+            productName:{
+                type: String, 
+                widgetType:'input',
+                subtype:'text',
+                label:'产品',
+                key:'productName',
+                notForm:true,
+                inSearch:true,
+                sort:4
+            },
+            util:{
+                type:String, 
+                width:100,
+                default:'',
+                widgetType:'input',
+                subtype:'text', 
+                label:'单位',
+                key:'util',
+                notForm:true,
+                sort:5
+            },
+            price:{
+                type: Number, 
+                width:100,
+                default:0, 
+                widgetType:'number',
+                decimal1: 2,
+                min:0,
+                prepend:'￥',
+                append:'元',
+                label:'单价',
+                key:'price',
+                notForm:true,
+                sort:6
+            },
+            count:{
+                type: Number, 
+                width:100,
+                default:0, 
+                widgetType:'number',
+                label:'数量',
+                min:1,
+                key:'count',
+                notForm:true,
+                sort:7
+            },
+            invoiceNumber:{
+                type: String, 
+                widgetType:'input',
+                subtype:'text',
+                label:'发票号',
+                key:'invoiceNumber',
+                rules:[
+                    {"required": true, "message": '请输入发票号', "trigger": 'blur'}
+                ],
+                inSearch:true,
+                sort:8
+            },
+            createDate:{
+                type: Number, 
+                default:new Date().getTime(), 
+                widgetType:'date',
+                subtype:'daterange',
+                label:'日期',
+                key:'createDate',
+                notForm:true,
+                inSearch:true,
+                sort:9
+            },
+            createByUser:{
+                type: String, 
+                default:'', 
+                label:'操作者',
+                key:'createByUser',
+                notForm:true,
+                sort:10
+            },
+            content:{
+                type: String, 
+                widgetType:'input',
+                label:'备注说明',
+                key:'content',
+                sort:11
+            }
+        },
     }
 	
 };

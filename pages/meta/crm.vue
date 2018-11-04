@@ -13,7 +13,7 @@
             <div class="search-content">
                 <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
                     <el-form-item label="分类：" prop="typeId">
-                        <el-select v-model="searchForm.typeId" placeholder="请选择" multiple clearable  style="width:100px">
+                        <el-select v-model="searchForm.typeId" placeholder="请选择" clearable style="width:100px">
                             <el-option v-for="(type,idx) in typeList" :key="idx" :label="type.name" :value="type.id"/>
                         </el-select>
                     </el-form-item>
@@ -32,14 +32,10 @@
                 </el-form>
             </div>
 
-            <el-table v-loading="listLoading" 
-            :data="gridList" 
-            border fit highlight-current-row 
-            size="mini" 
-            style="width: 100%">
+            <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" style="width: 100%">
                 <el-table-column label="No." width="50px" align="center" type="index"></el-table-column>
                 <el-table-column prop="typeName" label="所属类别" width="80px"></el-table-column>
-                <el-table-column prop="isuse" label="状态" width="80px">
+                <el-table-column prop="isuse" label="启用" width="80px">
                     <template slot-scope="scope">
                         <el-switch size="mini" v-model="scope.row.isuse" @change="changeIsUse(scope.row)"/>
                     </template>
@@ -128,14 +124,15 @@
     </section>
 </template>
 <script>
+import settings from '@/config/files/dataList.json';
 export default {
     name:'role',
     data(){
         return {
             isEdit:false,
             listLoading:false,
-            payTypeList:[],
-            typeList:[],
+            payTypeList:settings.payType,
+            typeList:settings.type,
             query:{},
             gridList:[],
             dataId:undefined,
@@ -176,7 +173,6 @@ export default {
                 payTypeId:[
                     { required: true, message: '请选择付款方式', trigger: 'change'},
                 ]
-
             }
         }
     },
@@ -236,6 +232,7 @@ export default {
                     });
                     let index = _.findIndex(this.gridList, {id:row.id});
                     this.gridList.splice(index, 1);
+                    this.writeFile()
                 });
             }).catch();
         },
@@ -277,9 +274,24 @@ export default {
                             this.gridList.push(_.merge(result, typeObj));
                         }
                         this.dataId = undefined;
+                        this.writeFile();
                     });
                 }
             });
+        },
+        async writeFile(){
+            let params = {
+                type:'listData',
+                collectionName: 'crm',
+                data:{}
+            }
+            let data = await this.$axios.$post('mock/db', {data:params});
+            let condition = {
+                type:'writeFile',
+                key:'crm',
+                data:data.list
+            }
+            await this.$axios.$post('mock/files', {data:condition});
         },
         async changeIsUse(row){
             let condition = {
@@ -292,24 +304,6 @@ export default {
                 }
             };
             let result = await this.$axios.$post('mock/db', {data:condition});
-        },
-        async getPayTypeList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'payType',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.payTypeList = result.list;
-        },
-        async getTypeList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'type',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.typeList = result.list;
         },
         submitSearch(){
             let params = {};
@@ -340,7 +334,7 @@ export default {
                 aggregate:[
                     {
                         $lookup:{
-                            from: "types",
+                            from: "type",
                             localField: "typeId",
                             foreignField: "id",
                             as: "type"
@@ -373,11 +367,6 @@ export default {
         },
     },
     created(){
-        //this.getList();
-        this.getPayTypeList();
-        this.getTypeList();
-    },
-    mounted(){
         this.getList();
     }
 }

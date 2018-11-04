@@ -101,14 +101,15 @@
     </section>
 </template>
 <script>
+import settings from '@/config/files/dataList.json';
 export default {
     name:'role',
     data(){
         return {
             isEdit:false,
             listLoading:false,
-            roleList:[],
-            posList:[],
+            roleList:settings.role,
+            posList:settings.pos,
             query:{},
             gridList:[],
             dataId:undefined,
@@ -235,29 +236,8 @@ export default {
                         }
                         this.dataId = undefined;
                     });
-                } else {
-                    this.$message.error('保存失败！请联系管理员');
-                    return false;
-                }
+                } 
             });
-        },
-        async getRoleList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'role',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.roleList = result.list;
-        },
-        async getPosList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'pos',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.posList = result.list;
         },
         submitSearch(){
             let params = {};
@@ -311,21 +291,14 @@ export default {
                     $match:match
                 })
             }
-            //console.log('aggregate', condition.aggregate)
-
             let result = await this.$axios.$post('mock/db', {data:condition});
-            console.log('getList',result)
+            //console.log('getList',result)
             this.total = result.total;
             this.gridList = result.list;
             this.listLoading = false;
         },
     },
     created(){
-        //this.getList();
-        this.getRoleList();
-        this.getPosList();
-    },
-    mounted(){
         this.getList();
     }
 }

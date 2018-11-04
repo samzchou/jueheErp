@@ -14,13 +14,18 @@
                     <el-form-item label="订单编号：" prop="serial">
                         <el-input v-model="searchForm.serial" clearable  style="width:120px"/>
                     </el-form-item>
+                    <el-form-item label="业务类型" prop="typeId">
+                        <el-select v-model="searchForm.typeId" placeholder="请选择" clearable style="width:100px">
+                            <el-option v-for="item in typeList" :key="item.id" :label="item.name" :value="item.id"/>
+                        </el-select>
+                    </el-form-item>
                     <el-form-item label="库位" prop="storeNoId">
                         <el-select v-model="searchForm.storeNoId" placeholder="请选择" clearable style="width:100px">
                             <el-option v-for="item in storeNoList" :key="item.id" :label="item.name" :value="item.id"/>
                         </el-select>
                     </el-form-item>
                     <el-form-item label="货品名称：" prop="productName">
-                        <el-input v-model="searchForm.productName" clearable  style="width:150px"/>
+                        <el-input v-model="searchForm.productName" clearable  style="width:120px"/>
                     </el-form-item>
                     <el-form-item label="入库日期：" prop="createDate">
                         <el-date-picker v-model="searchForm.createDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:220px"/>
@@ -44,6 +49,11 @@
                     <el-table-column prop="typeId" label="入库来源" width="70">
                         <template slot-scope="scope">
                             <span>{{parseType(scope.row.typeId)}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="flowStateId" label="当前流程状态" width="100">
+                        <template slot-scope="scope">
+                            <span>{{parseFlow(scope.row.order.flowStateId)}}</span>
                         </template>
                     </el-table-column>
                     <el-table-column prop="storeNoId" label="存放库位" width="80">
@@ -76,6 +86,11 @@
                             <span>{{scope.row.count}}</span>
                         </template>
                     </el-table-column>
+                    <el-table-column prop="outcount" label="出库量" width="70">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.outcount}}</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column prop="incount" label="当前库存" width="120">
                         <template slot-scope="scope">
                             <span :class="{'warning':scope.row.incount==0}">{{scope.row.incount}}</span>
@@ -97,6 +112,7 @@
 </template>
 
 <script>
+import settings from '@/config/files/dataList.json';
 export default {
     data(){
         return {
@@ -106,11 +122,13 @@ export default {
                 page:1,
                 pagesize:20
             },
-            typeList:[],
-            storeNoList:[],
+            flowList:settings.flowState,
+            typeList:settings.type,
+            storeNoList:settings.storeNo,
             gridList:[],
             searchForm:{
                 serial:'',
+                typeId:'',
                 storeNoId:'',
                 productName:'',
                 createDate:'',
@@ -131,6 +149,11 @@ export default {
             if(!id || id=='') return '';
             let type = _.find(this.storeNoList, {id:id});
             return type.name;
+        },
+        parseFlow(id){
+            if(!id) return '';
+            let flow = _.find(this.flowList, {'id':id});
+            return flow.name;
         },
         handleSizeChange(val){
             this.query.pagesize = val;
@@ -170,25 +193,6 @@ export default {
             }
             this.getList(params);
         },
-        async getStoreNoList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'storeNo',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.storeNoList = result.list;
-        },
-        async getTypeList(){
-            let condition = {
-                type:'listData',
-                collectionName: 'type',
-                data:{}
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.typeList = result.list;
-        },
-        
         async getList(match={}){
             this.listLoading = true;
             let condition = {
@@ -198,7 +202,7 @@ export default {
                 aggregate:[
                     {
                         $lookup:{
-                            from: "orders",
+                            from: "order",
                             localField: "orderId",
                             foreignField: "id",
                             as: "order"
@@ -226,10 +230,6 @@ export default {
         },
     },
     created(){
-        this.getTypeList();
-        this.getStoreNoList();
-    },
-    mounted(){
         this.getList();
     }
 }

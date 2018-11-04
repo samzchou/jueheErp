@@ -98,9 +98,9 @@ const dbFun = {
         const tn = params.collectionName;
         const data = params.data;
         let result = mongoDB[tn].insertMany(data);
-        let counters =  await mongoDB.counters.findOne({'model':tn});
-        mongoDB.counters.findOneAndUpdate({_id: counters._id}, {$inc:{count:data.length}});
-        //console.log('params', params)
+        //let counters =  await mongoDB.counters.findOne({'model':tn});
+        let cc = await mongoDB.counters.findOneAndUpdate({'model':tn}, {$inc:{count:data.length}});
+        //console.log('cc', cc)
         //console.log('result', result)
         return {
             success:true,
@@ -139,7 +139,7 @@ const dbFun = {
         data.id = counters.count + 1;
         let result =  await mongoDB[tn].create(data);
         if(result){
-            await mongoDB.counters.findOneAndUpdate({_id: counters._id}, {$inc:{count:1}});
+            await mongoDB.counters.findOneAndUpdate({'model':tn}, {$inc:{count:1}});
         }
         return {
             success:true,
@@ -178,6 +178,7 @@ const dbFun = {
         let total = await mongoDB[tn].countDocuments(condition);
         let result = null;
         if(total){
+            //console.log(condition, update)
             result =  await mongoDB[tn].updateOne(condition, update, options);
         }
         return {
