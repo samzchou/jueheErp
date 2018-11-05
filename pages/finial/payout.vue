@@ -128,9 +128,14 @@
                 </el-form-item>
             </el-form>
             <div class="grid-list">
-                <h5>已采购入库未付款订单列表</h5>
+                <h5>
+                    <span>已采购入库未付款订单列表</span>
+                    <span>
+                        <el-input size="mini" prefix-icon="el-icon-search" placeholder="快速查询" v-model="searchInput" @keyup.native="searchFilter"/>
+                    </span>
+                </h5>
                 <el-table 
-                :data="orderList" border fit highlight-current-row  size="mini" height="400" @selection-change="selectionRow">
+                :data="oList" border fit highlight-current-row  size="mini" height="400" @selection-change="selectionRow">
                     <el-table-column width="40px" type="selection"/>
                     <el-table-column prop="serial" label="订单编号" width="120px"/>
                     <el-table-column prop="deliveryDate" label="交付日期" width="100px">
@@ -167,6 +172,7 @@ export default {
             listLoading:false,
             isEdit:false,
             total:0,
+            searchInput:'',
             query:{
                 page:1,
                 pagesize:20
@@ -178,6 +184,7 @@ export default {
             },
             typeList:settings.type,
             orderList:[],
+            oList:[],
             gridList:[],
             rowData:[],
             lastId:0,
@@ -316,7 +323,14 @@ export default {
         orderSizeChange(val){
             this.queryOrder.pagesize = val;
         },
-
+        searchFilter(){
+            this.oList = [];
+            this.orderList.map(item=>{
+                if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput) || item.crmName.includes(this.searchInput)){
+                    this.oList.push(item);
+                }
+            });
+        },
         async getOrderList(params={}){
             let condition = {
                 type:'listData',
@@ -326,6 +340,7 @@ export default {
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.orderTotal = result.total;
             this.orderList = result.list;
+            this.oList = _.cloneDeep(result.list);
         },
         
         async getList(match={}){
@@ -394,9 +409,11 @@ export default {
         h5{
             line-height: 30px;
             font-size: 14px;
+            display:flex;
+            align-items:center;
+            justify-content: space-between;
             >span{
                 color:#ff6c00;
-                margin:0 5px;
             }
         }
         /deep/ .el-form{

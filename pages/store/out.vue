@@ -151,8 +151,13 @@
                 </el-form-item>
             </el-form>
             <div class="grid-list">
-                <h5>库存列表</h5>
-                <el-table :data="storeList" border fit highlight-current-row  size="mini" height="400" @selection-change="selectionRow">
+                <h5>
+                    <span>库存列表</span>
+                    <span>
+                        <el-input size="mini" prefix-icon="el-icon-search" placeholder="快速查询" v-model="searchInput" @keyup.native="searchFilter"/>
+                    </span>
+                </h5>
+                <el-table :data="sList" border fit highlight-current-row  size="mini" height="400" @selection-change="selectionRow">
                     <el-table-column width="40px" type="selection"/>
                     <el-table-column prop="serial" label="订单编号" width="120px">
                         <template slot-scope="scope">
@@ -184,6 +189,7 @@ import settings from '@/config/files/dataList.json';
 export default {
     data(){
         return {
+            searchInput:'',
             listLoading:false,
             isEdit:false,
             editRow:null,
@@ -202,6 +208,7 @@ export default {
             },
             typeList:settings.type,
             storeList:[],
+            sList:[],
             storeNoList:settings.storeNo,
             gridList:[],
             rowData:[],
@@ -353,11 +360,19 @@ export default {
             this.rowData = [];
             this.getStoreList({typeId:val});
         },
+        searchFilter(){
+            this.sList = [];
+            this.storeList.map(item=>{
+                if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput)){
+                    this.sList.push(item);
+                }
+            });
+        },
         async getStoreList(match={}){
             let condition = {
                 type:'aggregate',
                 collectionName: 'store',
-                data:_.merge({storeTypeId:1},match),
+                data:_.merge({storeTypeId:1,},match),
                 aggregate:[
                     {
                         $lookup:{
@@ -378,6 +393,7 @@ export default {
             };
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.storeList = result.list;
+            this.sList = _.cloneDeep(result.list);
         },
         
         async getList(match={}){
@@ -453,9 +469,11 @@ export default {
         h5{
             line-height: 30px;
             font-size: 14px;
+            display:flex;
+            align-items:center;
+            justify-content: space-between;
             >span{
                 color:#ff6c00;
-                margin:0 5px;
             }
         }
         /deep/ .el-form{

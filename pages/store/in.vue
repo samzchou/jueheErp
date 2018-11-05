@@ -152,8 +152,13 @@
                 </el-form-item>
             </el-form>
             <div class="grid-list">
-                <h5>未入库<span>{{ruleForm.typeId==1?'采购':'销售'}}</span>订单列表</h5>
-                <el-table :data="orderList" border fit highlight-current-row  size="mini" height="400" @selection-change="selectionRow">
+                <h5>
+                    <div>未入库<span>{{ruleForm.typeId==1?'采购':'销售'}}</span>订单列表</div>
+                    <div>
+                        <el-input size="mini" prefix-icon="el-icon-search" placeholder="快速查询" v-model="searchInput" @keyup.native="searchFilter"/>
+                    </div>
+                </h5>
+                <el-table :data="oList" border fit highlight-current-row  size="mini" height="400" @selection-change="selectionRow">
                     <el-table-column width="40px" type="selection"/>
                     <el-table-column prop="serial" label="订单编号" width="120px"/>
                     <el-table-column prop="deliveryDate" label="交付日期" width="100px">
@@ -187,6 +192,7 @@ import settings from '@/config/files/dataList.json';
 export default {
     data(){
         return {
+            searchInput:'',
             listLoading:false,
             isEdit:false,
             editRow:null,
@@ -205,6 +211,7 @@ export default {
             },
             typeList:settings.type,
             orderList:[],
+            oList:[],
             storeNoList:settings.storeNo,
             gridList:[],
             rowData:[],
@@ -270,7 +277,6 @@ export default {
                 delete item.edit;
                 return item;
             });
-            
             this.$refs['ruleForm'].validate((valid) => {
                 if(valid) {
                     let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
@@ -309,7 +315,7 @@ export default {
                 type:'updatePatch',
                 collectionName: 'order',
                 param:{'id':{$in:ids}},
-                set:{$set:{'flowStateId':this.ruleForm.typeId==1?2:6}}
+                set:{$set:{'flowStateId':this.ruleForm.typeId==1?2:7}}
             }
             let reuslt = await this.$axios.$post('mock/db', {data:condition});
             this.isEdit = false;
@@ -367,6 +373,15 @@ export default {
             this.getOrderList({typeId:val,flowStateId:val==1?1:6});
         },
 
+        searchFilter(){
+            this.oList = [];
+            this.orderList.map(item=>{
+                if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput) || item.crmName.includes(this.searchInput)){
+                    this.oList.push(item);
+                }
+            });
+        },
+
         async getOrderList(params={}){
             let condition = {
                 type:'listData',
@@ -376,6 +391,7 @@ export default {
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.orderTotal = result.total;
             this.orderList = result.list;
+            this.oList = _.cloneDeep(result.list);
         },
         
         async getList(match={}){
@@ -464,7 +480,10 @@ export default {
         h5{
             line-height: 30px;
             font-size: 14px;
-            >span{
+            display:flex;
+            align-items:center;
+            justify-content: space-between;
+            span{
                 color:#ff6c00;
                 margin:0 5px;
             }

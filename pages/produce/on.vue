@@ -127,8 +127,11 @@ export default {
                     return '完成生产';
                 case 6:
                     return '待入库';
+                case 7:
+                    return '已入库';
+                case 8:
+                    return '已出库销售';
             }
-
         },
         parseDate(date, format){
             return moment(date).format(format||'YYYY-MM-DD');
@@ -148,7 +151,8 @@ export default {
         },
         handleUpdate(row){
             let flowStateId = row.flowStateId + 1;
-            this.$confirm('此操作将确认生产完成提交给入库, 是否继续?', '提示', {
+            let msg = flowStateId==5?'此操作将开始进行生产任务':'此操作将确认生产完成提交给入库';
+            this.$confirm(msg + ', 是否继续?', '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
                 type: 'warning'
