@@ -82,4 +82,8 @@ exports.store = connect.model('store', storeScheme);
 var financeScheme = new Schema(dbServer.collections.finance,{collection:'finance'});
 exports.finance = connect.model('finance', financeScheme);
 
+/*---------全局设置数据-----------*/
+var settingScheme = new Schema(dbServer.collections.setting,{collection:'setting'});
+exports.setting = connect.model('setting', settingScheme);
+
 exports.connect = connect;

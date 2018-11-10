@@ -43,13 +43,13 @@
             <el-table v-loading="listLoading" 
             :data="gridList" 
             border fit highlight-current-row 
-            size="mini" height="400">
+            size="mini" max-height="400">
                 <el-table-column label="No." width="70px" align="center">
                     <template slot-scope="scope">
                         <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="id" label="ID" width="50px"/>
+                <el-table-column prop="id" label="ID" width="80px"/>
                 <el-table-column prop="isPayed" label="付款状态" width="100"> 
                     <template slot-scope="scope">
                         <span>{{scope.row.isPayed?'已付款':'未付款'}}</span>
@@ -119,7 +119,7 @@
                 <el-table size="mini" 
                 :data="tableData.slice((queryUpload.page-1)*queryUpload.pagesize, queryUpload.page*queryUpload.pagesize)" 
                 border highlight-current-row 
-                style="width: 100%;margin-top:20px;" height="400">
+                style="width: 100%;margin-top:20px;" max-height="400">
                     <el-table-column label="No." width="70px" align="center">
                         <template slot-scope="scope">
                             <span>{{scope.$index+(queryUpload.page - 1) * queryUpload.pagesize + 1}} </span>
@@ -206,18 +206,19 @@
     </section>
 </template>
 <script>
-import settings from '@/config/files/dataList.json';
+//import settings from '@/config/files/dataList.json';
 import UploadExcelComponent from '@/components/UploadExcel'
 export default {
     name:'role',
     components: { UploadExcelComponent },
     data(){
         return {
+            setting:{},
             isEdit:false,
             listLoading:false,
-            typeList:settings.type,
+            typeList:[],
             ptypeList:[],
-            flowList:settings.flowState,
+            flowList:[],
             crmList:[],
             productList:[],
             proList:[],
@@ -317,9 +318,10 @@ export default {
             this.queryUpload.page = val;
         },
         initProduct(){
-            this.ptypeList = _.filter(settings.ptype,{typeId:1});
-            this.crmList = _.filter(settings.crm,{typeId:1});
-            this.productList = _.filter(settings.product, {typeId:1});
+            debugger
+            this.ptypeList = _.filter(this.setting.ptype,{typeId:1});
+            this.crmList = _.filter(this.setting.crm,{typeId:1});
+            this.productList = _.filter(this.setting.product, {typeId:1});
             this.proList = {...this.productList};
         },
         setPtype(ptypeId){
@@ -646,11 +648,32 @@ export default {
                 console.log('lastId',result)
                 this.lastId = result;
             }
+        },
+        async getSetting(){
+            let condition = {
+                type:"getData",
+                collectionName:"setting",
+                data:{}
+            }
+            let result = await this.$axios.$post('mock/db', {data:condition});
+            if(result){
+                console.log('getSetting',result)
+                this.setting = result.content;
+                this.typeList = this.setting.type;
+                this.flowList = this.setting.flowState;
+
+                this.initProduct();
+                this.getList();
+            }
         }
     },
     created(){
-        this.initProduct();
+        this.getSetting();
+    },
+    mounted(){
+        /* this.initProduct();
         this.getList();
+        console.log('testFile', testFile) */
     }
 }
 </script>

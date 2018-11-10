@@ -66,6 +66,10 @@
                     </template>
                 </el-table-column>
             </el-table>
+            <div class="page-container" style="padding: 10px 0;">
+                <el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total">
+                </el-pagination>
+            </div>
         </div>
         <div class="form-container" v-else>
             <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" size="mini">
@@ -124,16 +128,18 @@
     </section>
 </template>
 <script>
-import settings from '@/config/files/dataList.json';
+//import settings from '@/config/files/dataList.json';
 export default {
     name:'role',
     data(){
         return {
+            setting:{},
             isEdit:false,
             listLoading:false,
-            payTypeList:settings.payType,
-            typeList:settings.type,
-            query:{},
+            payTypeList:[],
+            typeList:[],
+            total:0,
+            query:{page:1,pagesize:20},
             gridList:[],
             dataId:undefined,
             editRow:null,
@@ -287,11 +293,11 @@ export default {
             }
             let data = await this.$axios.$post('mock/db', {data:params});
             let condition = {
-                type:'writeFile',
-                key:'crm',
+                type:'updateSetting',
+                collectionName: 'crm',
                 data:data.list
             }
-            await this.$axios.$post('mock/files', {data:condition});
+            await this.$axios.$post('mock/db', {data:condition});
         },
         async changeIsUse(row){
             let condition = {
@@ -305,7 +311,7 @@ export default {
             };
             let result = await this.$axios.$post('mock/db', {data:condition});
         },
-        submitSearch(){
+        submitSearch(flag){
             let params = {};
             for(let k in this.searchForm){
                 if(this.searchForm[k] != '' && this.searchForm[k]){
@@ -323,14 +329,29 @@ export default {
                     }
                 }
             };
+            if(!flag){ // 不需要再做分页复位
+                this.query = {
+                    page:1,
+                    pagesize:20
+                }
+            }
             //console.log('submitSearch',params);
             this.getList(params)
+        },
+        handleSizeChange(val){
+            this.query.pagesize = val;
+            this.submitSearch(true);
+        },
+        handleCurrentChange(val){
+            this.query.page = val;
+            this.submitSearch(true);
         },
         async getList(match = {}){
             this.listLoading = true;
             let condition = {
                 type:'aggregate',
                 collectionName: 'crm',
+                data:match,
                 aggregate:[
                     {
                         $lookup:{
@@ -365,9 +386,25 @@ export default {
             this.gridList = result.list;
             this.listLoading = false;
         },
+        async getSetting(){
+            let condition = {
+                type:"getData",
+                collectionName:"setting",
+                data:{}
+            }
+            let result = await this.$axios.$post('mock/db', {data:condition});
+            if(result){
+                //console.log('getSetting',result)
+                this.setting = result.content;
+                this.payTypeList = this.setting.payType;
+                this.typeList = this.setting.type;
+
+                this.getList();
+            }
+        }
     },
     created(){
-        this.getList();
+        this.getSetting();
     }
 }
 </script>

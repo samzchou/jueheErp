@@ -9,12 +9,28 @@
             </div>
         </div>
         <div class="grid-container" v-if="!isEdit">
+            <div class="search-content">
+                <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
+                    <el-form-item label="业务分类：" prop="typeId">
+                        <el-select v-model="searchForm.typeId" placeholder="请选择" clearable  style="width:100px">
+                            <el-option v-for="(type,idx) in typeList" :key="idx" :label="type.name" :value="type.id"/>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button type="primary" @click="submitSearch">搜索</el-button>
+                    </el-form-item>
+                </el-form>
+            </div>
             <el-table v-loading="listLoading" 
             :data="gridList" 
             border fit highlight-current-row 
             size="mini" 
-            style="width: 100%">
-                <el-table-column label="No." width="50px" align="center" type="index"/>
+            style="width: 100%" max-height="400">
+                <el-table-column label="No." width="50px" align="center" type="index">
+                    <template slot-scope="scope">
+                        <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
+                    </template>
+                </el-table-column>
 				<el-table-column prop="typeName" label="业务类别" width="100px"/>
                 <el-table-column prop="name" label="产品分类名称" width="200px"/>
                 <el-table-column prop="content" label="描述"/>
@@ -25,6 +41,10 @@
                     </template>
                 </el-table-column>
             </el-table>
+            <div class="page-container" style="padding: 10px 0;">
+                <el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200]" :page-size="query.pagesize" layout="total,sizes, prev, pager, next" :total="total">
+                </el-pagination>
+            </div>
         </div>
         <div class="form-container" v-else>
             <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" size="mini">
@@ -50,15 +70,16 @@
     </section>
 </template>
 <script>
-import settings from '@/config/files/dataList.json';
+//import settings from '@/config/files/dataList.json';
 export default {
     name:'role',
     data(){
         return {
             isEdit:false,
             listLoading:false,
-            query:{},
-			typeList:settings.type,
+            query:{page:1,pagesize:20},
+            total:0,
+			typeList:[],
             gridList:[],
             dataId:undefined,
             ruleForm:{
@@ -70,6 +91,9 @@ export default {
                 name: [
                     { required: true, message: '请输入仓库库位名称', trigger: 'blur'},
                 ]
+            },
+            searchForm:{
+                typeId:''
             }
         }
     },
@@ -152,18 +176,48 @@ export default {
             }
             let data = await this.$axios.$post('mock/db', {data:params});
             let condition = {
-                type:'writeFile',
-                key:'ptype',
+                type:'updateSetting',
+                collectionName: 'ptype',
                 data:data.list
             }
-            await this.$axios.$post('mock/files', {data:condition});
+            await this.$axios.$post('mock/db', {data:condition});
+        },
+        handleSizeChange(val){
+            this.query.pagesize = val;
+            this.submitSearch(true);
+        },
+        handleCurrentChange(val){
+            this.query.page = val;
+            this.submitSearch(true);
+        },
+        submitSearch(flag){
+            let params = {};
+            for(let k in this.searchForm){
+                if(this.searchForm[k] != '' && this.searchForm[k]){
+                    if(_.isNumber(this.searchForm[k])){
+                        params[k] = Number(this.searchForm[k]);
+                    }else if(_.isArray(this.searchForm[k])){
+                        params[k] = {$in:this.searchForm[k]}
+                    }else{
+                        params[k] = {$regex:this.searchForm[k]};
+                    }
+                }
+            };
+            if(!flag){ // 不需要再做分页复位
+                this.query = {
+                    page:1,
+                    pagesize:20
+                }
+            }
+            this.getList(params);
         },
 		
-        async getList(){
+        async getList(match={}){
             this.listLoading = true;
-			let condition = _.merge(this.query,{
+			let condition = {
                 type:'aggregate',
                 collectionName: 'ptype',
+                data:match,
                 aggregate:[
                     {
                         $lookup:{
@@ -182,17 +236,38 @@ export default {
 					{
                         $addFields: {typeName:"$type.name"}
                     },
+                    {$sort:{id:-1}},
+                    {$skip:this.query.page-1},
+                    {$limit:this.query.pagesize}
                 ]
-            });
+            };
+            if(!_.isEmpty(match)){
+                condition.aggregate.push({
+                    $match:match
+                })
+            }
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.total = result.total;
             this.gridList = result.list;
             this.listLoading = false;
             //console.log('getList',this.gridList);
+        },
+        async getSetting(){
+            let condition = {
+                type:"getData",
+                collectionName:"setting",
+                data:{}
+            }
+            let result = await this.$axios.$post('mock/db', {data:condition});
+            if(result){
+                this.setting = result.content;
+                this.typeList = this.setting.type;
+                this.getList();
+            }
         }
     },
     created(){
-		this.getList();
+        this.getSetting();
     }
 }
 </script>

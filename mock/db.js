@@ -54,7 +54,7 @@ const dbFun = {
     async aggregate(params){
         const tn = params.collectionName;
         let condition = params.data || {};
-        //console.log('aggregate',params.aggregate['$match']['deliveryDate']['$gte']);
+        //console.log('aggregate condition', params.aggregate);
         let total = await mongoDB[tn].find(condition).countDocuments();
         let list = await mongoDB[tn].aggregate(params.aggregate);
         return {
@@ -79,6 +79,7 @@ const dbFun = {
         sortCondition[sortby] = ascby;
 
         let total = await mongoDB[tn].find(condition).countDocuments();
+        console.log('listData', condition, total);
         let list = [];
         if(pagesize){
             list =  await mongoDB[tn].find(condition).sort(sortCondition).skip(skips).limit(pagesize);
@@ -215,6 +216,19 @@ const dbFun = {
             msgDesc:result['n']==1?null:'删除数据失败'
         }
     },
+    /*--------基础数据和元数据更新--------*/
+    async updateSetting(params){
+        let tn = params.collectionName;
+        let data = params.data;
+        let opts =  await mongoDB['setting'].findOne({name:'opts'});
+        opts['content'][tn] = params.data;
+        let result = await mongoDB['setting'].updateOne({name:'opts'}, {$set : {'content':opts['content']}}, {upsert : true});
+        return {
+            success:result['n']==1?true:false,
+            msgDesc:result['n']==1?null:'参数更新失败'
+        }
+    },
+
     async captcha(params){
         //console.log('captcha', params)
         let captcha = svgCaptcha.create({ 

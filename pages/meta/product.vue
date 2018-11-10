@@ -2,7 +2,7 @@
     <section>
         <div class="page-title">
             <div>
-                <span>产品列表</span>
+                <span>{{isEdit?'产品编辑':'产品列表'}}</span>
             </div>
             <div>
                 <el-button @click="handleAdd" type="text" size="medium" :icon="!isEdit?'el-icon-plus':'el-icon-close'">{{!isEdit?'新增产品':'取消返回'}}</el-button>
@@ -12,17 +12,22 @@
             <div class="search-content">
                 <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
                     <el-form-item label="业务分类：" prop="typeId">
-                        <el-select v-model="searchForm.typeId" placeholder="请选择" clearable  style="width:100px" @change="filterPtype">
+                        <el-select v-model="searchForm.typeId" placeholder="请选择" clearable  style="width:100px" @change="filterPtypeBySearch">
                             <el-option v-for="(type,idx) in typeList" :key="idx" :label="type.name" :value="type.id"/>
                         </el-select>
                     </el-form-item>
                     <el-form-item label="产品分类：" prop="ptypeId">
                         <el-select v-model="searchForm.ptypeId" placeholder="请选择" multiple clearable>
-                            <el-option v-for="(ptype,idx) in pList" :key="idx" :label="ptype.name" :value="ptype.id"/>
+                            <el-option v-for="(ptype,idx) in searchptypeList" :key="idx" :label="ptype.name" :value="ptype.id"/>
                         </el-select>
                     </el-form-item>
                     <el-form-item label="产品名称：" prop="name">
                         <el-input v-model="searchForm.name" clearable  style="width:200px"/>
+                    </el-form-item>
+                    <el-form-item label="关联客户：" prop="crmId">
+                        <el-select v-model="searchForm.crmId" placeholder="请选择" multiple clearable>
+                            <el-option v-for="(crm,idx) in searchCrmList" :key="idx" :label="crm.name" :value="crm.id"/>
+                        </el-select>
                     </el-form-item>
                     <el-form-item>
                         <el-button type="primary" @click="submitSearch">搜索</el-button>
@@ -71,6 +76,10 @@
                     </template>
                 </el-table-column>
             </el-table>
+            <div class="page-container" style="padding: 10px 0;">
+                <el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total">
+                </el-pagination>
+            </div>
         </div>
         <div class="form-container" v-else>
             <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" size="mini">
@@ -91,7 +100,7 @@
                 </el-form-item>
                 <el-form-item label="关联客户" prop="crmId">
                     <el-select v-model="ruleForm.crmId" placeholder="请选择">
-                        <el-option v-for="crm in crmList" :key="crm.id" :label="crm.name" :value="crm.id"/>
+                        <el-option v-for="crm in formCrmList" :key="crm.id" :label="crm.name" :value="crm.id"/>
                     </el-select>
                 </el-form-item>
 
@@ -129,25 +138,30 @@
     </section>
 </template>
 <script>
-import settings from '@/config/files/dataList.json';
+//import settings from '@/config/files/dataList.json';
 export default {
     name:'role',
     data(){
         return {
             isEdit:false,
             listLoading:false,
-            typeList:settings.type,
-            ptypeList:settings.ptype,
+            typeList:[],
+            ptypeList:[],
+            searchptypeList:[],
 			pList:[],
-            crmList:settings.crm,
-            query:{},
+            crmList:[],
+            searchCrmList:[],
+            formCrmList:[],
+            query:{page:1,pagesize:20},
             gridList:[],
+            total:0,
             dataId:undefined,
             editRow:null,
             searchForm:{
                 name:'',
                 typeId:'',
-                ptypeId:''
+                ptypeId:'',
+                crmId:''
             },
             ruleForm:{
                 typeId:'',
@@ -202,7 +216,8 @@ export default {
                 content:''
             };
 			this.searchForm.typeId = '';
-			this.filterPtype(this.isEdit?1:'');
+            this.filterPtype(this.isEdit?1:'');
+            this.filterCrm(1);
         },
         handleUpdate(row){
             this.editRow = row;
@@ -221,6 +236,7 @@ export default {
                 content:row.content
             }
             this.isEdit = true;
+            this.filterCrm(row.typeId);
         },
         handleDelete(row){
             this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', {
@@ -247,16 +263,33 @@ export default {
         parsePtype(id){
             if(!id) return '';
             let type = _.find(this.ptypeList, {'id':id});
-            return type.name;
+            return type?type.name:'';
         },
         parseCrm(id){
             if(!id) return '';
             let crm = _.find(this.crmList, {'id':id});
-            return crm.name;
+            return crm?crm.name:'';
         },
-		filterPtype(val){
+        filterPtypeBySearch(val){
 			if(val != ''){
-				this.pList = _.filter(this.ptypeList,{typeId:val})
+                this.searchptypeList = _.filter(this.ptypeList,{typeId:val});
+                this.searchCrmList = _.filter(this.crmList,{typeId:val});
+			}else{
+                this.searchptypeList = _.cloneDeep(this.ptypeList);
+                this.searchCrmList = _.cloneDeep(this.crmList);
+			}
+        },
+
+        filterCrm(typeId){
+            this.formCrmList = _.filter(this.crmList,{typeId:typeId});
+        },
+        
+		filterPtype(val){
+            this.ruleForm.ptypeId = '';
+            this.ruleForm.crmId = '';
+			if(val != ''){
+                this.pList = _.filter(this.ptypeList,{typeId:val});
+                this.filterCrm(val);
 			}else{
 				this.pList = _.cloneDeep(this.ptypeList);
 			}
@@ -301,11 +334,11 @@ export default {
             }
             let data = await this.$axios.$post('mock/db', {data:params});
             let condition = {
-                type:'writeFile',
-                key:'product',
+                type:'updateSetting',
+                collectionName: 'product',
                 data:data.list
             }
-            await this.$axios.$post('mock/files', {data:condition});
+            await this.$axios.$post('mock/db', {data:condition});
         },
         async changeIsUse(row){
             let condition = {
@@ -320,7 +353,7 @@ export default {
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.writeFile();
         },
-        submitSearch(){
+        submitSearch(flag){
             let params = {};
             for(let k in this.searchForm){
                 if(this.searchForm[k] != '' && this.searchForm[k]){
@@ -338,14 +371,28 @@ export default {
                     }
                 }
             };
-            //console.log('submitSearch',params);
-            this.getList(params)
+            if(!flag){ // 不需要再做分页复位
+                this.query = {
+                    page:1,
+                    pagesize:20
+                }
+            }
+            this.getList(params);
+        },
+        handleSizeChange(val){
+            this.query.pagesize = val;
+            this.submitSearch(true);
+        },
+        handleCurrentChange(val){
+            this.query.page = val;
+            this.submitSearch(true);
         },
         async getList(match = {}){
             this.listLoading = true;
             let condition = {
                 type:'aggregate',
                 collectionName: 'product',
+                data:match,
                 aggregate:[
                     {
                         $lookup:{
@@ -364,7 +411,9 @@ export default {
                     {
                         $addFields: {typeName:"$type.name"}
                     },
-                    {$sort:{id:1}}
+                    {$sort:{id:-1}},
+                    {$skip:this.query.page-1},
+                    {$limit:this.query.pagesize}
                 ]
             };
             if(!_.isEmpty(match)){
@@ -373,14 +422,33 @@ export default {
                 })
             }
             let result = await this.$axios.$post('mock/db', {data:condition});
-            console.log('getList',result)
+            console.log('getList',result, match)
             this.total = result.total;
             this.gridList = result.list;
             this.listLoading = false;
         },
+        async getSetting(){
+            let condition = {
+                type:"getData",
+                collectionName:"setting",
+                data:{}
+            }
+            let result = await this.$axios.$post('mock/db', {data:condition});
+            if(result){
+                //console.log('getSetting',result)
+                this.setting = result.content;
+                this.typeList = this.setting.type;
+                this.ptypeList = this.setting.ptype;
+                this.crmList = this.setting.crm;
+                
+                this.getList();
+                this.filterPtypeBySearch('');
+            }
+        }
     },
     created(){
-        this.getList();
+        this.getSetting();
+        //this.getList();
     }
 }
 </script>

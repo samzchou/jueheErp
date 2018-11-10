@@ -1,11 +1,22 @@
 //const dbConfig = require('../files/dbConfig.json');
 module.exports = {
-    dbConect:{"dataUrl":"127.0.0.1","dataPort":"27017","dataName":"test","username":"","password":""},
+    dbConect:{"dataUrl":"47.91.231.119","dataPort":"27017","dataName":"test","username":"","password":""},
     /*----------数据表Collections-----------*/
     collectionList:[
         {"name":"用户列表","colname":"user"}
     ],
     collections:{
+        /*--------------全局数据设定--------------*/
+        setting:{
+            name:{
+                type:String,
+                default:'opts',
+            },
+            content:{
+                type:Object,
+                default:''
+            }
+        },
         /*--------------ID自增计数器--------------*/
         counters:{
             model:{

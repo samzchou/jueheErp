@@ -41,13 +41,13 @@
                 </el-form>
             </div>
             <div id="printTable">
-                <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" height="400">
+                <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" max-height="400">
                     <el-table-column label="No." width="70px" align="center">
                         <template slot-scope="scope">
                             <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="id" label="id" width="50px"/>
+                    <el-table-column prop="id" label="id" width="80px"/>
                     <el-table-column prop="flowStateId" label="流程状态" width="100">
                         <template slot-scope="scope">
                             <span v-bind:class="[scope.row.flowStateId===4?'wait-flow':'finished-flow']">{{parseFlow(scope.row.flowStateId)}}</span>
@@ -92,19 +92,20 @@
 </template>
 
 <script>
-import settings from '@/config/files/dataList.json';
+//import settings from '@/config/files/dataList.json';
 export default {
     data(){
         return {
+            setting:{},
             listLoading:false,
             total:0,
             query:{
                 page:1,
                 pagesize:20
             },
-            typeList:settings.type,
-            storeNoList:settings.storeNo,
-            flowList:settings.flowState,
+            typeList:[],//settings.type,
+            storeNoList:[],//settings.storeNo,
+            flowList:[],//settings.flowState,
             gridList:[],
             searchForm:{
                 serial:'',
@@ -217,9 +218,26 @@ export default {
             this.gridList = result.list;
             this.listLoading = false;
         },
+        async getSetting(){
+            let condition = {
+                type:"getData",
+                collectionName:"setting",
+                data:{}
+            }
+            let result = await this.$axios.$post('mock/db', {data:condition});
+            if(result){
+                console.log('getSetting',result)
+                this.setting = result.content;
+                this.typeList = this.setting.type;
+                this.storeNoList = this.setting.storeNo;
+                this.flowList = this.setting.flowState;
+
+                this.getList();
+            }
+        }
     },
     created(){
-        this.getList();
+        this.getSetting();
     }
 }
 </script>

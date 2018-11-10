@@ -112,7 +112,7 @@
 </template>
 
 <script>
-import settings from '@/config/files/dataList.json';
+//import settings from '@/config/files/dataList.json';
 export default {
     data(){
         return {
@@ -122,9 +122,9 @@ export default {
                 page:1,
                 pagesize:20
             },
-            flowList:settings.flowState,
-            typeList:settings.type,
-            storeNoList:settings.storeNo,
+            flowList:[],//settings.flowState,
+            typeList:[],//settings.type,
+            storeNoList:[],//settings.storeNo,
             gridList:[],
             searchForm:{
                 serial:'',
@@ -228,9 +228,26 @@ export default {
             this.gridList = result.list;
             this.listLoading = false;
         },
+        async getSetting(){
+            let condition = {
+                type:"getData",
+                collectionName:"setting",
+                data:{}
+            }
+            let result = await this.$axios.$post('mock/db', {data:condition});
+            if(result){
+                //console.log('getSetting',result)
+                this.setting = result.content;
+                this.typeList = this.setting.type;
+                this.flowList = this.setting.flowState;
+                this.storeNoList = this.setting.storeNo;
+
+                this.getList();
+            }
+        }
     },
     created(){
-        this.getList();
+        this.getSetting();
     }
 }
 </script>

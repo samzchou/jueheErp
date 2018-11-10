@@ -150,11 +150,11 @@ export default {
             }
             let data = await this.$axios.$post('mock/db', {data:params});
             let condition = {
-                type:'writeFile',
-                key:'pos',
+                type:'updateSetting',
+                collectionName: 'pos',
                 data:data.list
             }
-            await this.$axios.$post('mock/files', {data:condition});
+            await this.$axios.$post('mock/db', {data:condition});
         },
         async getList(){
             this.listLoading = true;

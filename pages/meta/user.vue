@@ -265,6 +265,7 @@ export default {
             let condition = {
                 type:'aggregate',
                 collectionName: 'user',
+                data:match,
                 aggregate:[
                     {
                         $lookup:{

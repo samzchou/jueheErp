@@ -39,7 +39,7 @@
                 </el-form>
             </div>
             <div id="printTable">
-                <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" height="400">
+                <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" max-height="400">
                     <el-table-column label="No." width="70px" align="center">
                         <template slot-scope="scope">
                             <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
@@ -157,7 +157,7 @@
                         <el-input size="mini" prefix-icon="el-icon-search" placeholder="快速查询" v-model="searchInput" @keyup.native="searchFilter"/>
                     </span>
                 </h5>
-                <el-table :data="sList" border fit highlight-current-row  size="mini" height="400" @selection-change="selectionRow">
+                <el-table :data="sList" border fit highlight-current-row  size="mini" max-height="400" @selection-change="selectionRow">
                     <el-table-column width="40px" type="selection"/>
                     <el-table-column prop="serial" label="订单编号" width="120px">
                         <template slot-scope="scope">
@@ -178,6 +178,10 @@
                         </template>
                     </el-table-column>
                 </el-table>
+                <div class="page-container" style="padding: 10px 0;">
+                    <el-pagination size="mini" @size-change="storeSizeChange" @current-change="storeCurrentChange" :current-page.sync="queryStore.page" :page-sizes="[20, 50, 100, 200]" :page-size="queryStore.pagesize" layout="total,sizes,prev,pager,next" :total="storeTotal">
+                    </el-pagination>
+                </div>
             </div>
 
         </div>
@@ -185,7 +189,7 @@
 </template>
 
 <script>
-import settings from '@/config/files/dataList.json';
+//import settings from '@/config/files/dataList.json';
 export default {
     data(){
         return {
@@ -201,15 +205,15 @@ export default {
                 page:1,
                 pagesize:20
             },
-            orderTotal:0,
-            queryOrder:{
+            storeTotal:0,
+            queryStore:{
                 page:1,
                 pagesize:20
             },
-            typeList:settings.type,
+            typeList:[],//settings.type,
             storeList:[],
             sList:[],
-            storeNoList:settings.storeNo,
+            storeNoList:[],//settings.storeNo,
             gridList:[],
             rowData:[],
             searchForm:{
@@ -357,6 +361,7 @@ export default {
         },
         filterPtype(val){
             //console.log(val);
+            this.queryStore = {page:1,pagesize:20};
             this.rowData = [];
             this.getStoreList({typeId:val});
         },
@@ -368,11 +373,19 @@ export default {
                 }
             });
         },
+        storeSizeChange(val){
+            this.queryStore.pagesize = val;
+            this.getStoreList();
+        },
+        storeCurrentChange(val){
+            this.queryStore.page = val;
+            this.getStoreList();
+        },
         async getStoreList(match={}){
             let condition = {
                 type:'aggregate',
                 collectionName: 'store',
-                data:_.merge({storeTypeId:1,},match),
+                data:_.merge({storeTypeId:1,typeId:this.ruleForm.typeId},match),
                 aggregate:[
                     {
                         $lookup:{
@@ -388,10 +401,13 @@ export default {
                             preserveNullAndEmptyArrays: true // 空的数组也拆分
                         }
                     },
-                    {$match:_.merge({storeTypeId:1, incount:{$gt:0}},match)}
+                    {$match:_.merge({storeTypeId:1, incount:{$gt:0}},match)},
+                    {$skip:this.queryStore.page-1},
+                    {$limit:this.queryStore.pagesize}
                 ]
             };
             let result = await this.$axios.$post('mock/db', {data:condition});
+            this.storeTotal = result.total;
             this.storeList = result.list;
             this.sList = _.cloneDeep(result.list);
         },
@@ -431,9 +447,25 @@ export default {
             this.gridList = result.list;
             this.listLoading = false;
         },
+        async getSetting(){
+            let condition = {
+                type:"getData",
+                collectionName:"setting",
+                data:{}
+            }
+            let result = await this.$axios.$post('mock/db', {data:condition});
+            if(result){
+                console.log('getSetting',result)
+                this.setting = result.content;
+                this.typeList = this.setting.type;
+                this.storeNoList = this.setting.storeNo;
+
+                this.getList();
+            }
+        }
     },
     created(){
-        this.getList();
+        this.getSetting();
     }
 }
 </script>
