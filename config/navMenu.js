@@ -28,7 +28,9 @@ export default {
             "icon":"ils",
             "children":[
                 {"label":"产品采购", "icon":"list-ul", "path":"/order/buy"},
-                {"label":"生产销售", "icon":"list-ul", "path":"/order/sale"}
+              { "label": "采购订单导入", "icon": "list-ul", "path": "/order/import-buy"},
+                {"label":"生产销售", "icon":"list-ul", "path":"/order/sale"},
+                {"label": "生产订单导入", "icon": "list-ul", "path": "/order/import-sale"}
             ]
         },
         {
@@ -56,5 +58,5 @@ export default {
             ]
         }
     ]
-    
+
 }

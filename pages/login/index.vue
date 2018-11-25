@@ -114,19 +114,14 @@ export default {
                             }
                         }
                     })
-                    
                 }
-
             })
         }
-
     },
     mounted(){
         this.updateImgCode();
-        
     },
     layout:'login'
-
 }
 </script>
 

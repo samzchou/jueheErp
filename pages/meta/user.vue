@@ -8,7 +8,7 @@
                 <el-button @click="handleAdd" type="text" size="medium" :icon="!isEdit?'el-icon-plus':'el-icon-close'">{{!isEdit?'新增用户':'取消返回'}}</el-button>
             </div>
         </div>
-        
+
         <div class="grid-container" v-if="!isEdit">
             <div class="search-content">
                 <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
@@ -34,10 +34,10 @@
                 </el-form>
             </div>
 
-            <el-table v-loading="listLoading" 
-            :data="gridList" 
-            border fit highlight-current-row 
-            size="mini" 
+            <el-table v-loading="listLoading"
+            :data="gridList"
+            border fit highlight-current-row
+            size="mini"
             style="width: 100%">
                 <el-table-column label="No." width="50px" align="center" type="index"></el-table-column>
                 <el-table-column prop="name" label="姓名" width="120px"></el-table-column>
@@ -236,7 +236,7 @@ export default {
                         }
                         this.dataId = undefined;
                     });
-                } 
+                }
             });
         },
         submitSearch(){
@@ -288,7 +288,7 @@ export default {
                 ]
             };
             if(!_.isEmpty(match)){
-                condition.aggregate.push({
+                condition.aggregate.unshift({
                     $match:match
                 })
             }

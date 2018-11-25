@@ -4,7 +4,7 @@
 const dbServer = require('../config/db/');
 const mongoDB = require('../config/db/connect');
 const mongoose = require('mongoose');
-//const dbConfig = require('../config/db'); 
+//const dbConfig = require('../config/db');
 const crypto = require('crypto');
 const _ = require('lodash');
 const tokenPrefix = 'samz.com';
@@ -79,7 +79,7 @@ const dbFun = {
         sortCondition[sortby] = ascby;
 
         let total = await mongoDB[tn].find(condition).countDocuments();
-        console.log('listData', condition, total);
+        //console.log('listData', condition, total);
         let list = [];
         if(pagesize){
             list =  await mongoDB[tn].find(condition).sort(sortCondition).skip(skips).limit(pagesize);
@@ -99,14 +99,11 @@ const dbFun = {
         const tn = params.collectionName;
         const data = params.data;
         let result = mongoDB[tn].insertMany(data);
-        //let counters =  await mongoDB.counters.findOne({'model':tn});
         let cc = await mongoDB.counters.findOneAndUpdate({'model':tn}, {$inc:{count:data.length}});
-        //console.log('cc', cc)
-        //console.log('result', result)
         return {
             success:true,
             msgDesc:'数据导入成功'
-        } 
+        }
     },
     /*--------批量更新数据--------*/
     async updatePatch(params){
@@ -116,7 +113,7 @@ const dbFun = {
         return {
             success:result.n?true:false,
             msgDesc:result.n?'数据更新成功':'数据更新失败'
-        } 
+        }
     },
     /*--------批量删除数据--------*/
     async removePatch(params){
@@ -126,7 +123,7 @@ const dbFun = {
         return {
             success:true,
             msgDesc:'数据删除成功'
-        } 
+        }
     },
     /*--------添加数据--------*/
     async addData(params){
@@ -159,7 +156,7 @@ const dbFun = {
                 set.updateDate = new Date().getTime();
             }
             let result = await mongoDB[tn].updateOne(condition, set, {upsert:true});
-            console.log('updateArr',result);
+            //console.log('updateArr',result);
         }
         return {
             success:true,
@@ -187,6 +184,18 @@ const dbFun = {
             msgDesc:result?'数据更新成功':'数据更新失败'
         }
     },
+    /*--------列出所有订单的指定字段列-------*/
+    async getColumns(params){
+        const tn = params.collectionName;
+        const condition = params.condition || {};
+        const cols = params.cols;
+        let result =  await mongoDB[tn].find(condition, cols);
+        return {
+            success:true,
+            response:result
+        }
+    },
+
     /*--------获取数据最后的ID--------*/
     async getId(params){
         let result =  await mongoDB.counters.findOne(params.data);
@@ -231,15 +240,15 @@ const dbFun = {
 
     async captcha(params){
         //console.log('captcha', params)
-        let captcha = svgCaptcha.create({ 
-            inverse: false, 
+        let captcha = svgCaptcha.create({
+            inverse: false,
             color:true,
             background: '#cc9966',
-            fontSize: 36, 
-            noise: 2, 
-            width: 90, 
-            height: 36, 
-        }); 
+            fontSize: 36,
+            noise: 2,
+            width: 90,
+            height: 36,
+        });
         return {
             success:true,
             msgDesc:'',
@@ -283,6 +292,6 @@ module.exports = ({data}) => {
         dbFun[data.type](data).then(result=>{
             resolve(result);
         });
-          
+
     });
 }

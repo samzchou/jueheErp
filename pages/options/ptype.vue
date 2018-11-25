@@ -16,19 +16,27 @@
                             <el-option v-for="(type,idx) in typeList" :key="idx" :label="type.name" :value="type.id"/>
                         </el-select>
                     </el-form-item>
+                    <el-form-item label="分类名称：">
+                        <el-input v-model="searchForm.name" placeholder="输入分类名称" clearable/>
+                    </el-form-item>
                     <el-form-item>
                         <el-button type="primary" @click="submitSearch">搜索</el-button>
                     </el-form-item>
                 </el-form>
             </div>
-            <el-table v-loading="listLoading" 
-            :data="gridList" 
-            border fit highlight-current-row 
-            size="mini" 
+            <el-table v-loading="listLoading"
+            :data="gridList"
+            border fit highlight-current-row
+            size="mini"
             style="width: 100%" max-height="400">
                 <el-table-column label="No." width="50px" align="center" type="index">
                     <template slot-scope="scope">
                         <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
+                    </template>
+                </el-table-column>
+				<el-table-column label="ID" width="80px">
+                    <template slot-scope="scope">
+                      {{scope.row.id}}
                     </template>
                 </el-table-column>
 				<el-table-column prop="typeName" label="业务类别" width="100px"/>
@@ -93,7 +101,8 @@ export default {
                 ]
             },
             searchForm:{
-                typeId:''
+				typeId:'',
+				name:''
             }
         }
     },
@@ -164,7 +173,7 @@ export default {
                         this.dataId = undefined;
                         this.writeFile();
                     });
-                    
+
                 }
             });
         },
@@ -211,7 +220,7 @@ export default {
             }
             this.getList(params);
         },
-		
+
         async getList(match={}){
             this.listLoading = true;
 			let condition = {
@@ -237,12 +246,12 @@ export default {
                         $addFields: {typeName:"$type.name"}
                     },
                     {$sort:{id:-1}},
-                    {$skip:this.query.page-1},
+                    {$skip:(this.query.page-1)*this.query.pagesize},
                     {$limit:this.query.pagesize}
                 ]
             };
             if(!_.isEmpty(match)){
-                condition.aggregate.push({
+                condition.aggregate.unshift({
                     $match:match
                 })
             }

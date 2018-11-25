@@ -11,18 +11,30 @@
         <div class="grid-container" v-if="!isEdit">
             <div class="search-content">
                 <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
-                    <el-form-item label="业务分类：" prop="typeId">
+                    <el-form-item label="业务分类：">
                         <el-select v-model="searchForm.typeId" placeholder="请选择" clearable  style="width:100px" @change="filterPtypeBySearch">
                             <el-option v-for="(type,idx) in typeList" :key="idx" :label="type.name" :value="type.id"/>
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="产品分类：" prop="ptypeId">
+                    <el-form-item label="产品分类：">
                         <el-select v-model="searchForm.ptypeId" placeholder="请选择" multiple clearable>
                             <el-option v-for="(ptype,idx) in searchptypeList" :key="idx" :label="ptype.name" :value="ptype.id"/>
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="产品名称：" prop="name">
+                    <el-form-item label="产品名称：">
                         <el-input v-model="searchForm.name" clearable  style="width:200px"/>
+                    </el-form-item>
+                    <el-form-item label="规格/梯形：">
+                        <el-input v-model="searchForm.model" clearable  style="width:100px"/>
+                    </el-form-item>
+					          <el-form-item label="型号/梯号：">
+                        <el-input v-model="searchForm.modelNo" clearable  style="width:100px"/>
+                    </el-form-item>
+					          <el-form-item label="套件物料号：">
+                        <el-input v-model="searchForm.parentMater" clearable  style="width:100px"/>
+                    </el-form-item>
+					          <el-form-item label="物料/版本号：">
+                        <el-input v-model="searchForm.materialNo" clearable  style="width:100px"/>
                     </el-form-item>
                     <el-form-item label="关联客户：" prop="crmId">
                         <el-select v-model="searchForm.crmId" placeholder="请选择" multiple clearable>
@@ -35,12 +47,16 @@
                 </el-form>
             </div>
 
-            <el-table v-loading="listLoading" 
-            :data="gridList" 
-            border fit highlight-current-row 
-            size="mini" 
+            <el-table v-loading="listLoading"
+            :data="gridList"
+            border fit highlight-current-row
+            size="mini"
+            height="450"
             style="width: 100%">
-                <el-table-column label="No." width="50px" align="center" type="index"></el-table-column>
+                <el-table-column label="No." width="50px" align="center" type="index">
+                  <template slot-scope="scope">{{scope.$index+(query.page - 1) * query.pagesize + 1}} </template>
+                </el-table-column>
+                <el-table-column prop="id" label="ID" width="80px"/>
                 <el-table-column prop="isuse" label="状态" width="80px">
                     <template slot-scope="scope">
                         <el-switch size="mini" v-model="scope.row.isuse" @change="changeIsUse(scope.row)"/>
@@ -52,18 +68,19 @@
                         {{parsePtype(scope.row.ptypeId)}}
                     </template>
                 </el-table-column>
-                <el-table-column prop="name" label="产品名称" width="180px"></el-table-column>
-                <el-table-column prop="crmId" label="关联客户" width="150px">
+                <el-table-column prop="name" label="产品名称" width="250px"></el-table-column>
+                <el-table-column prop="crmId" label="关联客户" width="250px">
                     <template slot-scope="scope">
                         {{parseCrm(scope.row.crmId)}}
                     </template>
                 </el-table-column>
                 <el-table-column prop="model" label="规格/梯型" width="100px"></el-table-column>
                 <el-table-column prop="modelNo" label="型号/梯号" width="150px"></el-table-column>
-                <el-table-column prop="materialNo" label="物料号/版本号" width="150px"></el-table-column>
+                <el-table-column prop="parentMater" label="父级套件物料号" width="150px"></el-table-column>
+				        <el-table-column prop="materialNo" label="物料号/版本号" width="150px"></el-table-column>
                 <el-table-column prop="caselNo" label="图号/版本号" width="150px"></el-table-column>
                 <el-table-column prop="util" label="单位"></el-table-column>
-                <el-table-column prop="price" label="单价" width="80px">
+                <el-table-column prop="price" label="单价" width="100px">
                     <template slot-scope="scope">
                         {{scope.row.price | currency}}
                     </template>
@@ -91,7 +108,7 @@
                     </el-radio-group>
                 </el-form-item>
                 <el-form-item label="产品分类" prop="ptypeId">
-                    <el-select v-model="ruleForm.ptypeId" placeholder="请选择">
+                    <el-select v-model="ruleForm.ptypeId" placeholder="请选择" style="width:200px">
                         <el-option v-for="ptype in pList" :key="ptype.id" :label="ptype.name" :value="ptype.id"/>
                     </el-select>
                 </el-form-item>
@@ -99,7 +116,7 @@
                     <el-input v-model="ruleForm.name" style="width:200px"/>
                 </el-form-item>
                 <el-form-item label="关联客户" prop="crmId">
-                    <el-select v-model="ruleForm.crmId" placeholder="请选择">
+                    <el-select v-model="ruleForm.crmId" placeholder="请选择" style="width:200px">
                         <el-option v-for="crm in formCrmList" :key="crm.id" :label="crm.name" :value="crm.id"/>
                     </el-select>
                 </el-form-item>
@@ -110,17 +127,23 @@
                 <el-form-item label="型号/梯号" prop="modelNo">
                     <el-input v-model="ruleForm.modelNo" style="width:200px"/>
                 </el-form-item>
-                <el-form-item label="物料号/版本号" prop="materialNo">
-                    <el-input v-model="ruleForm.materialNo"/>
+                <el-form-item label="父级物料号" prop="parentMater">
+                    <el-select v-model="ruleForm.parentMater" filterable clearable placeholder="父级物料号" style="width:200px">
+                        <el-option v-for="s in materialNoList" :key="s" :value="s" :label="s"/>
+                    </el-select>
+					<span>* 如属套件内，请选择已有的父级物料号,否则请直接输入</span>
+                </el-form-item>
+				<el-form-item label="物料号/版本号" prop="materialNo">
+                    <el-input placeholder="请输入物料号" v-model="ruleForm.materialNo" style="width:200px"/>
                 </el-form-item>
                 <el-form-item label="图号/版本号" prop="caselNo">
-                    <el-input v-model="ruleForm.caselNo"/>
+                    <el-input v-model="ruleForm.caselNo" style="width:200px"/>
                 </el-form-item>
                  <el-form-item label="单位" prop="util">
                     <el-input v-model="ruleForm.util"  style="width:120px"/>
                 </el-form-item>
                 <el-form-item label="单价" prop="price">
-                    <el-input v-model="ruleForm.price" style="width:120px">
+                    <el-input v-model="ruleForm.price" style="width:150px">
                         <template slot="append">
                             <span>元</span>
                         </template>
@@ -161,15 +184,21 @@ export default {
                 name:'',
                 typeId:'',
                 ptypeId:'',
-                crmId:''
+                crmId:'',
+				model:'',
+				modelNo:'',
+				parentMater:'',
+                materialNo:''
             },
+			materialNoList:[],
             ruleForm:{
                 typeId:'',
                 ptypeId:'',
                 crmId:'',
                 name:'',
                 model:'',
-                modelNo:'',
+				modelNo:'',
+				parentMater:'',
                 materialNo:'',
                 caselNo:'',
                 util:'',
@@ -209,6 +238,7 @@ export default {
                 name:'',
                 model:'',
                 modelNo:'',
+				parentMater:'',
                 materialNo:'',
                 caselNo:'',
                 util:'',
@@ -229,6 +259,7 @@ export default {
                 name:row.name,
                 model:row.model,
                 modelNo:row.modelNo,
+				parentMater:row.parentMater,
                 materialNo:row.materialNo,
                 caselNo:row.caselNo,
                 util:row.util,
@@ -283,7 +314,7 @@ export default {
         filterCrm(typeId){
             this.formCrmList = _.filter(this.crmList,{typeId:typeId});
         },
-        
+
 		filterPtype(val){
             this.ruleForm.ptypeId = '';
             this.ruleForm.crmId = '';
@@ -321,7 +352,7 @@ export default {
                         this.writeFile();
                         this.dataId = undefined;
                         this.filterPtype('');
-                        
+
                     });
                 }
             });
@@ -390,43 +421,46 @@ export default {
         async getList(match = {}){
             this.listLoading = true;
             let condition = {
-                type:'aggregate',
+                type:'aggregate',//'aggregate' listData,
                 collectionName: 'product',
                 data:match,
+                /* page:this.query.page,
+                pagesize:this.query.pagesize */
                 aggregate:[
                     {
                         $lookup:{
-                            from: "type",
-                            localField: "typeId",
-                            foreignField: "id",
-                            as: "type"
+                          from: "type",
+                          localField: "typeId",
+                          foreignField: "id",
+                          as: "type"
                         }
                     },
                     {
                         $unwind: { // 拆分子数组
-                            path: "$type",
-                            preserveNullAndEmptyArrays: true // 空的数组也拆分
+                          path: "$type",
+                          preserveNullAndEmptyArrays: true // 空的数组也拆分
                         }
                     },
                     {
-                        $addFields: {typeName:"$type.name"}
+                      $addFields: {typeName:"$type.name"}
                     },
                     {$sort:{id:-1}},
-                    {$skip:this.query.page-1},
+                    {$skip:(this.query.page-1)*this.query.pagesize},
                     {$limit:this.query.pagesize}
                 ]
             };
             if(!_.isEmpty(match)){
-                condition.aggregate.push({
-                    $match:match
+                condition.aggregate.unshift({
+                  $match:match
                 })
             }
             let result = await this.$axios.$post('mock/db', {data:condition});
-            console.log('getList',result, match)
+            console.log('getLists',result, match);
             this.total = result.total;
             this.gridList = result.list;
             this.listLoading = false;
-        },
+		},
+		// 获取已设定的基础数据和元数据
         async getSetting(){
             let condition = {
                 type:"getData",
@@ -439,8 +473,21 @@ export default {
                 this.setting = result.content;
                 this.typeList = this.setting.type;
                 this.ptypeList = this.setting.ptype;
-                this.crmList = this.setting.crm;
-                
+				        this.crmList = this.setting.crm;
+
+                // 父级物料号
+                let materialNoList = [];
+                    this.setting.product.forEach(item=>{
+                  if(item.parentMater && !materialNoList.includes(item.parentMater)){// 如存在父级
+                    materialNoList.push(item.parentMater);
+                  }else{
+                    if(item.materialNo && !materialNoList.includes(item.materialNo)){
+                      materialNoList.push(item.materialNo);
+                    }
+                  }
+                });
+                this.materialNoList = materialNoList;
+                //console.log('materialNoList', this.materialNoList);
                 this.getList();
                 this.filterPtypeBySearch('');
             }
@@ -448,7 +495,6 @@ export default {
     },
     created(){
         this.getSetting();
-        //this.getList();
     }
 }
 </script>

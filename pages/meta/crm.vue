@@ -8,7 +8,7 @@
                 <el-button @click="handleAdd" type="text" size="medium" :icon="!isEdit?'el-icon-plus':'el-icon-close'">{{!isEdit?'新增客户':'取消返回'}}</el-button>
             </div>
         </div>
-        
+
         <div class="grid-container" v-if="!isEdit">
             <div class="search-content">
                 <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
@@ -32,22 +32,24 @@
                 </el-form>
             </div>
 
-            <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" style="width: 100%">
-                <el-table-column label="No." width="50px" align="center" type="index"></el-table-column>
+            <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" height="500" style="width: 100%">
+                <el-table-column label="No." width="50px" align="center" type="index">
+                  <template slot-scope="scope">{{scope.$index+(query.page - 1) * query.pagesize + 1}} </template>
+                </el-table-column>
                 <el-table-column prop="typeName" label="所属类别" width="80px"></el-table-column>
                 <el-table-column prop="isuse" label="启用" width="80px">
                     <template slot-scope="scope">
                         <el-switch size="mini" v-model="scope.row.isuse" @change="changeIsUse(scope.row)"/>
                     </template>
                 </el-table-column>
-                <el-table-column prop="name" label="客户名称" width="150px"></el-table-column>
+                <el-table-column prop="name" label="客户名称" width="180px"></el-table-column>
                 <el-table-column prop="crmNo" label="客户ID" width="150px"></el-table-column>
                 <el-table-column prop="revenueNo" label="税号" width="150px"></el-table-column>
-                <el-table-column prop="bank" label="开户银行" width="100px"></el-table-column>
+                <el-table-column prop="bank" label="开户银行" width="200px"></el-table-column>
                 <el-table-column prop="bankNo" label="银行账号" width="150px"></el-table-column>
                 <el-table-column prop="address" label="联系地址" width="150px"></el-table-column>
                 <el-table-column prop="contactName" label="联系人" width="100px"></el-table-column>
-                <el-table-column prop="contactPhone" label="联系电话" width="100px"></el-table-column>
+                <el-table-column prop="contactPhone" label="联系电话" width="120px"></el-table-column>
                 <el-table-column prop="payTypeId" label="付款方式" width="80px">
                     <template slot-scope="scope">
                         <span>{{parsePayType(scope.row.payTypeId)}}</span>
@@ -336,7 +338,7 @@ export default {
                 }
             }
             //console.log('submitSearch',params);
-            this.getList(params)
+            this.getList(params);
         },
         handleSizeChange(val){
             this.query.pagesize = val;
@@ -370,16 +372,18 @@ export default {
                     {
                         $addFields: {typeName:"$type.name"}
                     },
-                    {$sort:{id:1}}
+                    {$sort:{id:1}},
+                    {$skip:(this.query.page-1)*this.query.pagesize},
+                    {$limit:this.query.pagesize}
                 ]
-            };
+			};
+
             if(!_.isEmpty(match)){
-                condition.aggregate.push({
+                condition.aggregate.unshift({
                     $match:match
                 })
             }
             //console.log('aggregate', condition.aggregate)
-
             let result = await this.$axios.$post('mock/db', {data:condition});
             console.log('getList',result)
             this.total = result.total;

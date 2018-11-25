@@ -1,6 +1,6 @@
 //const dbConfig = require('../files/dbConfig.json');
 module.exports = {
-    dbConect:{"dataUrl":"47.91.231.119","dataPort":"27017","dataName":"test","username":"","password":""},
+    dbConect:{"dataUrl":"127.0.0.01","dataPort":"27017","dataName":"test","username":"","password":""}, //47.91.231.119
     /*----------数据表Collections-----------*/
     collectionList:[
         {"name":"用户列表","colname":"user"}
@@ -660,7 +660,15 @@ module.exports = {
                 subtype:'text',
                 label:'型号/梯号',
                 key:'modelNo',
-                sort:5
+                sort:6
+            },
+            parentMater:{
+                type:String, 
+                default:'', 
+                widgetType:'select',
+                label:'父级物料号/版本号',
+                key:'parentMater',
+                sort:7
             },
             materialNo : {
                 type:String, 
@@ -670,7 +678,7 @@ module.exports = {
                 subtype:'text',
                 label:'物料号/版本号',
                 key:'materialNo',
-                sort:5
+                sort:8
             },
             caselNo : {
                 type:String, 
@@ -680,7 +688,7 @@ module.exports = {
                 subtype:'text',
                 label:'图号/版本号',
                 key:'caselNo',
-                sort:5
+                sort:9
             },
             util:{
                 type:String, 
@@ -693,7 +701,7 @@ module.exports = {
                 rules:[
                     {"required": true, "message": '请输入单位', "trigger": 'blur'}
                 ],
-                sort:6
+                sort:10
             },
             price:{
                 type: Number, 
@@ -709,7 +717,7 @@ module.exports = {
                 rules:[
                     {"required": true, "message": '请输入单价', "trigger": 'blur'}
                 ],
-                sort:7
+                sort:11
             },
             content : {
                 type:String, 
@@ -717,7 +725,7 @@ module.exports = {
                 widgetType:'richtext', 
                 label:'备注说明',
                 key:'content',
-                sort:11
+                sort:12
             },
             updateDate:{
                 type: Number, 

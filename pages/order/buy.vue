@@ -40,9 +40,9 @@
                     </el-form-item>
                 </el-form>
             </div>
-            <el-table v-loading="listLoading" 
-            :data="gridList" 
-            border fit highlight-current-row 
+            <el-table v-loading="listLoading"
+            :data="gridList"
+            border fit highlight-current-row
             size="mini" max-height="400">
                 <el-table-column label="No." width="70px" align="center">
                     <template slot-scope="scope">
@@ -50,7 +50,7 @@
                     </template>
                 </el-table-column>
                 <el-table-column prop="id" label="ID" width="80px"/>
-                <el-table-column prop="isPayed" label="付款状态" width="100"> 
+                <el-table-column prop="isPayed" label="付款状态" width="100">
                     <template slot-scope="scope">
                         <span>{{scope.row.isPayed?'已付款':'未付款'}}</span>
                     </template>
@@ -115,17 +115,37 @@
             <div v-if="!editRow">
                 <upload-excel-component @saveData="saveData" :on-success="handleSuccess" :before-upload="beforeUpload"/>
             </div>
+			<!--批量导入-->
             <div v-if="tableData.length">
-                <el-table size="mini" 
-                :data="tableData.slice((queryUpload.page-1)*queryUpload.pagesize, queryUpload.page*queryUpload.pagesize)" 
-                border highlight-current-row 
+				<el-form :inline="true" :model="tableForm" :rules="tableRules" ref="tableForm" size="mini">
+					<el-form-item label="客户名称：" prop="crmId">
+						<el-select v-model="tableForm.crmId" placeholder="请选择客户" filterable style="width:250px">
+							<el-option v-for="crm in crmList" :key="crm.id" :label="crm.name" :value="crm.id"/>
+						</el-select>
+					</el-form-item>
+					<el-form-item label="订单类型：" prop="typeId">
+						<el-radio-group v-model="tableForm.typeId" @change="setTableType">
+							<el-radio v-for="item in typeList" :key="item.id" :label="item.id">{{item.name}}</el-radio>
+						</el-radio-group>
+					</el-form-item>
+					<el-form-item>
+						<el-button type="primary" @click="saveTable">保存数据</el-button>
+					</el-form-item>
+				</el-form>
+                <el-table size="mini"
+                :data="tableData.slice((queryUpload.page-1)*queryUpload.pagesize, queryUpload.page*queryUpload.pagesize)"
+                border highlight-current-row
                 style="width: 100%;margin-top:20px;" max-height="400">
                     <el-table-column label="No." width="70px" align="center">
                         <template slot-scope="scope">
                             <span>{{scope.$index+(queryUpload.page - 1) * queryUpload.pagesize + 1}} </span>
                         </template>
                     </el-table-column>
-                    <el-table-column v-for="item of tableHeader" :prop="item" :label="item" :key="item" width="300"/>
+                    <el-table-column v-for="item of tableHeader" :prop="item" :label="item" :key="item" :width="item=='isSale'?80:300">
+						<template slot-scope="scope">
+							<span>{{scope.row[item]}}</span>
+						</template>
+					</el-table-column>
                 </el-table>
                 <div class="page-container" style="padding: 10px 0;">
                     <el-pagination size="mini" @size-change="uploadSizeChange" @current-change="uploadCurrentChange" :current-page.sync="queryUpload.page" :page-sizes="[20, 50, 100, 200]" :page-size="queryUpload.pagesize" layout="total,sizes, prev, pager, next" :total="uploadTotal">
@@ -143,6 +163,14 @@
                         <el-option v-for="product in proList" :key="product.id" :label="product.name" :value="product.id"/>
                     </el-select>
                 </el-form-item>
+                <el-form-item label="客户名称" prop="crmName">
+                     <el-select v-model="ruleForm.crmId" placeholder="请选择" filterable @change="getCrmName" style="width:200px">
+                        <el-option v-for="crm in crmList" :key="crm.id" :label="crm.name" :value="crm.id"/>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="客户ID" prop="crmNo">
+                    <el-input v-model="ruleForm.crmNo" placeholder="请输入" style="width:200px"/>
+                </el-form-item>
                 <el-form-item label="订单编号" prop="serial">
                     <el-input v-model="ruleForm.serial" style="width:300px">
                         <template slot="append">
@@ -157,34 +185,27 @@
                     <el-date-picker v-model="ruleForm.deliveryDate" value-format="timestamp" type="date" placeholder="选择日期"/>
                 </el-form-item>
                 <el-form-item label="规格/梯型" prop="model">
-                    <el-input v-model="ruleForm.model" placeholder="请输入"/>
+                    <el-input v-model="ruleForm.model" placeholder="请输入" style="width:200px"/>
                 </el-form-item>
                 <el-form-item label="型号/梯号" prop="modelNo">
-                    <el-input v-model="ruleForm.modelNo" placeholder="请输入"/>
+                    <el-input v-model="ruleForm.modelNo" placeholder="请输入" style="width:200px"/>
                 </el-form-item>
                 <el-form-item label="箱号" prop="boxNo">
-                    <el-input v-model="ruleForm.boxNo" placeholder="请输入"/>
+                    <el-input v-model="ruleForm.boxNo" placeholder="请输入" style="width:200px"/>
                 </el-form-item>
                 <el-form-item label="项目名称" prop="projectName">
-                    <el-input v-model="ruleForm.projectName" placeholder="请输入"/>
+                    <el-input v-model="ruleForm.projectName" placeholder="请输入" style="width:200px"/>
                 </el-form-item>
                 <el-form-item label="项目号" prop="projectNo">
-                    <el-input v-model="ruleForm.projectNo" placeholder="请输入"/>
+                    <el-input v-model="ruleForm.projectNo" placeholder="请输入" style="width:200px"/>
                 </el-form-item>
                 <el-form-item label="物料号/版本号" prop="materialNo">
-                    <el-input v-model="ruleForm.materialNo" placeholder="请输入"/>
+                    <el-input v-model="ruleForm.materialNo" placeholder="请输入" style="width:200px"/>
                 </el-form-item>
                 <el-form-item label="图号/版本号" prop="caselNo">
-                    <el-input v-model="ruleForm.caselNo" placeholder="请输入"/>
+                    <el-input v-model="ruleForm.caselNo" placeholder="请输入" style="width:200px"/>
                 </el-form-item>
-                <el-form-item label="客户名称" prop="crmName">
-                     <el-select v-model="ruleForm.crmId" placeholder="请选择" filterable @change="getCrmName">
-                        <el-option v-for="crm in crmList" :key="crm.id" :label="crm.name" :value="crm.id"/>
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="客户ID" prop="crmNo">
-                    <el-input v-model="ruleForm.crmNo" placeholder="请输入"/>
-                </el-form-item>
+
                 <el-form-item label="订单数量" prop="count">
                     <el-input v-model="ruleForm.count" placeholder="请输入" style="width:100px"/>
                 </el-form-item>
@@ -206,6 +227,23 @@
     </section>
 </template>
 <script>
+const tableKeys = [
+    {label:'订单编号',value:'serial'},
+    {label:'梯型',value:'model'},
+    {label:'项目号',value:'projectNo'},
+    {label:'梯号',value:'modelNo'},
+    {label:'箱号',value:'boxNo'},
+    {label:'制单日期',value:'orderDate'},
+    {label:'交货日期',value:'deliveryDate'},
+    {label:'物料号/版本号',value:'materialNo'},
+    {label:'图号/版本号',value:'caselNo'},
+    {label:'产品名称',value:'productName'},
+    {label:'数量',value:'count'},
+    {label:'单位',value:'util'},
+    {label:'单价',value:'price'},
+    {label:'项目名称',value:'projectName'},
+    {label:'备注',value:'content'}
+]
 //import settings from '@/config/files/dataList.json';
 import UploadExcelComponent from '@/components/UploadExcel'
 export default {
@@ -289,11 +327,22 @@ export default {
                 pagesize:20
             },
             lastId:0,
+            tableForm:{
+				crmId:'',
+				typeId:1
+			},
+			tableRules:{
+				crmId:[{ required: true, message: '请选择客户', trigger: 'change'}]
+			},
+			sourceData:[],
             tableData: [],
             tableHeader: []
         }
     },
     methods:{
+		setTableType(id){
+			console.log('setTableType', id)
+		},
         beforeUpload(file) {
             const isLt1M = file.size / 1024 / 1024 < 1
             if (isLt1M) {
@@ -306,10 +355,28 @@ export default {
             return false;
         },
         handleSuccess({results, header}) {
-            this.tableData = results;
-            this.tableHeader = header;
-            this.uploadTotal = results.length;
-            //this.setUploadData();
+            //处理列名
+			this.tableHeader = ['isSale'];
+			header.forEach(str=>{
+				if(_.find(tableKeys,{'label':str}) && !this.tableHeader.includes(str)){
+					this.tableHeader.push(str)
+				}
+            });
+			//处理导入的数据
+			results = results.map(item=>{
+				for(let k in item){
+					if(k === '订单编号'){
+						item[k] = this.handleSerial(true);
+					}else if(k ==='产品名称' && (item[k].indexOf('桥顶防护栏')>0 || item[k].indexOf('线槽')>0 || item[k].indexOf('挂钩')>0 || item[k].indexOf('救援装置柜'))>0){
+						item['isSale'] = true;
+					}
+				}
+				return item;
+			});
+			//debugger
+			this.sourceData = _.orderBy(results,['isSale'],['asc']);
+			this.tableData = _.cloneDeep(this.sourceData);
+            this.uploadTotal = this.sourceData.length;
         },
         uploadSizeChange(val){
             this.queryUpload.pagesize = val;
@@ -318,7 +385,7 @@ export default {
             this.queryUpload.page = val;
         },
         initProduct(){
-            debugger
+            //debugger
             this.ptypeList = _.filter(this.setting.ptype,{typeId:1});
             this.crmList = _.filter(this.setting.crm,{typeId:1});
             this.productList = _.filter(this.setting.product, {typeId:1});
@@ -354,8 +421,12 @@ export default {
             this.ruleForm.crmName = crm.name;
             this.ruleForm.crmNo = crm.crmNo;
         },
-        handleSerial(){
-            this.ruleForm.serial = Math.random().toString(36).substr(2).toLocaleUpperCase();
+        handleSerial(flag){
+			let serial = Math.random().toString(36).substr(2).toLocaleUpperCase();
+			if(flag){
+				return serial;
+			}
+            this.ruleForm.serial = serial;
         },
         handleAdd(){
             this._getLastId();
@@ -461,32 +532,24 @@ export default {
             let crm = _.find(this.crmList, {'id':id});
             return crm.name;
         },
+		saveTable(){
+			this.$refs['tableForm'].validate((valid) => {
+				if(valid){
+					this.saveData();
+				}
+			});
+		},
         async saveData(){
             let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
-            const keys = [
-                {label:'订单编号',value:'serial'},
-                {label:'梯型',value:'model'},
-                {label:'项目号',value:'projectNo'},
-                {label:'梯号',value:'modelNo'},
-                {label:'箱号',value:'boxNo'},
-                {label:'制单日期',value:'orderDate'},
-                {label:'交货日期',value:'deliveryDate'},
-                {label:'供应商名称',value:'crmName'},
-                {label:'物料号/版本号',value:'materialNo'},
-                {label:'图号/版本号',value:'caselNo'},
-                {label:'产品名称',value:'productName'},
-                {label:'数量',value:'count'},
-                {label:'单位',value:'util'},
-                {label:'单价',value:'price'},
-                {label:'供应商ID',value:'crmNo'},
-                {label:'项目名称',value:'projectName'},
-                {label:'备注',value:'content'}
-            ]
+			let crm = _.find(this.crmList,{'id':this.tableForm.crmId});
             let dataList = this.tableData.map((item, index)=>{
                 let id = this.lastId + index + 1;
-                let obj = {id:id,typeId:1,flowStateId:1,createByUser:this.$store.state.user.name};
+                let obj = {id:id,typeId:1,flowStateId:1,crmId:crm.id,crmName:crm.name,crmNo:crm.crmNo,createByUser:this.$store.state.user.name};
                 for(let key in item){
-                    let o = _.find(keys, {label:key});
+					if(key === 'isSale'){
+						obj = _.merge(obj, {typeId:2,flowStateId:4});
+					}
+                    let o = _.find(tableKeys, {label:key});
                     if(o){
                         let k = o.value;
                         let val = this._setValue(k, item[key]);
@@ -512,7 +575,10 @@ export default {
                 type:'addPatch',
                 collectionName: 'order',
                 data:dataList
-            }
+            };
+			console.log(condition);
+			loadingMask.close();
+			return;
             this.$axios.$post('mock/db', {data:condition}).then(result=>{
                 loadingMask.close();
                 this.tableData = [];
@@ -563,10 +629,10 @@ export default {
                         this.dataId = undefined;
                         this._getLastId();
                     });
-                } 
+                }
             });
         },
-        
+
         submitSearch(flag){
             let params = {};
             for(let k in this.searchForm){
@@ -627,7 +693,7 @@ export default {
                         $addFields: {flowStateName:"$flowState.name"}
                     },
                     {$sort:{id:-1}},
-                    {$skip:this.query.page-1},
+                    {$skip:(this.query.page-1)*this.query.pagesize},
                     {$limit:this.query.pagesize}
                 ]
             };

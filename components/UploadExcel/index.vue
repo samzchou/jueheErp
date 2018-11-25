@@ -1,14 +1,9 @@
 <template>
     <div class="head-form">
         <input id="excel-upload-input" ref="excel-upload-input" type="file" accept=".xlsx, .xls" @change="handleClick">
-        <el-form :inline="true"> 
-            <el-form-item v-if="excelData.header">
-                <el-button type="primary" size="mini" @click="$emit('saveData')">保存数据</el-button>
-            </el-form-item>
+        <el-form :inline="true" :size="size">
             <el-form-item>
-                <el-button :loading="loading" size="mini" type="danger" @click="handleUpload">
-                    {{!loading?'选择EXCEL文件上传':'正在上传处理中...'}}
-                </el-button>
+                <el-button :size="size" type="danger" @click="handleUpload">选择EXCEL文件上传</el-button>
             </el-form-item>
         </el-form>
     </div>
@@ -18,12 +13,15 @@
 import XLSX from 'xlsx'
 export default {
     props: {
+        size:{
+            type:String,
+            default:'mini'
+        },
         beforeUpload: Function, // eslint-disable-line
         onSuccess: Function     // eslint-disable-line
     },
     data() {
         return {
-            loading: false,
             orderType:1,
             excelData: {
                 header: null,
@@ -61,7 +59,6 @@ export default {
             }
         },
         readerData(rawFile) {
-            this.loading = true;
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = e => {
@@ -75,7 +72,6 @@ export default {
                     this.generateData({ header, results });
                     resolve();
                 }
-                this.loading = false;
                 reader.readAsArrayBuffer(rawFile);
             })
         },
@@ -108,19 +104,8 @@ export default {
     }
 }
 </script>
-
 <style lang="scss" scoped>
-    .head-form{
-        border-bottom: 1px solid #DDD;
-        padding-bottom: 10px;
-        margin-bottom: 15px;
-        /deep/ .el-form{
-            .el-form-item{
-                padding:0;
-                margin-bottom: 0;
-            }
-        }
-    }
+
     #excel-upload-input{
         display: none;
         z-index: -9999;
