@@ -53,7 +53,7 @@
                 <el-table-column prop="id" label="ID" width="80px"/>
                 <el-table-column prop="isPayed" label="付款状态">
                     <template slot-scope="scope">
-                        <span>{{scope.row.isPayed?'已付款':'未付款'}}</span>
+                        <span>{{scope.row.isPayed?'已结算':'未结算'}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column prop="isuse" label="流程状态" width="100">
@@ -62,6 +62,19 @@
                     </template>
                 </el-table-column>
                 <el-table-column prop="serial" label="订单编号" width="150px"/>
+                <el-table-column prop="productName" label="订单产品名称" width="200px"/>
+                <el-table-column prop="count" label="订单数量"/>
+                <el-table-column prop="util" label="单位"/>
+                <el-table-column prop="price" label="单价" width="100px">
+                    <template slot-scope="scope">
+                        {{scope.row.price | currency}}
+                    </template>
+                </el-table-column>
+                <el-table-column prop="price" label="总价" width="150px">
+                    <template slot-scope="scope">
+                        {{parseMoney(scope.row)}}
+                    </template>
+                </el-table-column>
                 <el-table-column prop="orderDate" label="制单日期" width="100px">
                     <template slot-scope="scope">
                         <span>{{parseDate(scope.row.orderDate)}}</span>
@@ -80,19 +93,7 @@
                 <el-table-column prop="materialNo" label="物料号/版本号" width="150px"/>
                 <el-table-column prop="caselNo" label="图号/版本号" width="150px"/>
                 <el-table-column prop="crmName" label="客户名称" width="150px"/>
-                <el-table-column prop="productName" label="订单产品名称" width="200px"/>
-                <el-table-column prop="count" label="订单数量"/>
-                <el-table-column prop="util" label="单位"/>
-                <el-table-column prop="price" label="单价" width="100px">
-                    <template slot-scope="scope">
-                        {{scope.row.price | currency}}
-                    </template>
-                </el-table-column>
-                <el-table-column prop="price" label="总价" width="150px">
-                    <template slot-scope="scope">
-                        {{parseMoney(scope.row)}}
-                    </template>
-                </el-table-column>
+                
                 <el-table-column prop="content" label="备注说明" width="250px"/>
                 <el-table-column prop="createByUser" label="创建人"/>
                 <el-table-column prop="updateDate" label="最后更新" width="150px">

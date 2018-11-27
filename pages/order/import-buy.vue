@@ -209,19 +209,24 @@ export default {
             this.serialList.push(serial);
 						item[k] = serial;
 					}else if(k ==='产品名称'){
-            if(item[k].indexOf('桥顶防护栏')>0 || item[k].indexOf('线槽')>0 || item[k].indexOf('挂钩')>0 || item[k].indexOf('救援装置柜')>0){
+						let str = item[k].replace(/\s+/g, "");
+            if(str.indexOf('轿顶防护栏')>-1 || str.indexOf('线槽')>-1 || str.indexOf('挂钩')>-1 || str.indexOf('救援装置柜')>-1){
               item['isMake'] = '属于生产订单';
               item.typeId = 2;
             }else{
               item.typeId = 1;
             }
             // 匹配产品分类和产品ID
-            let product = _.find(this.productList,{'name':item[k]});
+            let product = _.find(this.productList,(p)=>{
+							debugger
+							if(p['name'].replace(/\s+/g, "") == str && p['materialNo'] == item['物料号/版本号']){
+								return p;
+							}
+						});
             if(product){
-              item['元数据匹配'] = '匹配:ID='+product.id;
-              //item['产品分类'] = _.find(this.setting.ptype,{'id':product.ptypeId}).name;
+              item['元数据匹配'] = '匹配产品:ID='+product.id;
             }
-					}else if(k ==='梯号' && this.checkModelNo(item[k])){
+					}else if(k ==='梯号' && this.checkModelNo(item[k])){ 
             item['isRepeat'] = '订单梯号重复';
             this.repeatCount += 1;
           }
@@ -298,11 +303,14 @@ export default {
 						let k = o.value;
 						let val = this._setValue(k, item[key]);
             if(k === 'productName'){
-
-							let p = _.find(this.productList, {'name':val,'typeId':obj.typeId});
-							if(p){
-								obj.ptypeId = p.ptypeId;
-								obj.productId = p.id;
+							let product = _.find(this.productList,(p)=>{
+								if(p['name'].replace(/\s+/g, "") == val.replace(/\s+/g, "")){
+									return p;
+								}
+							});
+							if(product){
+								obj.ptypeId = product.ptypeId;
+								obj.productId = product.id;
 							}
 						}
 						obj[k] = val;

@@ -424,8 +424,6 @@ export default {
                 type:'aggregate',//'aggregate' listData,
                 collectionName: 'product',
                 data:match,
-                /* page:this.query.page,
-                pagesize:this.query.pagesize */
                 aggregate:[
                     {
                         $lookup:{
@@ -455,9 +453,9 @@ export default {
                 })
             }
             let result = await this.$axios.$post('mock/db', {data:condition});
-            console.log('getLists',result, match);
+            //console.log('getLists',result, match);
             this.total = result.total;
-            this.gridList = result.list;
+            this.gridList = _.orderBy(result.list,['name','crmId'],['asc']); //result.list;
             this.listLoading = false;
 		},
 		// 获取已设定的基础数据和元数据

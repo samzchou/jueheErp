@@ -52,7 +52,7 @@
                 <el-table-column prop="id" label="ID" width="80px"/>
                 <el-table-column prop="isPayed" label="付款状态" width="100">
                     <template slot-scope="scope">
-                        <span>{{scope.row.isPayed?'已付款':'未付款'}}</span>
+                        <span>{{scope.row.isPayed?'已结算':'未结算'}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column prop="isuse" label="流程状态">

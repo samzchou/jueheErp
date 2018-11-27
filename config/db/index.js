@@ -1,6 +1,6 @@
 //const dbConfig = require('../files/dbConfig.json');
 module.exports = {
-    dbConect:{"dataUrl":"127.0.0.01","dataPort":"27017","dataName":"test","username":"","password":""}, //47.91.231.119
+    dbConect:{"dataUrl":"127.0.0.1","dataPort":"27017","dataName":"test","username":"","password":""}, //47.91.231.119
     /*----------数据表Collections-----------*/
     collectionList:[
         {"name":"用户列表","colname":"user"}
