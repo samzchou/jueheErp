@@ -13,6 +13,7 @@
             :data="gridList" 
             border fit highlight-current-row 
             size="mini" 
+            max-height="400" 
             style="width: 100%">
 				<el-table-column prop="id" label="状态ID" width="60px"/>
                 <el-table-column prop="name" label="流程状态名称" width="200px"/>

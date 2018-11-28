@@ -59,7 +59,7 @@
                 </el-table-column>
                 <el-table-column label="订单编号" width="120">
                     <template slot-scope="scope">
-                        <span>{{scope.row.serial}}</span>
+                        <el-button type="text" @click="showOrderInfo(scope.row)">{{scope.row.serial}}</el-button>
                     </template>
                 </el-table-column>
                 <el-table-column label="货品名称">
@@ -69,7 +69,7 @@
                 </el-table-column>
                 <el-table-column label="单位" width="70">
                     <template slot-scope="scope">
-                        <span>{{scope.row.order.util||''}}</span>
+                        <span>{{scope.row.order.util}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column label="单价" width="100">
@@ -82,9 +82,14 @@
                         <span>{{scope.row.order.count}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="count" label="入库量"  width="70">
+                <el-table-column prop="count" label="入库量" width="70">
                     <template slot-scope="scope">
                         <span>{{scope.row.count}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="入库总价" width="150">
+                    <template slot-scope="scope">
+                        {{parseReleaseMoney(scope.row)}}
                     </template>
                 </el-table-column>
                 <el-table-column prop="createDate" label="入库日期" width="100">
@@ -168,6 +173,7 @@
                     </el-table-column>
                     <el-table-column prop="crmName" label="客户名称" width="200px"/>
                     <el-table-column prop="productName" label="货品名称" width="220px"/>
+                    <el-table-column prop="materialNo" label="物料号/版本号" width="150px"/>
                     <el-table-column prop="count" label="采购数量" width="80px"/>
                     <el-table-column prop="util" label="单位" width="60px"/>
                     <el-table-column prop="price" label="单价" width="100px">
@@ -185,12 +191,27 @@
                     <el-pagination size="mini" @size-change="orderSizeChange" @current-change="orderCurrentChange" :current-page.sync="queryOrder.page" :page-sizes="[20, 50, 100, 200]" :page-size="queryOrder.pagesize" layout="total,sizes,prev,pager,next" :total="orderTotal">
                     </el-pagination>
                 </div>
-
-                
-
             </div>
-
         </div>
+        <el-dialog title="订单明细查阅" :visible.sync="openDialogVisible" width="450px">
+            <div class="compare" v-if="currItem">
+                <div>
+                    <ul>
+                        <li><span>货品名称：</span><span>{{currItem.productName}}</span></li>
+                        <li><span>客户：</span><span>{{currItem.order.crmName}}</span></li>
+                        <li><span>订单号：</span><span>{{currItem.serial}}</span></li>
+                        <li><span>物料号：</span><span>{{currItem.order.materialNo}}</span></li>
+                        <li><span>单位：</span><span>{{currItem.order.util}}</span></li>
+                        <li><span>订单数量：</span><span>{{currItem.order.count}}</span></li>
+                        <li><span>单价：</span><span>{{currItem.order.price}}</span></li>
+                        <li><span>当前库存：</span><span>{{currItem.incount}}</span></li>
+                        <li><span>制单日期：</span><span>{{parseDate(currItem.orderDate)}}</span></li>
+                        <li><span>交付日期：</span><span>{{parseDate(currItem.deliveryDate)}}</span></li>
+                        <li><span>制单人：</span><span>{{currItem.order.createByUser}}</span></li>
+                    </ul>
+                </div>
+            </div>
+        </el-dialog>
     </section>
 </template>
 
@@ -199,6 +220,8 @@
 export default {
     data(){
         return {
+            openDialogVisible:false,
+            currItem:null,
             setting:{},
             searchInput:'',
             listLoading:false,
@@ -245,11 +268,19 @@ export default {
         }
     },
     methods:{
+        showOrderInfo(row){
+            this.openDialogVisible = true;
+            this.currItem = row;
+            console.log('showOrderInfo',row)
+        },
         parseDate(date, format){
             return moment(date).format(format||'YYYY-MM-DD');
         },
         parseMoney(row){
             return this.$options.filters['currency'](row.count*row.price);
+        },
+        parseReleaseMoney(row){
+            return this.$options.filters['currency'](row.count*row.order.price);
         },
         parseType(id){
             if(!id || id=='') return '';
@@ -441,8 +472,8 @@ export default {
                     /* {
                         $addFields: {flowStateName:"$order.name"}
                     }, */
-                    {$sort:{id:-1}},
-                    {$skip:this.query.page-1},
+                    {$sort:{_id:-1}},
+                    {$skip:(this.query.page-1)*this.query.pagesize},
                     {$limit:this.query.pagesize}
                 ]
             };
@@ -550,6 +581,34 @@ export default {
                 padding: 3px 5px;
                 text-align: center;
                 border-radius: 3px;
+            }
+        }
+    }
+    .compare{
+        display: flex;
+        >div{
+            flex:1;
+            box-sizing: border-box;
+            padding: 0 10px;
+            >h3{
+                font-size: 14px;
+                border-bottom: 1px solid #DDD;
+                line-height: 36px;
+            }
+            >ul{
+                flex:1;
+                box-sizing: border-box;
+                >li{
+                    line-height: 30px;
+                    border-bottom: 1px solid #DDD;
+                    display: flex;
+                    >span{
+                        &:first-child{
+                            width:80px;
+                            color:#417ce8;
+                        }
+                    }
+                }
             }
         }
     }

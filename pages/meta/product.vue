@@ -51,7 +51,7 @@
             :data="gridList"
             border fit highlight-current-row
             size="mini"
-            height="450"
+            max-height="400"
             style="width: 100%">
                 <el-table-column label="No." width="50px" align="center" type="index">
                   <template slot-scope="scope">{{scope.$index+(query.page - 1) * query.pagesize + 1}} </template>
@@ -183,8 +183,8 @@ export default {
             searchForm:{
                 name:'',
                 typeId:'',
-                ptypeId:'',
-                crmId:'',
+                ptypeId:[],
+                crmId:[],
 				model:'',
 				modelNo:'',
 				parentMater:'',

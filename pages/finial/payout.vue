@@ -31,7 +31,7 @@
                     </el-form-item>
                 </el-form>
             </div>
-            <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" height="400">
+            <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" max-height="400">
                 <el-table-column label="No." width="70px" align="center">
                     <template slot-scope="scope">
                         <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
@@ -39,17 +39,22 @@
                 </el-table-column>
                 <el-table-column prop="serial" label="订单编号" width="120">
                     <template slot-scope="scope">
-                        <span>{{scope.row.serial}}</span>
+                        <el-button type="text" @click="showOrderInfo(scope.row)">{{scope.row.serial}}</el-button>
                     </template>
                 </el-table-column>
-                <el-table-column prop="crmName" label="客户名称">
+                <el-table-column prop="crmName" label="客户名称" width="250">
                     <template slot-scope="scope">
                         <span>{{scope.row.crmName}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="productName" label="付款货品">
+                <el-table-column prop="productName" label="付款货品" width="250">
                     <template slot-scope="scope">
                         <span>{{scope.row.productName}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="materialNo" label="物料号" width="120">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.order.materialNo}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column prop="util" label="单位" width="70">
@@ -67,7 +72,7 @@
                         <span>{{scope.row.count}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="合计金额"  width="70">
+                <el-table-column label="合计金额"  width="120">
                     <template slot-scope="scope">
                         <span>{{parseMoney(scope.row)}}</span>
                     </template>
@@ -159,8 +164,27 @@
                     </el-table-column>
                 </el-table>
             </div>
-
         </div>
+        <el-dialog title="订单明细查阅" :visible.sync="openDialogVisible" width="450px">
+            <div class="compare" v-if="currItem">
+                <div>
+                    <ul>
+                        <li><span>货品名称：</span><span>{{currItem.productName}}</span></li>
+                        <li><span>客户：</span><span>{{currItem.order.crmName}}</span></li>
+                        <li><span>联系人：</span><span>{{getCrm(currItem.order.crmId,'contactName')}}</span></li>
+                        <li><span>电话：</span><span>{{getCrm(currItem.order.crmId,'contactPhone')}}</span></li>
+                        <li><span>订单号：</span><span>{{currItem.serial}}</span></li>
+                        <li><span>物料号：</span><span>{{currItem.order.materialNo}}</span></li>
+                        <li><span>单位：</span><span>{{currItem.order.util}}</span></li>
+                        <li><span>订单数量：</span><span>{{currItem.order.count}}</span></li>
+                        <li><span>单价：</span><span>{{currItem.order.price}}</span></li>
+                        <li><span>制单日期：</span><span>{{parseDate(currItem.order.orderDate)}}</span></li>
+                        <li><span>交付日期：</span><span>{{parseDate(currItem.order.deliveryDate)}}</span></li>
+                        <li><span>制单人：</span><span>{{currItem.order.createByUser}}</span></li>
+                    </ul>
+                </div>
+            </div>
+        </el-dialog>
     </section>
 </template>
 
@@ -169,6 +193,8 @@
 export default {
     data(){
         return {
+            openDialogVisible:false,
+            currItem:null,
             listLoading:false,
             isEdit:false,
             total:0,
@@ -204,6 +230,15 @@ export default {
         }
     },
     methods:{
+        showOrderInfo(row){
+            this.openDialogVisible = true;
+            this.currItem = row;
+            console.log('showOrderInfo',row)
+        },
+        getCrm(id, key){
+            let crm = _.find(this.setting.crm, {'id':id});
+            return crm[key];
+        },
         parseDate(date, format){
             return moment(date).format(format||'YYYY-MM-DD');
         },
@@ -346,11 +381,41 @@ export default {
         async getList(match={}){
             this.listLoading = true;
             let condition = {
+                type:'aggregate',
+                collectionName: 'finance',
+                data:_.merge({payType:1},match),
+                aggregate:[
+                    {
+                        $lookup:{
+                            from: "order",
+                            localField: "serial",
+                            foreignField: "serial",
+                            as: "order"
+                        }
+                    },
+                    {
+                        $unwind: { // 拆分子数组
+                            path: "$order",
+                            preserveNullAndEmptyArrays: true // 空的数组也拆分
+                        }
+                    },
+                    {$match:_.merge({payType:1},match)},
+                    /* {
+                        $addFields: {flowStateName:"$order.name"}
+                    }, */
+                    {$sort:{_id:-1}},
+                    {$skip:(this.query.page-1)*this.query.pagesize},
+                    {$limit:this.query.pagesize}
+                ]
+            };
+            let result = await this.$axios.$post('mock/db', {data:condition});
+
+            /* let condition = {
                 type:'listData',
                 collectionName: 'finance',
                 data:_.merge({payType:1},match),
             };
-            let result = await this.$axios.$post('mock/db', {data:condition});
+            let result = await this.$axios.$post('mock/db', {data:condition}); */
             this.total = result.total;
             this.gridList = result.list;
             this.listLoading = false;
@@ -379,7 +444,7 @@ export default {
             }
             let result = await this.$axios.$post('mock/db', {data:condition});
             if(result){
-                console.log('getSetting',result)
+                //console.log('getSetting',result)
                 this.setting = result.content;
                 this.typeList = this.setting.type;
                 this.getList();
@@ -462,5 +527,34 @@ export default {
         display:flex;
         align-items: center;
         justify-content: space-between;
+    }
+
+    .compare{
+        display: flex;
+        >div{
+            flex:1;
+            box-sizing: border-box;
+            padding: 0 10px;
+            >h3{
+                font-size: 14px;
+                border-bottom: 1px solid #DDD;
+                line-height: 36px;
+            }
+            >ul{
+                flex:1;
+                box-sizing: border-box;
+                >li{
+                    line-height: 30px;
+                    border-bottom: 1px solid #DDD;
+                    display: flex;
+                    >span{
+                        &:first-child{
+                            width:80px;
+                            color:#417ce8;
+                        }
+                    }
+                }
+            }
+        }
     }
 </style>

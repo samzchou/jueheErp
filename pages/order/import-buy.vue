@@ -10,9 +10,9 @@
 				<el-form :inline="true" :model="tableForm" :rules="tableRules" ref="tableForm" size="mini" v-if="sourceData.length">
 
 					<el-form-item label="订单类型：" prop="typeId">
-            <el-radio-group v-model="tableForm.typeId" @change="tableFilter">
-              <el-radio v-for="item in typeList" :key="item.id" :label="item.id">{{item.name}}</el-radio>
-            </el-radio-group>
+            <el-checkbox-group v-model="tableForm.typeId" @change="tableFilter">
+              <el-checkbox v-for="item in typeList" :key="item.id" :label="item.id">{{item.name}}</el-checkbox>
+            </el-checkbox-group>
 					</el-form-item>
           <el-form-item label="客户名称：" prop="crmId">
 						<el-select v-model="tableForm.crmId" placeholder="请选择客户" filterable style="width:250px">
@@ -23,13 +23,14 @@
             <el-switch v-model="tableForm.modelFilter" @change="tableFilter"/>
 					</el-form-item> -->
 					<el-form-item>
-						<el-button type="primary" @click="saveTable" v-if="tableData.length">保存数据</el-button>
+						<el-button type="primary" @click="saveTable" v-if="tableData.length" :loading="uploading">保存数据</el-button>
             <el-button type="" @click="sourceData=[]">重新上传</el-button>
+						<el-button type="" @click="removeRepeat" v-if="repeatCount">删除重复梯号的订单</el-button>
 					</el-form-item>
 				</el-form>
 				<upload-excel-component v-else size="mini" @saveData="saveData" :on-success="handleSuccess" :before-upload="beforeUpload"/>
 			</div>
-      <div v-if="uploading">正在导入订单中...</div>
+      <div v-if="uploading">正在导入订单中，请等待处理完成...</div>
 			<!--批量导入-->
 			<div v-if="sourceData.length">
 				<el-table size="mini"
@@ -41,9 +42,11 @@
 									<span>{{scope.$index+(queryUpload.page - 1) * queryUpload.pagesize + 1}} </span>
 							</template>
 					</el-table-column>
-					<el-table-column v-for="item of tableHeader" :prop="item" :label="item" :key="item" :width="(item=='isMake'||item=='isRepeat')?100:250">
+					<el-table-column v-for="item of tableHeader" :prop="item" :label="item" :key="item" :width="(item=='产品名称'||item=='备注')?250:150">
 						<template slot-scope="scope">
-							<span :class="{'warning':(item=='isMake'||item=='isRepeat')}">{{scope.row[item]}}</span>
+							<span :class="{'warning':(item=='isMake'||item=='isRepeat')}">
+								{{scope.row[item]}}
+							</span>
 						</template>
 					</el-table-column>
 					<el-table-column label="操作" fixed="right" align="center" width="100">
@@ -72,18 +75,18 @@ export default {
         {label:'isMake',value:'isMake'},
         {label:'isRepeat',value:'isRepeat'},
         {label:'订单编号',value:'serial'},
-        {label:'产品名称',value:'productName'},
-        {label:'元数据匹配',value:'meta'},
+				{label:'产品名称',value:'productName'},
+				{label:'元数据匹配',value:'meta'},
+				{label:'物料号/版本号',value:'materialNo'},
         {label:'梯型',value:'model'},
         {label:'梯号',value:'modelNo'},
-          {label:'数量',value:'count'},
+       	{label:'数量',value:'count'},
         {label:'单位',value:'util'},
         {label:'单价',value:'price'},
         {label:'项目号',value:'projectNo'},
         {label:'箱号',value:'boxNo'},
         {label:'制单日期',value:'orderDate'},
         {label:'交货日期',value:'deliveryDate'},
-        {label:'物料号/版本号',value:'materialNo'},
         {label:'图号/版本号',value:'caselNo'},
         {label:'项目名称',value:'projectName'},
         {label:'备注',value:'content'}
@@ -98,12 +101,12 @@ export default {
 			uploadTotal:0,
 			queryUpload:{
 				page:1,
-				pagesize:20
+				pagesize:200
 			},
 			lastId:0,
 			tableForm:{
 				crmId:'',
-				typeId:''
+				typeId:[1,2]
 			},
 			tableRules:{
 				crmId:[{ required: true, message: '请选择客户', trigger: 'change'}],
@@ -118,41 +121,45 @@ export default {
 	},
 	methods:{
     selectionChange(selection){
-      console.log('selectionChange',selection);
-      this.uploadTable = selection;
+      //console.log('selectionChange',selection);
+			this.uploadTable = selection;
+			this.checkRepeat(this.uploadTable);
     },
 		tableFilter(){
+			//this.repeatCount = 0;
       let list = _.cloneDeep(this.sourceData);
       // 过滤订单类型
       list = _.filter(list, (item)=>{
-        return this.tableForm.typeId == item.typeId;
+        return this.tableForm.typeId.includes(item.typeId);//this.tableForm.typeId == item.typeId;
       });
       // 筛选客户
       let crmList = _.cloneDeep(this.setting.crm);
-      this.crmList = _.filter(crmList,{'typeId':this.tableForm.typeId})
-
+      this.crmList = _.filter(crmList,(item)=>{
+				return this.tableForm.typeId.includes(item.typeId);//{'typeId':this.tableForm.typeId}
+			})
       this.tableData = list;
-      this.uploadTotal = this.tableData.length;
+			this.uploadTotal = this.tableData.length;
 		},
-    modelFilter(flag){
-      console.log('modelFilter', flag);
-      let list = _.cloneDeep(this.sourceData);
+		removeRepeat(){
+			let list = []; //_.cloneDeep(this.tableData);
+			this.sourceData.forEach(item=>{
+				if(!item.isRepeat){
+					list.push(item);
+				}
+			});
+			this.repeatCount = 0;
+			this.sourceData = list;
+			this.tableData = list;
+			this.uploadTotal = list.length;
+		},
+		// 检查订单梯号是否重复
+    checkRepeat(arr){
       this.repeatCount = 0;
-      if(list.length){
-        if(flag){
-          this.tableData = _.filter(list, (item)=>{
-            return item.isRepeat === undefined;
-          });
-        }else{
-          this.tableData = list;
-          list.forEach(item=>{
-            if(item.isRepeat !== undefined){
-              this.repeatCount++;
-            }
-          })
-        }
-        this.uploadTotal = this.tableData.length;
-      }
+      arr.forEach(item=>{
+				if(item.isRepeat !== undefined){
+					this.repeatCount++;
+				}
+			})
     },
 		beforeUpload(file) {
 			this.tableData = [];
@@ -184,18 +191,10 @@ export default {
 			// 处理列名
 			this.tableHeader = [];//['isMake','isRepeat'];
       // 重复订单量
-      this.repeatCount = 0;
+      //this.repeatCount = 0;
       this.tableKeys.forEach(item=>{
         this.tableHeader.push(item.label);
-        /* if(header.includes(item.label) && !this.tableHeader.includes(item.label)){
-          this.tableHeader.push(item.label);
-        } */
       })
-			/* header.forEach(str=>{
-				if(_.find(this.tableKeys,{'label':str}) && !this.tableHeader.includes(str)){
-					this.tableHeader.push(str)
-				}
-			}); */
 			//处理导入的数据
       var index = 1;
       //var series = [];
@@ -208,7 +207,7 @@ export default {
             let serial = this.checkSerial();
             this.serialList.push(serial);
 						item[k] = serial;
-					}else if(k ==='产品名称'){
+					}else if(k ==='产品名称'||k ==='物料描述'){
 						let str = item[k].replace(/\s+/g, "");
             if(str.indexOf('轿顶防护栏')>-1 || str.indexOf('线槽')>-1 || str.indexOf('挂钩')>-1 || str.indexOf('救援装置柜')>-1){
               item['isMake'] = '属于生产订单';
@@ -218,7 +217,6 @@ export default {
             }
             // 匹配产品分类和产品ID
             let product = _.find(this.productList,(p)=>{
-							debugger
 							if(p['name'].replace(/\s+/g, "") == str && p['materialNo'] == item['物料号/版本号']){
 								return p;
 							}
@@ -228,7 +226,6 @@ export default {
             }
 					}else if(k ==='梯号' && this.checkModelNo(item[k])){ 
             item['isRepeat'] = '订单梯号重复';
-            this.repeatCount += 1;
           }
 				}
 				return item;
@@ -236,6 +233,7 @@ export default {
 			//debugger
 			this.sourceData = _.orderBy(results,['isMake','isRepeat'],['asc']);
 			this.tableData = _.cloneDeep(this.sourceData);
+			this.checkRepeat(this.tableData);
 			this.uploadTotal = this.sourceData.length;
       this.uploading = false;
 		},
@@ -262,7 +260,7 @@ export default {
             return;
           }
           if(this.repeatCount){
-            this.$confirm('订单有'+this.repeatCount+'个重复的梯号, 是否继续?', '', {
+            this.$confirm('在保存的订单有'+this.repeatCount+'个重复的梯号, 是否继续?', '', {
               confirmButtonText: '确定',
               cancelButtonText: '取消',
               type: 'warning'
@@ -290,8 +288,12 @@ export default {
 			}
 		},
 		async saveData(){
+			this.uploading = true;
+			let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
 			let crm = _.find(this.setting.crm,{'id':this.tableForm.crmId});
+			let indexs = [];
 			let dataList = this.uploadTable.map((item, index)=>{
+				indexs.push(item.index)
 				let id = this.lastId + index + 1;
 				let obj = {id:id,typeId:1,flowStateId:1,crmId:crm.id,crmName:crm.name,crmNo:crm.crmNo,createByUser:this.$store.state.user.name};
 				for(let key in item){
@@ -325,22 +327,28 @@ export default {
 			};
 			console.log(condition);
 			this.$axios.$post('mock/db', {data:condition}).then(result=>{
-        this.uploadTable.forEach(item=>{
-          var index = _.findIndex(this.sourceData,{'index':item.index});
+				indexs.forEach(i=>{
+					let index = _.findIndex(this.sourceData,{'index':i});
+					this.sourceData.splice(index,1);
+				})
+        /* this.uploadTable.forEach(item=>{
+          let index = _.findIndex(this.sourceData,{'index':item.index});
           if(index>-1){
             this.sourceData.splice(index,1);
           }
-        });
+        }); */
         this.tableData = _.cloneDeep(this.sourceData);
         this.uploadTable = [];
         this.uploadTotal = this.sourceData.length;
-        this.tableForm.typeId = '';//this.tableForm.typeId==1?2:1;
-        this.tableForm.crmId = '';
+        //this.tableForm.typeId = '';//this.tableForm.typeId==1?2:1;
+        //this.tableForm.crmId = '';
 
         //this.sourceData = [];
 				//this.tableData = [];
 				this.getModelNoList();
 				this._getLastId();
+				this.uploading = false;
+				loadingMask.close();
 			});
 		},
 		// 获取所有订单列表,列出梯号,校验是否重复
@@ -351,12 +359,12 @@ export default {
 				cols:{modelNo:1,crmId:1,serial:1}
 			}
 			let result = await this.$axios.$post('mock/db', {data:condition});
-			console.log('getModelNoList',result);
+			//console.log('getModelNoList',result);
 			this.modelNoList = result;
       result.forEach(item=>{
         this.serialList.push(item.serial);
       });
-      console.log('serialList',this.serialList);
+      //console.log('serialList',this.serialList);
 		},
 		async _getLastId(){
 			let condition = {

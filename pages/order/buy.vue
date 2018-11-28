@@ -101,9 +101,13 @@
                 </el-table-column>
                 <el-table-column label="操作" fixed="right" align="center" width="100">
                     <template slot-scope="scope">
-                        <el-button size="mini" type="text" @click="handleUpdate(scope.row)">编辑</el-button>
-                        <el-button size="mini" type="text" @click="handleDelete(scope.row)">删除</el-button>
+                        <span  v-if="scope.row.flowStateId==1">
+                            <el-button size="mini" type="text" @click="handleUpdate(scope.row)">编辑</el-button>
+                            <el-button size="mini" type="text" @click="handleDelete(scope.row)">删除</el-button>
+                        </span>
+                        <span v-else style="color:#CCC">已采购入库</span>
                     </template>
+                    
                 </el-table-column>
             </el-table>
             <div class="page-container" style="padding: 10px 0;">
@@ -111,48 +115,9 @@
                 </el-pagination>
             </div>
         </div>
+        <!--订单录入-->
         <div class="form-container" v-else>
-            <div v-if="!editRow">
-                <upload-excel-component @saveData="saveData" :on-success="handleSuccess" :before-upload="beforeUpload"/>
-            </div>
-			<!--批量导入-->
-            <div v-if="tableData.length">
-				<el-form :inline="true" :model="tableForm" :rules="tableRules" ref="tableForm" size="mini">
-					<el-form-item label="客户名称：" prop="crmId">
-						<el-select v-model="tableForm.crmId" placeholder="请选择客户" filterable style="width:250px">
-							<el-option v-for="crm in crmList" :key="crm.id" :label="crm.name" :value="crm.id"/>
-						</el-select>
-					</el-form-item>
-					<el-form-item label="订单类型：" prop="typeId">
-						<el-radio-group v-model="tableForm.typeId" @change="setTableType">
-							<el-radio v-for="item in typeList" :key="item.id" :label="item.id">{{item.name}}</el-radio>
-						</el-radio-group>
-					</el-form-item>
-					<el-form-item>
-						<el-button type="primary" @click="saveTable">保存数据</el-button>
-					</el-form-item>
-				</el-form>
-                <el-table size="mini"
-                :data="tableData.slice((queryUpload.page-1)*queryUpload.pagesize, queryUpload.page*queryUpload.pagesize)"
-                border highlight-current-row
-                style="width: 100%;margin-top:20px;" max-height="400">
-                    <el-table-column label="No." width="70px" align="center">
-                        <template slot-scope="scope">
-                            <span>{{scope.$index+(queryUpload.page - 1) * queryUpload.pagesize + 1}} </span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column v-for="item of tableHeader" :prop="item" :label="item" :key="item" :width="item=='isSale'?80:300">
-						<template slot-scope="scope">
-							<span>{{scope.row[item]}}</span>
-						</template>
-					</el-table-column>
-                </el-table>
-                <div class="page-container" style="padding: 10px 0;">
-                    <el-pagination size="mini" @size-change="uploadSizeChange" @current-change="uploadCurrentChange" :current-page.sync="queryUpload.page" :page-sizes="[20, 50, 100, 200]" :page-size="queryUpload.pagesize" layout="total,sizes, prev, pager, next" :total="uploadTotal">
-                    </el-pagination>
-                </div>
-            </div>
-            <el-form v-else :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" size="mini">
+            <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" size="mini">
                 <el-form-item label="产品分类" prop="ptypeId">
                     <el-select v-model="ruleForm.ptypeId" placeholder="请选择" filterable clearable  @change="setPtype">
                         <el-option v-for="ptype in ptypeList" :key="ptype.id" :label="ptype.name" :value="ptype.id"/>
@@ -160,7 +125,7 @@
                 </el-form-item>
                 <el-form-item label="产品名称" prop="productId">
                     <el-select v-model="ruleForm.productId" placeholder="请选择" filterable @change="setProduct" style="width:300px">
-                        <el-option v-for="product in proList" :key="product.id" :label="product.name" :value="product.id"/>
+                        <el-option v-for="product in proList" :key="product.id" :label="product.name+'('+product.materialNo+')'" :value="product.id"/>
                     </el-select>
                 </el-form-item>
                 <el-form-item label="客户名称" prop="crmName">
@@ -227,28 +192,8 @@
     </section>
 </template>
 <script>
-const tableKeys = [
-    {label:'订单编号',value:'serial'},
-    {label:'梯型',value:'model'},
-    {label:'项目号',value:'projectNo'},
-    {label:'梯号',value:'modelNo'},
-    {label:'箱号',value:'boxNo'},
-    {label:'制单日期',value:'orderDate'},
-    {label:'交货日期',value:'deliveryDate'},
-    {label:'物料号/版本号',value:'materialNo'},
-    {label:'图号/版本号',value:'caselNo'},
-    {label:'产品名称',value:'productName'},
-    {label:'数量',value:'count'},
-    {label:'单位',value:'util'},
-    {label:'单价',value:'price'},
-    {label:'项目名称',value:'projectName'},
-    {label:'备注',value:'content'}
-]
-//import settings from '@/config/files/dataList.json';
-import UploadExcelComponent from '@/components/UploadExcel'
 export default {
     name:'role',
-    components: { UploadExcelComponent },
     data(){
         return {
             setting:{},
@@ -321,11 +266,6 @@ export default {
                     { required: true, message: '请输入单价', trigger: 'blur'},
                 ]
             },
-            uploadTotal:0,
-            queryUpload:{
-                page:1,
-                pagesize:20
-            },
             lastId:0,
             tableForm:{
 				crmId:'',
@@ -334,56 +274,13 @@ export default {
 			tableRules:{
 				crmId:[{ required: true, message: '请选择客户', trigger: 'change'}]
 			},
-			sourceData:[],
-            tableData: [],
-            tableHeader: []
         }
     },
     methods:{
 		setTableType(id){
 			console.log('setTableType', id)
 		},
-        beforeUpload(file) {
-            const isLt1M = file.size / 1024 / 1024 < 1
-            if (isLt1M) {
-                return true;
-            }
-            this.$message({
-                message: '文件大小不能超过1M',
-                type: 'warning'
-            })
-            return false;
-        },
-        handleSuccess({results, header}) {
-            //处理列名
-			this.tableHeader = ['isSale'];
-			header.forEach(str=>{
-				if(_.find(tableKeys,{'label':str}) && !this.tableHeader.includes(str)){
-					this.tableHeader.push(str)
-				}
-            });
-			//处理导入的数据
-			results = results.map(item=>{
-				for(let k in item){
-					if(k === '订单编号'){
-						item[k] = this.handleSerial(true);
-					}else if(k ==='产品名称' && (item[k].indexOf('桥顶防护栏')>0 || item[k].indexOf('线槽')>0 || item[k].indexOf('挂钩')>0 || item[k].indexOf('救援装置柜'))>0){
-						item['isSale'] = true;
-					}
-				}
-				return item;
-			});
-			//debugger
-			this.sourceData = _.orderBy(results,['isSale'],['asc']);
-			this.tableData = _.cloneDeep(this.sourceData);
-            this.uploadTotal = this.sourceData.length;
-        },
-        uploadSizeChange(val){
-            this.queryUpload.pagesize = val;
-        },
-        uploadCurrentChange(val){
-            this.queryUpload.page = val;
-        },
+        
         initProduct(){
             //debugger
             this.ptypeList = _.filter(this.setting.ptype,{typeId:1});
@@ -423,15 +320,10 @@ export default {
         },
         handleSerial(flag){
 			let serial = Math.random().toString(36).substr(2).toLocaleUpperCase();
-			if(flag){
-				return serial;
-			}
             this.ruleForm.serial = serial;
         },
         handleAdd(){
             this._getLastId();
-            this.tableData = [];
-            this.tableHeader = [];
             this.isEdit = !this.isEdit;
             this.editRow = null;
             this.ruleForm = {
@@ -532,62 +424,7 @@ export default {
             let crm = _.find(this.crmList, {'id':id});
             return crm.name;
         },
-		saveTable(){
-			this.$refs['tableForm'].validate((valid) => {
-				if(valid){
-					this.saveData();
-				}
-			});
-		},
-        async saveData(){
-            let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
-			let crm = _.find(this.crmList,{'id':this.tableForm.crmId});
-            let dataList = this.tableData.map((item, index)=>{
-                let id = this.lastId + index + 1;
-                let obj = {id:id,typeId:1,flowStateId:1,crmId:crm.id,crmName:crm.name,crmNo:crm.crmNo,createByUser:this.$store.state.user.name};
-                for(let key in item){
-					if(key === 'isSale'){
-						obj = _.merge(obj, {typeId:2,flowStateId:4});
-					}
-                    let o = _.find(tableKeys, {label:key});
-                    if(o){
-                        let k = o.value;
-                        let val = this._setValue(k, item[key]);
-                        if(k === 'productName'){
-                            let p = _.find(this.productList, {'name':val,'typeId':1});
-                            if(p){
-                                obj.ptypeId = p.ptypeId;
-                                obj.productId = p.id;
-                                obj.crmId = p.crmId;
-                            }
-                        }else if(k === 'crmName'){
-                            let crm = _.find(this.crmList, {'name':val});
-                            if(crm){
-                                obj.crmId = crm.id;
-                            }
-                        }
-                        obj[k] = val;
-                    }
-                };
-                return obj;
-            });
-            let condition = {
-                type:'addPatch',
-                collectionName: 'order',
-                data:dataList
-            };
-			console.log(condition);
-			loadingMask.close();
-			return;
-            this.$axios.$post('mock/db', {data:condition}).then(result=>{
-                loadingMask.close();
-                this.tableData = [];
-                this.isEdit = false;
-                this.query.page = 1;
-                this.getList();
-                this._getLastId();
-            });
-        },
+		
         _setValue(key, value){
             switch(key){
                 case 'orderDate':
@@ -692,7 +529,7 @@ export default {
                     {
                         $addFields: {flowStateName:"$flowState.name"}
                     },
-                    {$sort:{id:-1}},
+                    {$sort:{_id:-1}},
                     {$skip:(this.query.page-1)*this.query.pagesize},
                     {$limit:this.query.pagesize}
                 ]

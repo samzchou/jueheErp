@@ -13,6 +13,7 @@
             :data="gridList" 
             border fit highlight-current-row 
             size="mini" 
+            max-height="400" 
             style="width: 100%">
                 <el-table-column label="No." width="50px" align="center" type="index"></el-table-column>
                 <el-table-column prop="name" label="库位名称" width="200px"></el-table-column>

@@ -8,7 +8,6 @@
                 <el-button @click="handleAdd" type="text" size="medium" :icon="!isEdit?'el-icon-plus':'el-icon-close'">{{!isEdit?'新增客户':'取消返回'}}</el-button>
             </div>
         </div>
-
         <div class="grid-container" v-if="!isEdit">
             <div class="search-content">
                 <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
@@ -32,7 +31,7 @@
                 </el-form>
             </div>
 
-            <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" height="500" style="width: 100%">
+            <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" max-height="400" style="width: 100%">
                 <el-table-column label="No." width="50px" align="center" type="index">
                   <template slot-scope="scope">{{scope.$index+(query.page - 1) * query.pagesize + 1}} </template>
                 </el-table-column>

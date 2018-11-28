@@ -37,7 +37,8 @@
             <el-table v-loading="listLoading"
             :data="gridList"
             border fit highlight-current-row
-            size="mini"
+            size="mini" 
+            max-height="400" 
             style="width: 100%">
                 <el-table-column label="No." width="50px" align="center" type="index"></el-table-column>
                 <el-table-column prop="name" label="姓名" width="120px"></el-table-column>

@@ -36,7 +36,6 @@
                     <el-form-item>
                         <el-button type="primary" @click="submitSearch">搜索</el-button>
                     </el-form-item>
-                    
                 </el-form>
             </div>
             <div id="printTable">
@@ -91,9 +90,22 @@
                             <span>{{scope.row.outcount}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="incount" label="当前库存" width="120">
+                     <el-table-column label="出库总价" width="120">
+                        <template slot-scope="scope">
+                            <span>{{parseReleaseMoney(scope.row)}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="incount" label="当前库存" width="100">
                         <template slot-scope="scope">
                             <span :class="{'warning':scope.row.incount==0}">{{scope.row.incount}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="incount" label="7天后库存" width="150">
+                        <template slot-scope="scope">
+                            <span :class="{'warning':scope.row.incount==0}">
+                                {{parseMaterialNo(scope.row)}}
+                                <el-button type="text" v-if="parseMaterialNo(scope.row)<0" @click="viewAfterOrder(scope.row)">比对查阅</el-button>
+                            </span>
                         </template>
                     </el-table-column>
                     <el-table-column prop="createDate" label="入库日期" width="100">
@@ -108,6 +120,36 @@
                 </el-pagination>
             </div>
         </div>
+        <el-dialog title="比较采购订单" :visible.sync="openDialogVisible">
+            <div class="compare" v-if="afterOrderItem">
+                <div>
+                    <h3>即将采购订单</h3>
+                    <ul>
+                        <li><span>货品名称：</span><span>{{afterOrderItem.productName}}</span></li>
+                        <li><span>订单号：</span><span>{{afterOrderItem.serial}}</span></li>
+                        <li><span>物料号：</span><span>{{afterOrderItem.materialNo}}</span></li>
+                        <li><span>单位：</span><span>{{afterOrderItem.util}}</span></li>
+                        <li><span>采购数量：</span><span>{{afterOrderItem.count}}</span></li>
+                        <li><span>单价：</span><span>{{afterOrderItem.price}}</span></li>
+                        <li><span>制单日期：</span><span>{{parseDate(afterOrderItem.orderDate)}}</span></li>
+                        <li><span>交付日期：</span><span>{{parseDate(afterOrderItem.deliveryDate)}}</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>库存货品</h3>
+                    <ul>
+                        <li><span>货品名称：</span><span>{{currItem.productName}}</span></li>
+                        <li><span>订单号：</span><span>{{currItem.order.serial}}</span></li>
+                        <li><span>物料号：</span><span>{{currItem.order.materialNo}}</span></li>
+                        <li><span>单位：</span><span>{{currItem.order.util}}</span></li>
+                        <li><span>库存数量：</span><span>{{currItem.incount}}</span></li>
+                        <li><span>单价：</span><span>{{currItem.order.price}}</span></li>
+                        <li><span>入库日期：</span><span>{{parseDate(currItem.createDate)}}</span></li>
+                        <li><span>最后更新：</span><span>{{parseDate(currItem.updateDate)}}</span></li>
+                    </ul>
+                </div>
+            </div>
+        </el-dialog>
     </section>
 </template>
 
@@ -116,6 +158,10 @@
 export default {
     data(){
         return {
+            openDialogVisible:false,
+            afterOrderItem:null,
+            currItem:null,
+            afterOrderList:[],
             listLoading:false,
             total:0,
             query:{
@@ -144,6 +190,24 @@ export default {
             if(!id || id=='') return '';
             let type = _.find(this.typeList, {id:id});
             return type.name;
+        },
+        parseReleaseMoney(row){
+            return this.$options.filters['currency'](row.outcount*row.order.price);
+        },
+        viewAfterOrder(row){
+            this.afterOrderItem = _.find(this.afterOrderList, {'materialNo':row.order.materialNo});
+            this.currItem = row;
+            this.openDialogVisible = true;
+        },
+        // 比较物料号相同
+        parseMaterialNo(row){
+            let counts = 0;
+            let order = _.find(this.afterOrderList, {'materialNo':row.order.materialNo});
+            console.log('parseMaterialNo', order);
+            if(order && order.serial != row.serial){
+                counts = row.incount - order.count;
+            }
+            return counts;
         },
         parseStoreNo(id){
             if(!id || id=='') return '';
@@ -244,10 +308,23 @@ export default {
 
                 this.getList();
             }
-        }
+        },
+        async getBuys(){
+            let condition = {
+                type:"listOrderByDate",
+            }
+            let result = await this.$axios.$post('mock/db', {data:condition});
+            console.log('getBuys', result);
+            this.afterOrderList = result.list;
+        },
     },
     created(){
         this.getSetting();
+        // 获取七天后的采购订单数据
+        this.getBuys();
+    },
+    mounted(){
+        
     }
 }
 </script>
@@ -257,5 +334,33 @@ export default {
         color:red;
         font-size: 14px;
         font-weight: 700;
+    }
+    .compare{
+        display: flex;
+        >div{
+            flex:1;
+            box-sizing: border-box;
+            padding: 0 10px;
+            >h3{
+                font-size: 14px;
+                border-bottom: 1px solid #DDD;
+                line-height: 36px;
+            }
+            >ul{
+                flex:1;
+                box-sizing: border-box;
+                >li{
+                    line-height: 30px;
+                    border-bottom: 1px solid #DDD;
+                    display: flex;
+                    >span{
+                        &:first-child{
+                            width:80px;
+                            color:#417ce8;
+                        }
+                    }
+                }
+            }
+        }
     }
 </style>

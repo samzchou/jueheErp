@@ -65,6 +65,25 @@ const dbFun = {
             }
         }
     },
+	/*--------列出几天后的所有采购订单数据--------*/
+    async listOrderByDate(params){
+        let now = new Date();
+		let sd = new Date(now.setDate(now.getDate() -1));
+		let ed = new Date(now.setDate(now.getDate() + 6));
+        let condition = {'typeId':1,'flowStateId':1,'updateDate':{'$gte':sd.getTime(),'$lte':ed.getTime()}};
+
+		console.log('listOrderByDate',condition);
+
+        let total = await mongoDB['order'].find(condition).countDocuments();
+        let list = await mongoDB['order'].find(condition);
+        return {
+            success:true,
+            response:{
+                total:total,
+                list : list
+            }
+        }
+    },
 
     /*--------列出数据--------*/
     async listData(params){

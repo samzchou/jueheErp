@@ -57,7 +57,7 @@
                     </el-table-column>
                     <el-table-column label="订单编号" width="120">
                         <template slot-scope="scope">
-                            <span>{{scope.row.serial}}</span>
+                            <el-button type="text" @click="showOrderInfo(scope.row)">{{scope.row.serial}}</el-button>
                         </template>
                     </el-table-column>
                     <el-table-column label="货品名称">
@@ -85,6 +85,11 @@
                             <span>{{scope.row.outcount}}</span>
                         </template>
                     </el-table-column>
+                    <el-table-column label="出库总价"  width="150">
+                        <template slot-scope="scope">
+                            <span>{{parseReleaseMoney(scope.row)}}</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column prop="updateDate" label="出库日期" width="100">
                         <template slot-scope="scope">
                             <span>{{parseDate(scope.row.updateDate)}}</span>
@@ -107,7 +112,6 @@
                 </el-pagination>
             </div>
         </div>
-
         <div v-else class="form-plit">
             <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="80px" size="mini">
                 <el-form-item label="出库来源" prop="ptypeId">
@@ -183,8 +187,26 @@
                     </el-pagination>
                 </div>
             </div>
-
         </div>
+        <el-dialog title="订单明细查阅" :visible.sync="openDialogVisible" width="450px">
+            <div class="compare" v-if="currItem">
+                <div>
+                    <ul>
+                        <li><span>货品名称：</span><span>{{currItem.productName}}</span></li>
+                        <li><span>客户：</span><span>{{currItem.order.crmName}}</span></li>
+                        <li><span>订单号：</span><span>{{currItem.serial}}</span></li>
+                        <li><span>物料号：</span><span>{{currItem.order.materialNo}}</span></li>
+                        <li><span>单位：</span><span>{{currItem.order.util}}</span></li>
+                        <li><span>订单数量：</span><span>{{currItem.order.count}}</span></li>
+                        <li><span>单价：</span><span>{{currItem.order.price}}</span></li>
+                        <li><span>当前库存：</span><span>{{currItem.incount}}</span></li>
+                        <li><span>制单日期：</span><span>{{parseDate(currItem.orderDate)}}</span></li>
+                        <li><span>交付日期：</span><span>{{parseDate(currItem.deliveryDate)}}</span></li>
+                        <li><span>制单人：</span><span>{{currItem.order.createByUser}}</span></li>
+                    </ul>
+                </div>
+            </div>
+        </el-dialog>
     </section>
 </template>
 
@@ -193,6 +215,8 @@
 export default {
     data(){
         return {
+            openDialogVisible:false,
+            currItem:null,
             searchInput:'',
             listLoading:false,
             isEdit:false,
@@ -236,6 +260,11 @@ export default {
         }
     },
     methods:{
+        showOrderInfo(row){
+            this.openDialogVisible = true;
+            this.currItem = row;
+            //console.log('showOrderInfo',row)
+        },
         handlePrint(){
             this.$print(this.$refs.print) 
         },
@@ -252,6 +281,9 @@ export default {
         },
         parseMoney(row){
             return this.$options.filters['currency'](row.count*row.price);
+        },
+        parseReleaseMoney(row){
+            return this.$options.filters['currency'](row.outcount*row.order.price);
         },
         parseType(id){
             if(!id || id=='') return '';
@@ -536,6 +568,34 @@ export default {
                 text-align: center;
                 border-radius: 3px;
                 
+            }
+        }
+    }
+    .compare{
+        display: flex;
+        >div{
+            flex:1;
+            box-sizing: border-box;
+            padding: 0 10px;
+            >h3{
+                font-size: 14px;
+                border-bottom: 1px solid #DDD;
+                line-height: 36px;
+            }
+            >ul{
+                flex:1;
+                box-sizing: border-box;
+                >li{
+                    line-height: 30px;
+                    border-bottom: 1px solid #DDD;
+                    display: flex;
+                    >span{
+                        &:first-child{
+                            width:80px;
+                            color:#417ce8;
+                        }
+                    }
+                }
             }
         }
     }
