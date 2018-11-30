@@ -17,11 +17,16 @@
                     <el-form-item label="订单编号：" prop="serial">
                         <el-input v-model="searchForm.serial" clearable  style="width:120px"/>
                     </el-form-item>
-                    <el-form-item label="客户名称" prop="crmName">
-                        <el-input v-model="searchForm.crmName" clearable  style="width:120px"/>
-                    </el-form-item>
                     <el-form-item label="货品名称：" prop="productName">
                         <el-input v-model="searchForm.productName" clearable  style="width:120px"/>
+                    </el-form-item>
+                    <el-form-item label="物料号：" prop="materialNo">
+                        <el-input v-model="searchForm.materialNo" clearable/>
+                    </el-form-item>   
+                    <el-form-item label="客户：" prop="crmId">
+                        <el-select v-model="searchForm.crmId" placeholder="请选择" clearable style="width:200px">
+                            <el-option v-for="item in crmList" :key="item.id" :label="item.name" :value="item.id"/>
+                        </el-select>
                     </el-form-item>
                     <el-form-item label="发票号：" prop="invoiceNumber">
                         <el-input v-model="searchForm.invoiceNumber" clearable  style="width:120px"/>
@@ -35,6 +40,33 @@
                 </el-form>
             </div>
             <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" max-height="400">
+                <el-table-column type="expand">
+                    <template slot-scope="props">
+                        <el-form label-position="left" label-width="80" inline class="table-expand">
+                            <el-form-item label="客户名称：">
+                                <span>{{ props.row.crmName }}</span>
+                            </el-form-item>
+                            <el-form-item label="联系地址：">
+                                <span>{{ parseCrm(props.row.crmId,'address') }}</span>
+                            </el-form-item>
+                            <el-form-item label="联系人：">
+                                <span>{{ parseCrm(props.row.crmId,'contactName') }}</span>
+                            </el-form-item>
+                            <el-form-item label="联系电话：">
+                                <span>{{ parseCrm(props.row.crmId,'contactPhone') }}</span>
+                            </el-form-item>
+                            <el-form-item label="税号：">
+                                <span>{{ parseCrm(props.row.crmId,'revenueNo') }}</span>
+                            </el-form-item>
+                            <el-form-item label="开户银行：">
+                                <span>{{ parseCrm(props.row.crmId,'bank') }}</span>
+                            </el-form-item>
+                            <el-form-item label="银行账号：">
+                                <span>{{ parseCrm(props.row.crmId,'bankNo') }}</span>
+                            </el-form-item>
+                        </el-form>
+                    </template>
+                </el-table-column>
                 <el-table-column label="No." width="70px" align="center">
                     <template slot-scope="scope">
                         <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
@@ -60,7 +92,7 @@
                         <span>{{scope.row.order.materialNo}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="util" label="单位" width="70">
+                <el-table-column prop="util" label="单位">
                     <template slot-scope="scope">
                         <span>{{scope.row.util}}</span>
                     </template>
@@ -70,7 +102,7 @@
                         <span>{{scope.row.price | currency}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="count" label="订单量" width="70">
+                <el-table-column prop="count" label="订单量">
                     <template slot-scope="scope">
                         <span>{{scope.row.count}}</span>
                     </template>
@@ -92,7 +124,7 @@
                         <span>{{scope.row.createByUser}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="content" label="备注说明" width="70">
+                <el-table-column prop="content" label="备注说明">
                     <template slot-scope="scope">
                         <span>{{scope.row.content}}</span>
                     </template>
@@ -148,6 +180,33 @@
                 </h5>
                 <el-table 
                 :data="oList" border fit highlight-current-row  size="mini" height="400" @selection-change="selectionRow">
+                    <el-table-column type="expand">
+                        <template slot-scope="props">
+                            <el-form label-position="left" label-width="80" inline class="table-expand">
+                                <el-form-item label="客户名称：">
+                                    <span>{{ props.row.crmName }}</span>
+                                </el-form-item>
+                                <el-form-item label="联系地址：">
+                                    <span>{{ parseCrm(props.row.crmId,'address') }}</span>
+                                </el-form-item>
+                                <el-form-item label="联系人：">
+                                    <span>{{ parseCrm(props.row.crmId,'contactName') }}</span>
+                                </el-form-item>
+                                <el-form-item label="联系电话：">
+                                    <span>{{ parseCrm(props.row.crmId,'contactPhone') }}</span>
+                                </el-form-item>
+                                <el-form-item label="税号：">
+                                    <span>{{ parseCrm(props.row.crmId,'revenueNo') }}</span>
+                                </el-form-item>
+                                <el-form-item label="开户银行：">
+                                    <span>{{ parseCrm(props.row.crmId,'bank') }}</span>
+                                </el-form-item>
+                                <el-form-item label="银行账号：">
+                                    <span>{{ parseCrm(props.row.crmId,'bankNo') }}</span>
+                                </el-form-item>
+                            </el-form>
+                        </template>
+                    </el-table-column>
                     <el-table-column width="40px" type="selection"/>
                     <el-table-column prop="serial" label="订单编号" width="120px"/>
                     <el-table-column prop="deliveryDate" label="交付日期" width="100px">
@@ -157,6 +216,7 @@
                     </el-table-column>
                     <el-table-column prop="crmName" label="客户名称" width="200px" sortable/>
                     <el-table-column prop="productName" label="货品名称" width="220px"/>
+                    <el-table-column prop="materialNo" label="物料号" width="100px"/>
                     <el-table-column prop="count" label="供应数量" width="80px"/>
                     <el-table-column prop="util" label="单位" width="60px"/>
                     <el-table-column prop="price" label="单价" width="100px">
@@ -218,6 +278,7 @@ export default {
             typeList:[],//settings.type,
             orderList:[],
             oList:[],
+            crmList:[],
             gridList:[],
             rowData:[],
             lastId:0,
@@ -228,6 +289,8 @@ export default {
                 invoiceNumber:'',
                 crmName:'',
                 productName:'',
+                crmId:'',
+                materialNo:'',
                 createDate:'',
             },
             ruleForm:{
@@ -244,6 +307,13 @@ export default {
         }
     },
     methods:{
+        parseCrm(id, key){
+            let crm = _.find(this.crmList,{'id':id});
+            if(!crm){
+                return '--'
+            }
+            return crm[key] || '--';
+        },
         showOrderInfo(row){
             this.openDialogVisible = true;
             this.currItem = row;
@@ -276,8 +346,10 @@ export default {
                 this.rowData.push({
                     orderId:item.id,
                     serial:item.serial,
+                    crmId:item.crmId,
                     crmName:item.crmName,
                     productName:item.productName,
+                    materialNo:item.materialNo,
                     util:item.util,
                     count:item.count,
                     price:item.price
@@ -371,7 +443,7 @@ export default {
         searchFilter(){
             this.oList = [];
             this.orderList.map(item=>{
-                if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput) || item.crmName.includes(this.searchInput)){
+                if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput) || item.crmName.includes(this.searchInput)  || item.materialNo.includes(this.searchInput)){
                     this.oList.push(item);
                 }
             });
@@ -456,6 +528,9 @@ export default {
                 console.log('getSetting',result)
                 this.setting = result.content;
                 this.typeList = this.setting.type;
+                this.crmList = _.filter(this.setting.crm, item=>{
+                    return item.typeId == 2;
+                });
                 this.getList();
             }
         }

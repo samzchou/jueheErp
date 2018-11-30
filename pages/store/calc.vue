@@ -25,7 +25,15 @@
                         </el-select>
                     </el-form-item>
                     <el-form-item label="货品名称：" prop="productName">
-                        <el-input v-model="searchForm.productName" clearable  style="width:120px"/>
+                        <el-input v-model="searchForm.productName" clearable/>
+                    </el-form-item>
+                    <el-form-item label="客户：" prop="crmId">
+                        <el-select v-model="searchForm.crmId" placeholder="请选择" clearable style="width:200px">
+                            <el-option v-for="item in crmList" :key="item.id" :label="item.name" :value="item.id"/>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="物料号：" prop="materialNo">
+                        <el-input v-model="searchForm.materialNo" clearable/>
                     </el-form-item>
                     <el-form-item label="入库日期：" prop="createDate">
                         <el-date-picker v-model="searchForm.createDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:220px"/>
@@ -70,6 +78,16 @@
                             <span>{{scope.row.productName}}</span>
                         </template>
                     </el-table-column>
+                     <el-table-column label="物料号">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.materialNo}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="客户" width="200">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.crmName}}</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column label="单位" width="70">
                         <template slot-scope="scope">
                             <span>{{scope.row.order.util}}</span>
@@ -100,7 +118,7 @@
                             <span :class="{'warning':scope.row.incount==0}">{{scope.row.incount}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="incount" label="7天后库存" width="150">
+                    <el-table-column prop="incount" label="7天内库存" width="100">
                         <template slot-scope="scope">
                             <span :class="{'warning':scope.row.incount==0}">
                                 {{parseMaterialNo(scope.row)}}
@@ -168,6 +186,7 @@ export default {
                 page:1,
                 pagesize:20
             },
+            crmList:[],
             flowList:[],//settings.flowState,
             typeList:[],//settings.type,
             storeNoList:[],//settings.storeNo,
@@ -176,6 +195,8 @@ export default {
                 serial:'',
                 typeId:'',
                 storeNoId:'',
+                crmId:'',
+                materialNo:'',
                 productName:'',
                 createDate:'',
                 incount:'',
@@ -305,7 +326,7 @@ export default {
                 this.typeList = this.setting.type;
                 this.flowList = this.setting.flowState;
                 this.storeNoList = this.setting.storeNo;
-
+                this.crmList = this.setting.crm;
                 this.getList();
             }
         },

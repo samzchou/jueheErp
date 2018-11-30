@@ -1063,12 +1063,43 @@ module.exports = {
                 key:'serial',
                 sort:3
             },
+			crmId:{
+                type: Number, 
+                default:'', 
+                widgetType:'select',
+                multiple:false,
+                label:'客户ID', 
+                key:'crmId',
+                valueSet:'crm',
+                notForm:true,
+                sort:4
+            },
+            crmName:{
+                type: String, 
+                width:200,
+                default:'', 
+                widgetType:'input',
+                multiple:false,
+                label:'关联客户名称',
+                key:'crmName',
+                sort:5
+            },
             productName:{
                 type:String, 
                 widgetType:'input',
                 label:'货品名称',
                 key:'productName',
-                sort:4
+                sort:6
+            },
+			materialNo : {
+                type:String, 
+                default:'', 
+                widgetType:'input',
+                width:200,
+                subtype:'text',
+                label:'物料号/版本号',
+                key:'materialNo',
+                sort:7
             },
             storeTypeId:{
                 type: Number, 
@@ -1078,7 +1109,7 @@ module.exports = {
                 key:'storeTypeId',
                 valueSet:'storeType',
                 notForm:true,
-                sort:5
+                sort:8
             },
             storeNoId:{
                 type: Number, 
@@ -1092,7 +1123,7 @@ module.exports = {
                     {"required": true, "message": '请选择库位', "trigger": 'change'}
                 ],
                 inSearch:true,
-                sort:6
+                sort:9
             },
             count:{
                 type: Number, 
@@ -1104,7 +1135,7 @@ module.exports = {
                 rules:[
                     {"required": true, "message": '请输入数量', "trigger": 'blur'}
                 ],
-                sort:7
+                sort:10
             },
             incount:{
                 type: Number, 
@@ -1112,7 +1143,7 @@ module.exports = {
                 widgetType:'number',
                 label:'库存数量',
                 key:'incount',
-                sort:8
+                sort:11
             },
             outcount:{
                 type: Number, 
@@ -1120,7 +1151,7 @@ module.exports = {
                 widgetType:'number',
                 label:'出库数量',
                 key:'outcount',
-                sort:9
+                sort:12
             },
             outTypeId:{
                 type: Number, 
@@ -1129,21 +1160,21 @@ module.exports = {
                 label:'出库去向', 
                 key:'outTypeId',
                 notForm:true,
-                sort:10
+                sort:13
             },
             content:{
                 type:String, 
                 widgetType:'input',
                 label:'备注说明',
                 key:'content',
-                sort:11
+                sort:14
             },
             updateContent:{
                 type:String, 
                 widgetType:'input',
                 label:'出库备注说明',
                 key:'updateContent',
-                sort:11
+                sort:15
             },
             createByUser:{
                 type: String, 
@@ -1151,7 +1182,7 @@ module.exports = {
                 label:'创建者',
                 key:'createByUser',
                 notForm:true,
-                sort:12
+                sort:16
             },
             createDate:{
                 type: Number, 
@@ -1159,7 +1190,7 @@ module.exports = {
                 label:'创建日期',
                 notForm:true,
                 key:'createDate',
-                sort:13
+                sort:17
             },
             updateByUser:{
                 type: String, 
@@ -1167,7 +1198,7 @@ module.exports = {
                 label:'出库者',
                 key:'updateByUser',
                 notForm:true,
-                sort:14
+                sort:18
             },
             updateDate:{
                 type: Number, 
@@ -1175,7 +1206,7 @@ module.exports = {
                 label:'更新日期',
                 notForm:true,
                 key:'updateDate',
-                sort:15
+                sort:19
             }
         },
         /*----------财务-----------*/
@@ -1216,6 +1247,17 @@ module.exports = {
                 inSearch:true,
                 sort:2
             },
+			crmId:{
+                type: Number, 
+                default:'', 
+                widgetType:'select',
+                multiple:false,
+                label:'客户ID', 
+                key:'crmId',
+                valueSet:'crm',
+                notForm:true,
+                sort:3
+            },
             crmName:{
                 type: String, 
                 widgetType:'input',
@@ -1225,7 +1267,7 @@ module.exports = {
                 key:'crmName',
                 notForm:true,
                 inSearch:true,
-                sort:3
+                sort:4
             },
             productName:{
                 type: String, 
@@ -1235,7 +1277,17 @@ module.exports = {
                 key:'productName',
                 notForm:true,
                 inSearch:true,
-                sort:4
+                sort:5
+            },
+			materialNo : {
+                type:String, 
+                default:'', 
+                widgetType:'input',
+                width:200,
+                subtype:'text',
+                label:'物料号/版本号',
+                key:'materialNo',
+                sort:6
             },
             util:{
                 type:String, 
@@ -1246,7 +1298,7 @@ module.exports = {
                 label:'单位',
                 key:'util',
                 notForm:true,
-                sort:5
+                sort:7
             },
             price:{
                 type: Number, 
@@ -1260,7 +1312,7 @@ module.exports = {
                 label:'单价',
                 key:'price',
                 notForm:true,
-                sort:6
+                sort:8
             },
             count:{
                 type: Number, 
@@ -1271,7 +1323,7 @@ module.exports = {
                 min:1,
                 key:'count',
                 notForm:true,
-                sort:7
+                sort:9
             },
             invoiceNumber:{
                 type: String, 
@@ -1283,7 +1335,7 @@ module.exports = {
                     {"required": true, "message": '请输入发票号', "trigger": 'blur'}
                 ],
                 inSearch:true,
-                sort:8
+                sort:10
             },
             createDate:{
                 type: Number, 
@@ -1294,7 +1346,7 @@ module.exports = {
                 key:'createDate',
                 notForm:true,
                 inSearch:true,
-                sort:9
+                sort:11
             },
             createByUser:{
                 type: String, 
@@ -1302,14 +1354,14 @@ module.exports = {
                 label:'操作者',
                 key:'createByUser',
                 notForm:true,
-                sort:10
+                sort:12
             },
             content:{
                 type: String, 
                 widgetType:'input',
                 label:'备注说明',
                 key:'content',
-                sort:11
+                sort:13
             }
         },
     }

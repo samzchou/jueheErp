@@ -9,7 +9,7 @@
             <div>
                 <el-button v-if="!isEdit" @click="handleAdd" type="text" size="medium" icon="el-icon-plus">新增入库单</el-button>
                 <el-button v-else @click="isEdit=false" type="text" size="medium" icon="el-icon-close">取消返回</el-button>
-               </div>
+            </div>
         </div>
         <div class="grid-container" v-if="!isEdit">
             <div class="search-content">
@@ -17,18 +17,26 @@
                     <el-form-item label="订单编号：" prop="serial">
                         <el-input v-model="searchForm.serial" clearable  style="width:120px"/>
                     </el-form-item>
-                    <el-form-item label="业务类型" prop="typeId">
+                    <el-form-item label="业务类型：" prop="typeId">
                         <el-select v-model="searchForm.typeId" placeholder="请选择" clearable style="width:100px">
                             <el-option v-for="item in typeList" :key="item.id" :label="item.name" :value="item.id"/>
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="库位" prop="storeNoId">
+                    <el-form-item label="客户：" prop="crmId">
+                        <el-select v-model="searchForm.crmId" placeholder="请选择" clearable style="width:200px">
+                            <el-option v-for="item in crmList" :key="item.id" :label="item.name" :value="item.id"/>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="库位：" prop="storeNoId">
                         <el-select v-model="searchForm.storeNoId" placeholder="请选择" clearable style="width:100px">
                             <el-option v-for="item in storeNoList" :key="item.id" :label="item.name" :value="item.id"/>
                         </el-select>
                     </el-form-item>
                     <el-form-item label="货品名称：" prop="productName">
                         <el-input v-model="searchForm.productName" clearable  style="width:120px"/>
+                    </el-form-item>
+                    <el-form-item label="物料号：" prop="materialNo">
+                        <el-input v-model="searchForm.materialNo" clearable  style="width:120px"/>
                     </el-form-item>
                     <el-form-item label="入库日期：" prop="createDate">
                         <el-date-picker v-model="searchForm.createDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:220px"/>
@@ -65,6 +73,16 @@
                 <el-table-column label="货品名称">
                     <template slot-scope="scope">
                         <span>{{scope.row.productName}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="客户">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.crmName}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="物料号">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.materialNo}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column label="单位" width="70">
@@ -240,6 +258,7 @@ export default {
                 page:1,
                 pagesize:20
             },
+            crmList:[],
             typeList:[],//settings.type,
             orderList:[],
             oList:[],
@@ -252,6 +271,8 @@ export default {
                 typeId:'',
                 storeNoId:'',
                 productName:'',
+                materialNo:'',
+                crmId:'',
                 createDate:'',
             },
             ruleForm:{
@@ -299,6 +320,9 @@ export default {
                     orderId:item.id,
                     serial:item.serial,
                     productName:item.productName,
+                    crmId:item.crmId,
+                    crmName:item.crmName,
+                    materialNo:item.materialNo,
                     count:item.count,
                     edit:false
                 });
@@ -316,6 +340,21 @@ export default {
                 delete item.edit;
                 return item;
             });
+            // 群组化数据
+            let list = [];
+            this.isMergeSerial = false;
+            dataList.forEach(item=>{
+                let index = _.findIndex(list, {'materialNo':item.materialNo,'price':item.price,'productName':item.productName});
+                if(index>-1 && split){
+                    this.isMergeSerial = true;
+                    list[index]['count'] += item.count;
+                }else{
+                    list.push(item);
+                }
+            });
+            dataList = list;
+            console.log('list', list);
+
             this.$refs['ruleForm'].validate((valid) => {
                 if(valid) {
                     let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
@@ -414,11 +453,10 @@ export default {
             this.rowData = [];
             this.getOrderList({typeId:val,flowStateId:val==1?1:6});
         },
-
         searchFilter(){
             this.oList = [];
             this.orderList.map(item=>{
-                if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput) || item.crmName.includes(this.searchInput)){
+                if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput) || item.crmName.includes(this.searchInput) || item.materialNo.includes(this.searchInput)){
                     this.oList.push(item);
                 }
             });
@@ -507,7 +545,7 @@ export default {
                 this.setting = result.content;
                 this.typeList = this.setting.type;
                 this.storeNoList = this.setting.storeNo;
-
+                this.crmList = this.setting.crm;
                 this.getList();
             }
         }

@@ -22,13 +22,26 @@
                     <el-form-item label="订单编号：" prop="serial">
                         <el-input v-model="searchForm.serial" clearable  style="width:150px"/>
                     </el-form-item>
-                    <el-form-item label="出库去向" prop="outTypeId">
+                    <el-form-item label="库位：" prop="storeNoId">
+                        <el-select v-model="searchForm.storeNoId" placeholder="请选择" clearable style="width:100px">
+                            <el-option v-for="item in storeNoList" :key="item.id" :label="item.name" :value="item.id"/>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="出库去向：" prop="outTypeId">
                         <el-select v-model="searchForm.outTypeId" placeholder="请选择" clearable style="width:100px">
                             <el-option v-for="item in $store.state.storeTarget" :key="item.id" :label="item.name" :value="item.id"/>
                         </el-select>
                     </el-form-item>
                     <el-form-item label="货品名称：" prop="productName">
                         <el-input v-model="searchForm.productName" clearable  style="width:150px"/>
+                    </el-form-item>
+                    <el-form-item label="客户：" prop="crmId">
+                        <el-select v-model="searchForm.crmId" placeholder="请选择" clearable style="width:200px">
+                            <el-option v-for="item in crmList" :key="item.id" :label="item.name" :value="item.id"/>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="物料号：" prop="materialNo">
+                        <el-input v-model="searchForm.materialNo" clearable  style="width:120px"/>
                     </el-form-item>
                     <el-form-item label="出库日期：" prop="updateDate">
                         <el-date-picker v-model="searchForm.updateDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px"/>
@@ -63,6 +76,16 @@
                     <el-table-column label="货品名称">
                         <template slot-scope="scope">
                             <span>{{scope.row.productName}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="物料号">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.materialNo}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="客户">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.crmName}}</span>
                         </template>
                     </el-table-column>
                     <el-table-column label="单位" width="70">
@@ -168,7 +191,9 @@
                             <span>{{scope.row.order.serial}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="productName" label="货品名称"/>
+                    <el-table-column prop="productName" label="货品名称" width="200px"/>
+                    <el-table-column prop="materialNo" label="物料号" width="100px"/>
+                    <el-table-column prop="crmName" label="客户" width="220px"/>
                     <el-table-column prop="count" label="入库数量" width="80px"/>
                     <el-table-column prop="incount" label="当前库存" width="80px"/>
                     <el-table-column prop="util" label="单位" width="60px">
@@ -236,6 +261,7 @@ export default {
             },
             typeList:[],//settings.type,
             storeList:[],
+            crmList:[],
             sList:[],
             storeNoList:[],//settings.storeNo,
             gridList:[],
@@ -243,6 +269,9 @@ export default {
             searchForm:{
                 serial:'',
                 outTypeId:'',
+                storeNoId:'',
+                crmId:'',
+                materialNo:'',
                 productName:'',
                 updateDate:'',
             },
@@ -400,7 +429,7 @@ export default {
         searchFilter(){
             this.sList = [];
             this.storeList.map(item=>{
-                if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput)){
+                if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput)  || item.materialNo.includes(this.searchInput) || item.crmName.includes(this.searchInput)){
                     this.sList.push(item);
                 }
             });
@@ -490,6 +519,7 @@ export default {
                 console.log('getSetting',result)
                 this.setting = result.content;
                 this.typeList = this.setting.type;
+                this.crmList = this.setting.crm;
                 this.storeNoList = this.setting.storeNo;
 
                 this.getList();
