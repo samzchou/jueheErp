@@ -290,7 +290,7 @@ export default {
             searchForm:{
                 serial:'',
                 crmId:'',
-                flowStateId:4,
+                flowStateId:'',
                 productName:'',
                 projectNo:'',
                 boxNo:'',
@@ -704,7 +704,7 @@ export default {
                     return item.id>3;
                 });
                 this.initProduct();
-                this.getList();
+                this.getList({flowStateId:{'$gte':4}});
             }
         }
     },

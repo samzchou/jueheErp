@@ -291,7 +291,7 @@ export default {
                 boxNo:'',
                 modelNo:'',
                 materialNo:'',
-                flowStateId:1,
+                flowStateId:'',
                 orderDate:'',
                 deliveryDate:''
             },
@@ -712,7 +712,7 @@ export default {
                 });
 
                 this.initProduct();
-                this.getList({flowStateId:1});
+                this.getList({flowStateId:{'$lte':3}});//{flowStateId:1}
             }
         }
     },
