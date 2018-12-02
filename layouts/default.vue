@@ -12,11 +12,9 @@
 					<el-breadcrumb-item v-for="(item,idx) in breadcrumb" :key="idx">{{item}}</el-breadcrumb-item>
 				</el-breadcrumb>
 				<div class="main-content">
-					<el-scrollbar class="scrollbar">
 						<transition name="page-enter">
 							<nuxt class="page-content page-enter-active"/>
 						</transition>
-					</el-scrollbar>
 				</div>
 			</el-main>
 		</el-container>
@@ -35,7 +33,7 @@ export default {
 	computed:{
 		...mapState(['sidebar']),
 	},
-	
+
 	data(){
 		return {
 			breadcrumb:[]
@@ -58,7 +56,7 @@ export default {
 	mounted(){
 		this.setBreadcrumb();
 	}
-	
+
 }
 </script>
 
@@ -119,9 +117,9 @@ export default {
 				background-color: #F8F8F8;
 				border-bottom: 1px solid #ececec;
 			}
-			
+
 		}
 	}
-    
+
 </style>
 

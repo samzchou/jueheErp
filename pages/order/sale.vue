@@ -53,10 +53,10 @@
                     </el-form-item>
                 </el-form>
             </div>
-            <el-table v-loading="listLoading" 
-            :data="gridList" 
-            border fit highlight-current-row 
-            size="mini" max-height="400">
+            <el-table v-loading="listLoading"
+            :data="gridList"
+            border fit highlight-current-row
+            size="mini">
                 <el-table-column label="No." width="70px" align="center">
                     <template slot-scope="scope">
                         <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
@@ -109,8 +109,8 @@
                 <el-table-column prop="projectNo" label="项目号" width="150px"/>
                 <el-table-column prop="materialNo" label="物料号/版本号" width="150px"/>
                 <el-table-column prop="caselNo" label="图号/版本号" width="150px"/>
-                
-                
+
+
                 <el-table-column prop="content" label="备注说明" width="250px"/>
                 <el-table-column prop="createByUser" label="创建人"/>
                 <el-table-column prop="updateDate" label="最后更新" width="150px">
@@ -206,7 +206,7 @@
                 </el-form-item>
             </el-form>
         </div>
-        <el-dialog title="客户生产订单" :visible.sync="openDialogVisible" width="950px">
+        <el-dialog title="客户生产订单" :visible.sync="openDialogVisible" width="65%">
             <div class="form-dialog">
                 <el-form :inline="true" :model="dialogForm" ref="dialogForm" size="mini">
                     <el-form-item label="客户：" prop="crmId">
@@ -236,17 +236,19 @@
                 :data="crmOrderList"
                 border fit highlight-current-row
                 size="mini" max-height="400">
-                    <el-table-column prop="serial" label="订单号" width="250px"/>
-                    <el-table-column prop="materialNo" label="型号/物料号" width="100px"/>
-                    <el-table-column prop="productName" label="生产产品名称" width="250px"/>
+                    <el-table-column prop="serial" label="订单号" width="120px"/>
+                    <el-table-column prop="materialNo" label="型号/物料号" width="150px"/>
+                    <el-table-column prop="productName" label="产品名称" width="250px"/>
+                    <el-table-column prop="model" label="规格/梯型" width="100px"/>
+                    <el-table-column prop="modelNo" label="梯号" width="80px"/>
+                    <el-table-column prop="count" label="数量"/>
+                    <el-table-column prop="price" label="单价"/>
+                    <el-table-column prop="allPrice" label="合计"/>
                     <el-table-column prop="deliveryDate" label="交付日期" width="100px">
                         <template slot-scope="scope">
                             <span>{{parseDate(scope.row.deliveryDate)}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="count" label="生产数量"/>
-                    <el-table-column prop="price" label="生产单价"/>
-                    <el-table-column prop="allPrice" label="合计" width="120px"/>
                 </el-table>
             </div>
             <div class="btns">
@@ -349,8 +351,8 @@ export default {
     methods:{
         exportOrder(){
             import ('@/components/Export2Excel').then(excel=>{
-                const tHeader = ['订单号', '型号/物料号', '生产产品名称', '交付日期','生产数量', '订单单价', '合计'];
-                const filterVal = ['serial', 'materialNo', 'productName', 'deliveryDate','count', 'price', 'allPrice'];
+                const tHeader = ['订单号', '型号/物料号', '产品名称','规格/梯型','梯号', '交付日期','数量', '单价', '合计'];
+                const filterVal = ['serial', 'materialNo', 'productName', 'model','modelNo','deliveryDate','count', 'price', 'allPrice'];
                 const data = this.formatJson(filterVal, this.crmOrderList);
                 console.log('exportOrder', data);
                 excel.export_json_to_excel({
@@ -519,7 +521,7 @@ export default {
                 content:row.content
             }
             this.isEdit = true;
-            
+
         },
         handleDelete(row){
             this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', {
@@ -737,7 +739,7 @@ export default {
             }
         }
     }
-    
+
 </style>
 
 

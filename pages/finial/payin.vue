@@ -22,7 +22,7 @@
                     </el-form-item>
                     <el-form-item label="物料号：" prop="materialNo">
                         <el-input v-model="searchForm.materialNo" clearable/>
-                    </el-form-item>   
+                    </el-form-item>
                     <el-form-item label="客户：" prop="crmId">
                         <el-select v-model="searchForm.crmId" placeholder="请选择" clearable style="width:200px">
                             <el-option v-for="item in crmList" :key="item.id" :label="item.name" :value="item.id"/>
@@ -30,7 +30,7 @@
                     </el-form-item>
                     <el-form-item label="发票号：" prop="invoiceNumber">
                         <el-input v-model="searchForm.invoiceNumber" clearable  style="width:120px"/>
-                    </el-form-item>                   
+                    </el-form-item>
                     <el-form-item label="收款日期：" prop="createDate">
                         <el-date-picker v-model="searchForm.createDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:220px"/>
                     </el-form-item>
@@ -90,6 +90,16 @@
                 <el-table-column prop="materialNo" label="物料号" width="120">
                     <template slot-scope="scope">
                         <span>{{scope.row.order.materialNo}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="model" label="规格/梯型">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.order.model}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="modelNo" label="型号/梯号">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.order.modelNo}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column prop="util" label="单位">
@@ -178,7 +188,7 @@
                         <el-input size="mini" prefix-icon="el-icon-search" placeholder="快速查询" v-model="searchInput" @keyup.native="searchFilter"/>
                     </span>
                 </h5>
-                <el-table 
+                <el-table
                 :data="oList" border fit highlight-current-row  size="mini" height="400" @selection-change="selectionRow">
                     <el-table-column type="expand">
                         <template slot-scope="props">
@@ -232,8 +242,8 @@
                 </el-table>
             </div>
         </div>
-        <el-dialog title="订单明细查阅" :visible.sync="openDialogVisible" width="450px">
-            <div class="compare" v-if="currItem">
+        <el-dialog title="订单明细查阅" :visible.sync="openDialogVisible" width="40%">
+            <div class="compare" v-if="currItem" style="margin-top:-10px">
                 <div>
                     <ul>
                         <li><span>货品名称：</span><span>{{currItem.productName}}</span></li>
@@ -459,7 +469,7 @@ export default {
             this.orderList = result.list;
             this.oList = _.cloneDeep(result.list);
         },
-        
+
         async getList(match={}){
             this.listLoading = true;
             let condition = {
@@ -545,12 +555,12 @@ export default {
     .edit-count{
         color:#999;
         >i{
-            margin-left:5px; 
-            color:#e85810; 
+            margin-left:5px;
+            color:#e85810;
             font-size:16px;
             cursor: pointer;
         }
-        
+
     }
     .editrow-form{
         /deep/ .el-input{
@@ -591,7 +601,7 @@ export default {
         }
     }
     .form-plist{
-        //padding-right:25px; 
+        //padding-right:25px;
         box-sizing:border-box;
         .edit-content{
             i{
@@ -608,7 +618,7 @@ export default {
         }
     }
     .page-container{
-        padding: 10px 0; 
+        padding: 10px 0;
         display:flex;
         align-items: center;
         justify-content: space-between;

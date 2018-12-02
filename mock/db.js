@@ -70,7 +70,7 @@ const dbFun = {
         let now = new Date();
 		let sd = new Date(now.setDate(now.getDate() -1));
 		let ed = new Date(now.setDate(now.getDate() + 6));
-        let condition = {'typeId':1,'flowStateId':1,'updateDate':{'$gte':sd.getTime(),'$lte':ed.getTime()}};
+        let condition = {'typeId':1,'flowStateId':1,'deliveryDate':{'$gte':sd.getTime(),'$lte':ed.getTime()}};
 
 		console.log('listOrderByDate',condition);
 

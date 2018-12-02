@@ -1,4 +1,3 @@
-//const dbConfig = require('../files/dbConfig.json');
 module.exports = {
     dbConect:{"dataUrl":"127.0.0.1","dataPort":"27017","dataName":"test","username":"","password":""}, //47.91.231.119
     /*----------数据表Collections-----------*/
@@ -31,15 +30,15 @@ module.exports = {
         /*----------权限数据-----------*/
         role : {
             id : {
-                type: Number, 
+                type: Number,
                 key:'id',
-                default:0, 
+                default:0,
                 label:'ID',
-                sort:0, 
+                sort:0,
                 notForm:true
             },
             name : {
-                type:String, 
+                type:String,
                 key:'name',
                 default:'',
                 widgetType:'input',
@@ -53,7 +52,7 @@ module.exports = {
                 sort:1
             },
             tag : {
-                type:String, 
+                type:String,
                 key:'tag',
                 default:'',
                 widgetType:'input',
@@ -68,10 +67,10 @@ module.exports = {
                 sort:2
             },
             content : {
-                type:String, 
+                type:String,
                 key:'content',
                 default:'',
-                widgetType:'input', 
+                widgetType:'input',
                 width:500,
                 label:'描述',
                 sort:4
@@ -80,15 +79,15 @@ module.exports = {
         /*----------组织部门-----------*/
         org : {
             id : {
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 key:'id',
                 label:'ID',
-                sort:0, 
+                sort:0,
                 notForm:true
             },
             name : {
-                type:String,  
+                type:String,
                 widgetType:'input',
                 subtype:'text',
                 key:'name',
@@ -101,9 +100,9 @@ module.exports = {
                 sort:1
             },
             content : {
-                type:String, 
+                type:String,
                 default:'',
-                widgetType:'input', 
+                widgetType:'input',
                 key:'content',
                 width:500,
                 label:'描述',
@@ -113,26 +112,26 @@ module.exports = {
         /*----------职位-----------*/
         pos : {
             id : {
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'ID',
                 key:'id',
-                sort:0, 
+                sort:0,
                 notForm:true
             },
             orgId : {
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'所属部门', 
+                label:'所属部门',
                 key:'orgId',
                 valueSet:'org',
                 inSearch:true,
                 sort:1
             },
             name : {
-                type:String,  
+                type:String,
                 widgetType:'input',
                 subtype:'text',
                 label:'职位名称',
@@ -142,8 +141,8 @@ module.exports = {
                 sort:2
             },
             content : {
-                type:String, 
-                widgetType:'input', 
+                type:String,
+                widgetType:'input',
                 label:'描述',
                 key:'content',
                 width:500,
@@ -153,15 +152,15 @@ module.exports = {
         /*----------仓库库位-----------*/
         storeNo:{
             id : {
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'ID',
                 key:'id',
-                sort:0, 
+                sort:0,
                 notForm:true
             },
             name : {
-                type:String,  
+                type:String,
                 width:200,
                 widgetType:'input',
                 subtype:'text',
@@ -174,8 +173,8 @@ module.exports = {
                 sort:1
             },
             content : {
-                type:String, 
-                widgetType:'input', 
+                type:String,
+                widgetType:'input',
                 label:'描述',
                 key:'content',
                 sort:2
@@ -184,15 +183,15 @@ module.exports = {
         /*----------业务分类-----------*/
         type : {
             id : {
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'ID',
                 key:'id',
                 sort:0,
                 notForm:true
             },
             name : {
-                type:String, 
+                type:String,
                 widgetType:'input',
                 subtype:'text',
                 width:200,
@@ -205,8 +204,8 @@ module.exports = {
                 sort:1
             },
             content : {
-                type:String, 
-                widgetType:'input', 
+                type:String,
+                widgetType:'input',
                 label:'描述',
                 key:'content',
                 sort:2
@@ -215,23 +214,23 @@ module.exports = {
         /*----------产品分类-----------*/
         ptype : {
             id : {
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'ID',
                 key:'id',
                 sort:0,
                 notForm:true
             },
             typeId : {
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'业务分类',
                 key:'typeId',
                 sort:0,
                 notForm:true
             },
             name : {
-                type:String, 
+                type:String,
                 widgetType:'input',
                 subtype:'text',
                 width:200,
@@ -244,8 +243,8 @@ module.exports = {
                 sort:1
             },
             content : {
-                type:String, 
-                widgetType:'input', 
+                type:String,
+                widgetType:'input',
                 label:'描述',
                 key:'content',
                 sort:2
@@ -254,15 +253,15 @@ module.exports = {
         /*----------付款方式-----------*/
         payType : {
             id : {
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'ID',
                 key:'id',
-                sort:0, 
+                sort:0,
                 notForm:true
             },
             name : {
-                type:String,  
+                type:String,
                 widgetType:'input',
                 subtype:'text',
                 label:'名称定义',
@@ -275,8 +274,8 @@ module.exports = {
                 sort:1
             },
             content : {
-                type:String, 
-                widgetType:'input', 
+                type:String,
+                widgetType:'input',
                 label:'描述',
                 key:'content',
                 width:500,
@@ -286,26 +285,26 @@ module.exports = {
         /*----------流程状态数据-----------*/
         flowState:{
             id:{
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'ID',
                 key:'id',
                 notForm:true,
                 sort:0
             },
             typeId:{
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'所属业务类别', 
+                label:'所属业务类别',
                 key:'typeId',
                 valueSet:'type',
                 sort:1
             },
             name:{
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:100,
                 subtype:'text',
@@ -315,7 +314,7 @@ module.exports = {
                 sort:2
             },
             content : {
-                type:String, 
+                type:String,
                 default:'',
                 widgetType:'input',
                 label:'备注说明',
@@ -326,19 +325,19 @@ module.exports = {
         /*----------用户数据-----------*/
         user : {
             id : {
-                type:Number, 
-                default:0, 
+                type:Number,
+                default:0,
                 label:'ID',
                 key:'id',
-                sort:0, 
+                sort:0,
                 notForm:true
             },
             roles : {
-                type:Array, 
-                default:[], 
+                type:Array,
+                default:[],
                 widgetType:'select',
                 multiple: true,
-                label:'权限', 
+                label:'权限',
                 key:'roles',
                 rules: [
                     {"type": "array","required": true,"min": 1,"message": "请至少选1项"}
@@ -347,20 +346,20 @@ module.exports = {
                 sort:1
             },
             posId:{
-                type:Number, 
-                default:'', 
+                type:Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
                 width:150,
-                label:'职位', 
+                label:'职位',
                 key:'posId',
                 valueSet:'pos',
                 sort:3
             },
             username : {
-                type:String, 
+                type:String,
                 widgetType:'input',
-                default:'', 
+                default:'',
                 subtype:'text',
                 width:200,
                 label:'用户名',
@@ -373,10 +372,10 @@ module.exports = {
                 sort:4
             },
             password : {
-                type:String, 
+                type:String,
                 widgetType:'input',
                 subtype:'password',
-                default:'juehe123456', 
+                default:'juehe123456',
                 width:200,
                 label:'登录密码',
                 key:'password',
@@ -387,11 +386,11 @@ module.exports = {
                 sort:5
             },
             name : {
-                type:String, 
+                type:String,
                 widgetType:'input',
                 subtype:'text',
                 width:150,
-                default:'', 
+                default:'',
                 label:'姓名',
                 key:'name',
                 rules:[
@@ -401,16 +400,16 @@ module.exports = {
                 sort:6
             },
             token :{
-                type:String,  
-                widgetType:'input', 
+                type:String,
+                widgetType:'input',
                 label:'TOKEN',
                 key:'token',
                 notForm:true,
                 sort:13
             },
             content :{
-                type:String,  
-                widgetType:'input', 
+                type:String,
+                widgetType:'input',
                 label:'备注说明',
                 key:'content',
                 sort:14
@@ -419,35 +418,35 @@ module.exports = {
         /*----------客户数据-----------*/
         crm : {
             id : {
-                type: Number, 
-                default:1, 
+                type: Number,
+                default:1,
                 label:'ID',
                 key:'id',
-                sort:0, 
+                sort:0,
                 notForm:true
             },
             typeId : {
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'所属类别', 
+                label:'所属类别',
                 key:'typeId',
                 valueSet:'type',
                 inSearch:true,
                 sort:1
             },
             isuse:{
-                type:Boolean, 
-                default:true, 
+                type:Boolean,
+                default:true,
                 widgetType:'switch',
-                label:'启用', 
+                label:'启用',
                 key:'isuse',
                 sort:2
             },
             crmNo:{
                 type:String,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 subtype:'text',
                 label:'客户ID',
@@ -455,8 +454,8 @@ module.exports = {
                 sort:3
             },
             name : {
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 subtype:'text',
                 label:'客户名称',
@@ -469,7 +468,7 @@ module.exports = {
             },
             revenueNo : {
                 type:String,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 subtype:'text',
                 label:'税号',
@@ -478,7 +477,7 @@ module.exports = {
             },
             bank:{
                 type:String,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 subtype:'text',
                 label:'开户银行',
@@ -487,7 +486,7 @@ module.exports = {
             },
             bankNo : {
                 type:String,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 subtype:'text',
                 label:'银行账号',
@@ -496,7 +495,7 @@ module.exports = {
             },
             address : {
                 type:String,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 subtype:'text',
                 label:'联系地址',
@@ -505,7 +504,7 @@ module.exports = {
             },
             contactName : {
                 type:String,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 subtype:'text',
                 label:'联系人',
@@ -518,7 +517,7 @@ module.exports = {
             },
             contactPhone : {
                 type:String,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 subtype:'text',
                 label:'联系电话',
@@ -530,18 +529,18 @@ module.exports = {
                 sort:8
             },
             payTypeId:{
-                type: Number, 
+                type: Number,
                 widgetType:'select',
-                default:'', 
+                default:'',
                 label:'付款方式',
                 key:'payTypeId',
                 valueSet:'payType',
                 sort:9
             },
             payTimes:{
-                type: String, 
+                type: String,
                 default:'',
-                widgetType:'input', 
+                widgetType:'input',
                 subtype:'text',
                 width:150,
                 append:'天',
@@ -553,7 +552,7 @@ module.exports = {
                 sort:10
             },
             content : {
-                type:String, 
+                type:String,
                 default:'',
                 widgetType:'input',
                 label:'备注说明',
@@ -561,8 +560,8 @@ module.exports = {
                 sort:11
             },
             updateDate:{
-                type: Number, 
-                default:new Date().getTime(), 
+                type: Number,
+                default:new Date().getTime(),
                 widgetType:'date',
                 label:'更新日期',
                 notForm:true,
@@ -572,19 +571,19 @@ module.exports = {
         /*----------产品数据-----------*/
         product : {
             id : {
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'ID',
                 key:'id',
-                sort:0, 
+                sort:0,
                 notForm:true
             },
             typeId : {
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'业务分类', 
+                label:'业务分类',
                 key:'typeId',
                 valueSet:'type',
                 rules:[
@@ -592,14 +591,14 @@ module.exports = {
                 ],
                 emit:['emit_crmId'],
                 inSearch:true,
-                sort:1, 
+                sort:1,
             },
             ptypeId : {
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'产品分类', 
+                label:'产品分类',
                 key:'ptypeId',
                 valueSet:'ptype',
                 rules:[
@@ -607,30 +606,30 @@ module.exports = {
                 ],
                 emit:['emit_crmId'],
                 inSearch:true,
-                sort:1, 
+                sort:1,
             },
             crmId : {
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'所属客户', 
+                label:'所属客户',
                 key:'crmId',
                 valueSet:'crm',
                 inSearch:true,
                 sort:2
             },
             isuse:{
-                type:Boolean, 
-                default:true, 
+                type:Boolean,
+                default:true,
                 widgetType:'switch',
-                label:'启用', 
+                label:'启用',
                 key:'isuse',
                 sort:3
             },
             name : {
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 subtype:'text',
                 width:200,
@@ -643,8 +642,8 @@ module.exports = {
                 sort:4
             },
             model : {
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:200,
                 subtype:'text',
@@ -653,8 +652,8 @@ module.exports = {
                 sort:5
             },
             modelNo : {
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:200,
                 subtype:'text',
@@ -663,16 +662,16 @@ module.exports = {
                 sort:6
             },
             parentMater:{
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'select',
                 label:'父级物料号/版本号',
                 key:'parentMater',
                 sort:7
             },
             materialNo : {
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:200,
                 subtype:'text',
@@ -681,8 +680,8 @@ module.exports = {
                 sort:8
             },
             caselNo : {
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:200,
                 subtype:'text',
@@ -691,11 +690,11 @@ module.exports = {
                 sort:9
             },
             util:{
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:100,
-                subtype:'text', 
+                subtype:'text',
                 label:'单位',
                 key:'util',
                 rules:[
@@ -704,8 +703,8 @@ module.exports = {
                 sort:10
             },
             price:{
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 widgetType:'number',
                 width:100,
                 decimal: 2,
@@ -720,28 +719,28 @@ module.exports = {
                 sort:11
             },
             content : {
-                type:String, 
+                type:String,
                 default:'',
-                widgetType:'richtext', 
+                widgetType:'richtext',
                 label:'备注说明',
                 key:'content',
                 sort:12
             },
             updateDate:{
-                type: Number, 
-                default:new Date().getTime(), 
-                widgetType:'date', 
+                type: Number,
+                default:new Date().getTime(),
+                widgetType:'date',
                 label:'更新日期',
                 key:'updateDate',
-                sort:13, 
+                sort:13,
                 notForm:true
             }
         },
         /*----------订单数据-----------*/
         order : {
             id:{
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'ID',
                 key:'id',
                 notForm:true,
@@ -750,40 +749,40 @@ module.exports = {
             isPayed:{
                 type: Boolean,
                 default:false,
-                label:'是否已付款', 
+                label:'是否已付款',
                 key:'isPayed',
                 notForm:true,
                 sort:1
             },
             typeId:{
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'业务类别', 
+                label:'业务类别',
                 key:'typeId',
                 valueSet:'type',
                 notForm:true,
                 sort:1
             },
             ptypeId:{
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'产品类别', 
+                label:'产品类别',
                 key:'ptypeId',
                 valueSet:'ptype',
                 notForm:true,
                 sort:2
             },
             flowStateId:{
-                type: Number, 
+                type: Number,
                 width:100,
-                default:'', 
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'流程状态', 
+                label:'流程状态',
                 key:'flowStateId',
                 valueSet:'flowState',
                 byId:'typeId',
@@ -792,8 +791,8 @@ module.exports = {
                 sort:3
             },
             serial:{
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:250,
                 subtype:'text',
@@ -806,20 +805,20 @@ module.exports = {
                 sort:4
             },
             crmId:{
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'客户ID', 
+                label:'客户ID',
                 key:'crmId',
                 valueSet:'crm',
                 notForm:true,
                 sort:5
             },
             crmName:{
-                type: String, 
+                type: String,
                 width:200,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 multiple:false,
                 label:'关联客户名称',
@@ -827,9 +826,9 @@ module.exports = {
                 sort:6
             },
             crmNo:{
-                type: String, 
+                type: String,
                 width:200,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 multiple:false,
                 label:'客户编号ID',
@@ -837,19 +836,19 @@ module.exports = {
                 sort:7
             },
             productId:{
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'产品ID', 
+                label:'产品ID',
                 key:'productId',
                 valueSet:'product',
                 sort:8
             },
             productName:{
-                type: String, 
+                type: String,
                 width:200,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 label:'产品名称',
                 key:'productName',
@@ -859,35 +858,35 @@ module.exports = {
                 sort:9
             },
             projectNo:{
-                type: String, 
+                type: String,
                 width:200,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 label:'项目号',
                 key:'projectNo',
                 sort:10
             },
             projectName:{
-                type: String, 
+                type: String,
                 width:200,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 label:'项目名称',
                 key:'projectName',
                 sort:11
             },
             boxNo:{
-                type: String, 
+                type: String,
                 width:200,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 label:'箱号',
                 key:'boxNo',
                 sort:12
             },
             model : {
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:200,
                 subtype:'text',
@@ -896,8 +895,8 @@ module.exports = {
                 sort:13
             },
             modelNo : {
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:200,
                 subtype:'text',
@@ -906,8 +905,8 @@ module.exports = {
                 sort:14
             },
             materialNo : {
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:200,
                 subtype:'text',
@@ -916,8 +915,8 @@ module.exports = {
                 sort:15
             },
             caselNo : {
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:200,
                 subtype:'text',
@@ -926,19 +925,19 @@ module.exports = {
                 sort:16
             },
             util:{
-                type:String, 
+                type:String,
                 width:100,
                 default:'',
                 widgetType:'input',
-                subtype:'text', 
+                subtype:'text',
                 label:'单位',
                 key:'util',
                 sort:17
             },
             price:{
-                type: Number, 
+                type: Number,
                 width:100,
-                default:0, 
+                default:0,
                 widgetType:'number',
                 decimal1: 2,
                 min:0,
@@ -952,9 +951,9 @@ module.exports = {
                 sort:18
             },
             count:{
-                type: Number, 
+                type: Number,
                 width:100,
-                default:0, 
+                default:0,
                 widgetType:'number',
                 label:'数量',
                 min:1,
@@ -965,33 +964,33 @@ module.exports = {
                 sort:19
             },
             releaseCount:{
-                type: Number, 
+                type: Number,
                 width:100,
-                default:'', 
+                default:'',
                 widgetType:'number',
                 label:'实际数量',
                 key:'releaseCount',
                 sort:19
             },
             orderDate:{
-                type: Number, 
-                default:new Date().getTime(), 
-                widgetType:'date', 
+                type: Number,
+                default:new Date().getTime(),
+                widgetType:'date',
                 label:'制单日期',
                 key:'orderDate',
                 sort:20
             },
             deliveryDate:{
-                type: Number, 
-                default:new Date().getTime(), 
-                widgetType:'date', 
+                type: Number,
+                default:new Date().getTime(),
+                widgetType:'date',
                 label:'交付日期',
                 key:'deliveryDate',
                 notForm:true,
                 sort:21
             },
             content:{
-                type:String, 
+                type:String,
                 widgetType:'input',
                 default:'',
                 label:'备注说明',
@@ -999,8 +998,8 @@ module.exports = {
                 sort:22
             },
             createByUser:{
-                type: String, 
-                default:'', 
+                type: String,
+                default:'',
                 widgetType:'input',
                 label:'创建者',
                 key:'createByUser',
@@ -1008,8 +1007,8 @@ module.exports = {
                 sort:23
             },
             updateDate:{
-                type: Number, 
-                default:new Date().getTime(), 
+                type: Number,
+                default:new Date().getTime(),
                 label:'更新日期',
                 key:'updateDate',
                 notForm:true,
@@ -1019,8 +1018,8 @@ module.exports = {
         /*----------仓库数据（入库出库）-----------*/
         store : {
             id:{
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'ID',
                 notForm:true,
                 sort:0
@@ -1028,14 +1027,14 @@ module.exports = {
             isPayed:{
                 type: Boolean,
                 default:false,
-                label:'是否已付款', 
+                label:'是否已付款',
                 key:'isPayed',
                 notForm:true,
-                sort:1         
+                sort:1
             },
             typeId:{
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'radio',
                 label:'订单',
                 key:'typeId',
@@ -1043,8 +1042,8 @@ module.exports = {
                 sort:2
             },
             orderId:{
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
                 label:'订单',
@@ -1057,27 +1056,27 @@ module.exports = {
                 sort:2
             },
             serial:{
-                type:String, 
+                type:String,
                 widgetType:'input',
                 label:'订单编号',
                 key:'serial',
                 sort:3
             },
 			crmId:{
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'客户ID', 
+                label:'客户ID',
                 key:'crmId',
                 valueSet:'crm',
                 notForm:true,
                 sort:4
             },
             crmName:{
-                type: String, 
+                type: String,
                 width:200,
-                default:'', 
+                default:'',
                 widgetType:'input',
                 multiple:false,
                 label:'关联客户名称',
@@ -1085,15 +1084,15 @@ module.exports = {
                 sort:5
             },
             productName:{
-                type:String, 
+                type:String,
                 widgetType:'input',
                 label:'货品名称',
                 key:'productName',
                 sort:6
             },
 			materialNo : {
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:200,
                 subtype:'text',
@@ -1102,21 +1101,21 @@ module.exports = {
                 sort:7
             },
             storeTypeId:{
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'radio',
-                label:'入库分类', 
+                label:'入库分类',
                 key:'storeTypeId',
                 valueSet:'storeType',
                 notForm:true,
                 sort:8
             },
             storeNoId:{
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'库位', 
+                label:'库位',
                 key:'storeNoId',
                 valueSet:'storeNo',
                 rules:[
@@ -1126,8 +1125,8 @@ module.exports = {
                 sort:9
             },
             count:{
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 widgetType:'number',
                 label:'入库数量',
                 min:1,
@@ -1138,71 +1137,71 @@ module.exports = {
                 sort:10
             },
             incount:{
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 widgetType:'number',
                 label:'库存数量',
                 key:'incount',
                 sort:11
             },
             outcount:{
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 widgetType:'number',
                 label:'出库数量',
                 key:'outcount',
                 sort:12
             },
             outTypeId:{
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'radio',
-                label:'出库去向', 
+                label:'出库去向',
                 key:'outTypeId',
                 notForm:true,
                 sort:13
             },
             content:{
-                type:String, 
+                type:String,
                 widgetType:'input',
                 label:'备注说明',
                 key:'content',
                 sort:14
             },
             updateContent:{
-                type:String, 
+                type:String,
                 widgetType:'input',
                 label:'出库备注说明',
                 key:'updateContent',
                 sort:15
             },
             createByUser:{
-                type: String, 
-                default:'', 
+                type: String,
+                default:'',
                 label:'创建者',
                 key:'createByUser',
                 notForm:true,
                 sort:16
             },
             createDate:{
-                type: Number, 
-                default:new Date().getTime(), 
+                type: Number,
+                default:new Date().getTime(),
                 label:'创建日期',
                 notForm:true,
                 key:'createDate',
                 sort:17
             },
             updateByUser:{
-                type: String, 
-                default:'', 
+                type: String,
+                default:'',
                 label:'出库者',
                 key:'updateByUser',
                 notForm:true,
                 sort:18
             },
             updateDate:{
-                type: Number, 
-                default:new Date().getTime(), 
+                type: Number,
+                default:new Date().getTime(),
                 label:'更新日期',
                 notForm:true,
                 key:'updateDate',
@@ -1212,32 +1211,32 @@ module.exports = {
         /*----------财务-----------*/
         finance : {
             id : {
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'ID',
                 key:'id',
                 notForm:true,
                 sort:0
             },
             payType : {
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'应收支类型',
                 key:'payType',
                 notForm:true,
                 sort:1
             },
             orderId : {
-                type: Number, 
-                default:0, 
+                type: Number,
+                default:0,
                 label:'ID',
                 key:'orderId',
                 notForm:true,
                 sort:2
             },
             serial:{
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:150,
                 subtype:'text',
@@ -1248,18 +1247,18 @@ module.exports = {
                 sort:2
             },
 			crmId:{
-                type: Number, 
-                default:'', 
+                type: Number,
+                default:'',
                 widgetType:'select',
                 multiple:false,
-                label:'客户ID', 
+                label:'客户ID',
                 key:'crmId',
                 valueSet:'crm',
                 notForm:true,
                 sort:3
             },
             crmName:{
-                type: String, 
+                type: String,
                 widgetType:'input',
                 width:150,
                 subtype:'text',
@@ -1270,7 +1269,7 @@ module.exports = {
                 sort:4
             },
             productName:{
-                type: String, 
+                type: String,
                 widgetType:'input',
                 subtype:'text',
                 label:'产品',
@@ -1280,8 +1279,8 @@ module.exports = {
                 sort:5
             },
 			materialNo : {
-                type:String, 
-                default:'', 
+                type:String,
+                default:'',
                 widgetType:'input',
                 width:200,
                 subtype:'text',
@@ -1290,20 +1289,20 @@ module.exports = {
                 sort:6
             },
             util:{
-                type:String, 
+                type:String,
                 width:100,
                 default:'',
                 widgetType:'input',
-                subtype:'text', 
+                subtype:'text',
                 label:'单位',
                 key:'util',
                 notForm:true,
                 sort:7
             },
             price:{
-                type: Number, 
+                type: Number,
                 width:100,
-                default:0, 
+                default:0,
                 widgetType:'number',
                 decimal1: 2,
                 min:0,
@@ -1315,9 +1314,9 @@ module.exports = {
                 sort:8
             },
             count:{
-                type: Number, 
+                type: Number,
                 width:100,
-                default:0, 
+                default:0,
                 widgetType:'number',
                 label:'数量',
                 min:1,
@@ -1326,7 +1325,7 @@ module.exports = {
                 sort:9
             },
             invoiceNumber:{
-                type: String, 
+                type: String,
                 widgetType:'input',
                 subtype:'text',
                 label:'发票号',
@@ -1338,8 +1337,8 @@ module.exports = {
                 sort:10
             },
             createDate:{
-                type: Number, 
-                default:new Date().getTime(), 
+                type: Number,
+                default:new Date().getTime(),
                 widgetType:'date',
                 subtype:'daterange',
                 label:'日期',
@@ -1349,15 +1348,15 @@ module.exports = {
                 sort:11
             },
             createByUser:{
-                type: String, 
-                default:'', 
+                type: String,
+                default:'',
                 label:'操作者',
                 key:'createByUser',
                 notForm:true,
                 sort:12
             },
             content:{
-                type: String, 
+                type: String,
                 widgetType:'input',
                 label:'备注说明',
                 key:'content',
@@ -1365,6 +1364,6 @@ module.exports = {
             }
         },
     }
-	
+
 };
 

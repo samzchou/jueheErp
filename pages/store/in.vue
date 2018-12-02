@@ -46,10 +46,10 @@
                     </el-form-item>
                 </el-form>
             </div>
-            <el-table v-loading="listLoading" 
-            :data="gridList" 
-            border fit highlight-current-row 
-            size="mini" max-height="400">
+            <el-table v-loading="listLoading"
+            :data="gridList"
+            border fit highlight-current-row
+            size="mini">
                 <el-table-column label="No." width="70px" align="center">
                     <template slot-scope="scope">
                         <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
@@ -57,7 +57,7 @@
                 </el-table-column>
                 <el-table-column prop="typeId" label="入库来源" width="70">
                     <template slot-scope="scope">
-                        <span>{{parseType(scope.row.typeId)}}</span>
+                      <el-button type="text" :title="'查看'+parseType(scope.row.typeId)+'的库品'" @click="viewByType(scope.row.typeId)">{{parseType(scope.row.typeId)}}</el-button>
                     </template>
                 </el-table-column>
                 <el-table-column prop="storeNoId" label="存放库位" width="80">
@@ -149,9 +149,10 @@
                             <el-table-column prop="productName" label="入库货品"/>
                             <el-table-column prop="count" label="入库数量" width="70">
                                 <template slot-scope="scope">
-                                    <div v-if="!scope.row.edit" class="edit-content" @click="scope.row.edit=true" title="点击编辑数量">
+                                    <!-- <div v-if="!scope.row.edit" class="edit-content" @click="scope.row.edit=true" title="点击编辑数量"> -->
+                                    <div v-if="!scope.row.edit" class="edit-content">
                                         <span>{{scope.row.count}}</span>
-                                        <i class="el-icon-edit"/>
+                                        <!-- <i class="el-icon-edit"/> -->
                                     </div>
                                     <div v-else class="edit-content">
                                         <input v-model="scope.row.count" @blur="scope.row.edit=false"/>
@@ -353,8 +354,7 @@ export default {
                 }
             });
             dataList = list;
-            console.log('list', list);
-
+            //console.log('list', list);
             this.$refs['ruleForm'].validate((valid) => {
                 if(valid) {
                     let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
@@ -367,7 +367,6 @@ export default {
                         /* loadingMask.close();
                         this.clearData() */
                     });
-
                     // 更新订单流程状态
                     let cn = {
                         type:'updatePatch',
@@ -380,10 +379,8 @@ export default {
                         loadingMask.close();
                         this.clearData()
                     });
-
                 }
             });
-            
         },
         async clearData(){
             let ids = this.rowData.map(item=>{
@@ -413,53 +410,57 @@ export default {
             this.query.page = val;
             this.submitSearch(true);
         },
+        viewByType(typeId){
+          this.searchForm.typeId = typeId;
+          this.submitSearch();
+        },
         submitSearch(flag){
-            let params = {};
-            for(let k in this.searchForm){
-                if(this.searchForm[k] != '' && this.searchForm[k]){
-                    if(_.isNumber(this.searchForm[k])){
-                        params[k] = Number(this.searchForm[k]);
-                    }else if(_.isArray(this.searchForm[k]) && k==='createDate'){
-                        params[k] = {
-                            $gte:this.searchForm[k][0],
-                            $lte:this.searchForm[k][1]
-                        }
-                    }else if(_.isArray(this.searchForm[k])){
-                        params[k] = {$in:this.searchForm[k]}
-                    }else{
-                        params[k] = {$regex:this.searchForm[k]};
-                    }
+          let params = {};
+          for(let k in this.searchForm){
+            if(this.searchForm[k] != '' && this.searchForm[k]){
+              if(_.isNumber(this.searchForm[k])){
+                params[k] = Number(this.searchForm[k]);
+              }else if(_.isArray(this.searchForm[k]) && k==='createDate'){
+                params[k] = {
+                  $gte:this.searchForm[k][0],
+                  $lte:this.searchForm[k][1]
                 }
-            };
-            if(!flag){ // 不需要再做分页复位
-                this.query = {
-                    page:1,
-                    pagesize:20
-                }
+              }else if(_.isArray(this.searchForm[k])){
+                params[k] = {$in:this.searchForm[k]}
+              }else{
+                params[k] = {$regex:this.searchForm[k]};
+              }
             }
-            this.getList(params);
+          };
+          if(!flag){ // 不需要再做分页复位
+            this.query = {
+              page:1,
+              pagesize:20
+            }
+          }
+          this.getList(params);
         },
         orderCurrentChange(val){
-            this.queryOrder.page = val;
+          this.queryOrder.page = val;
         },
         orderSizeChange(val){
-            this.queryOrder.pagesize = val;
+          this.queryOrder.pagesize = val;
         },
         filterPtype(val){
-            this.queryOrder = {
-                page:1,
-                pagesize:20
-            }
-            this.rowData = [];
-            this.getOrderList({typeId:val,flowStateId:val==1?1:6});
+          this.queryOrder = {
+            page:1,
+            pagesize:20
+          }
+          this.rowData = [];
+          this.getOrderList({typeId:val,flowStateId:val==1?1:6});
         },
         searchFilter(){
-            this.oList = [];
-            this.orderList.map(item=>{
-                if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput) || item.crmName.includes(this.searchInput) || item.materialNo.includes(this.searchInput)){
-                    this.oList.push(item);
-                }
-            });
+          this.oList = [];
+          this.orderList.map(item=>{
+            if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput) || item.crmName.includes(this.searchInput) || item.materialNo.includes(this.searchInput)){
+              this.oList.push(item);
+            }
+          });
         },
 
         orderSizeChange(val){
@@ -484,7 +485,7 @@ export default {
             this.orderList = result.list;
             this.oList = _.cloneDeep(result.list);
         },
-        
+
         async getList(match={}){
             this.listLoading = true;
             let condition = {
@@ -560,12 +561,12 @@ export default {
     .edit-count{
         color:#999;
         >i{
-            margin-left:5px; 
-            color:#e85810; 
+            margin-left:5px;
+            color:#e85810;
             font-size:16px;
             cursor: pointer;
         }
-        
+
     }
     .editrow-form{
         /deep/ .el-input{
@@ -606,7 +607,7 @@ export default {
         }
     }
     .form-plist{
-        //padding-right:25px; 
+        //padding-right:25px;
         box-sizing:border-box;
         .edit-content{
             i{

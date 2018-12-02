@@ -56,7 +56,7 @@
             <el-table v-loading="listLoading"
             :data="gridList"
             border fit highlight-current-row
-            size="mini" max-height="400">
+            size="mini">
                 <el-table-column label="No." width="70px" align="center">
                     <template slot-scope="scope">
                         <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
@@ -136,7 +136,7 @@
             <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" size="mini">
                 <el-form-item label="产品分类" prop="ptypeId">
                     <el-select v-model="ruleForm.ptypeId" placeholder="请选择" filterable clearable  @change="setPtype">
-                        <el-option v-for="ptype in ptypeList" :key="ptype.id" :label="ptype.name+'-'+ptype.id" :value="ptype.id"/>
+                        <el-option v-for="ptype in ptypeList" :key="ptype.id" :label="ptype.name" :value="ptype.id"/>
                     </el-select>
                 </el-form-item>
                 <el-form-item label="产品名称" prop="productId">
@@ -205,7 +205,7 @@
                 </el-form-item>
             </el-form>
         </div>
-        <el-dialog title="供应商采购清单" :visible.sync="openDialogVisible" width="950px">
+        <el-dialog title="供应商采购清单" :visible.sync="openDialogVisible" width="65%">
             <div class="form-dialog">
                 <el-form :inline="true" :model="dialogForm" ref="dialogForm" size="mini">
                     <el-form-item label="供应商：" prop="crmId">
@@ -235,18 +235,24 @@
                 :data="crmOrderList"
                 border fit highlight-current-row
                 size="mini" max-height="400">
-                    <el-table-column prop="serial" label="订单号" width="200px"/>
-                    <el-table-column prop="materialNo" label="型号/物料号" width="100px"/>
-                    <el-table-column prop="productName" label="采购产品名称" width="220px"/>
-                    <el-table-column prop="count" label="采购数量"/>
+                    <el-table-column prop="serial" label="订单号" width="120px"/>
+                    <el-table-column prop="materialNo" label="型号/物料号" width="150px"/>
+                    <el-table-column prop="productName" label="物料名称" width="250px"/>
+                    <el-table-column prop="model" label="规格型号"/>
                     <el-table-column prop="util" label="单位"/>
-                    <el-table-column prop="price" label="采购单价"/>
-                    <el-table-column prop="allPrice" label="合计" width="120px"/>
+                    <el-table-column prop="count" label="数量"/>
+                    <el-table-column prop="price" label="单价"/>
+                    <el-table-column prop="allPrice" label="合计"/>
+                    <el-table-column prop="deliveryDate" label="交货日期">
+                      <template slot-scope="scope">
+                        <span>{{parseDate(scope.row.deliveryDate)}}</span>
+                    </template>
+                    </el-table-column>
                 </el-table>
             </div>
             <div class="btns">
                 <el-button type="success" @click="exportOrder">导出采购单</el-button>
-                <el-button type="infor" size="medium" icon="el-icon-plus" v-print="'#printTable'">打印</el-button>
+                <el-button type="infor" size="medium" icon="el-icon-plus" v-print="'#printTable'">打印采购单</el-button>
             </div>
         </el-dialog>
     </section>
@@ -352,55 +358,57 @@ export default {
     methods:{
         exportOrder(){
             import ('@/components/Export2Excel').then(excel=>{
-                const tHeader = ['订单号', '型号/物料号', '采购产品名称', '采购数量', '采购单价', '合计'];
-                const filterVal = ['serial', 'materialNo', 'productName', 'count', 'price', 'allPrice'];
-                const data = this.formatJson(filterVal, this.crmOrderList);
-                console.log('exportOrder', data);
-                excel.export_json_to_excel({
-                    header: tHeader,
-                    data,
-                    filename: this.currItem.crmName + '-' + new Date().getTime(),
-                    autoWidth: true,
-                    bookType: 'xlsx'
-                })
+              const tHeader = ['订单号', '型号/物料号', '物料名称', '规格型号','数量', '单价', '合计','交货日期'];
+              const filterVal = ['serial', 'materialNo', 'productName', 'model','count', 'price', 'allPrice','deliveryDate'];
+              const data = this.formatJson(filterVal, this.crmOrderList);
+              console.log('exportOrder', data);
+              excel.export_json_to_excel({
+                header: tHeader,
+                data,
+                filename: this.currItem.crmName + '-' + new Date().getTime(),
+                autoWidth: true,
+                bookType: 'xlsx'
+              })
             })
-            
         },
         formatJson(filterVal, jsonData) {
-            return jsonData.map(v => filterVal.map(j => {
-                return v[j];
-            }))
+          return jsonData.map(v => filterVal.map(j => {
+            if(j == 'deliveryDate'){
+              v[j] = this.parseDate(v[j]);
+            }
+            return v[j];
+          }))
         },
         // 查看供应商订单汇总
         showDetail(row){
-            let crm = _.find(this.crmList, {'id':row.crmId});
-            this.dialogForm.crmId = row.crmId;
-            this.currItem = {'address':crm.address,'contactName':crm.contactName,'contactPhone':crm.contactPhone,'crmName':crm.name};
-            this.openDialogVisible = true;
-            console.log('showDetail',row, crm);
-            // group 供应商订单
-            this.listOrderByCrm({crmId:row.crmId});
+          let crm = _.find(this.crmList, {'id':row.crmId});
+          this.dialogForm.crmId = row.crmId;
+          this.currItem = {'address':crm.address,'contactName':crm.contactName,'contactPhone':crm.contactPhone,'crmName':crm.name};
+          this.openDialogVisible = true;
+          console.log('showDetail',row, crm);
+          // group 供应商订单
+          this.listOrderByCrm({crmId:row.crmId});
         },
         dialogSearch(){
-            let crm = _.find(this.crmList, {'id':this.dialogForm.crmId});
-            this.listOrderByCrm(this.dialogForm);
-            this.currItem = {'address':crm.address,'contactName':crm.contactName,'contactPhone':crm.contactPhone,'crmName':crm.name};
-            this.listOrderByCrm(this.dialogForm);
+          let crm = _.find(this.crmList, {'id':this.dialogForm.crmId});
+          this.listOrderByCrm(this.dialogForm);
+          this.currItem = {'address':crm.address,'contactName':crm.contactName,'contactPhone':crm.contactPhone,'crmName':crm.name};
+          this.listOrderByCrm(this.dialogForm);
         },
         async listOrderByCrm(match={}){
-            let params = {
-                type:'listData',
-                collectionName: 'order',
-                data:_.merge({flowStateId:1}, match)
-            }
-            let data = await this.$axios.$post('mock/db', {data:params});
+          let params = {
+            type:'listData',
+            collectionName: 'order',
+            data:_.merge({flowStateId:1}, match)
+          }
+          let data = await this.$axios.$post('mock/db', {data:params});
 
-            console.log('listOrderByCrm', data.list);
-            this.sourceCrmOrderList = data.list;
-            this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList), true);
+          console.log('listOrderByCrm', data.list);
+          this.sourceCrmOrderList = data.list;
+          this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList), true);
         },
         splitCrmOrderList(){
-            this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList), false);
+          this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList), false);
         },
         filterCrmOrderList(arr,split){
             let list = [];
@@ -443,6 +451,7 @@ export default {
         },
         setProduct(id){
             let product = _.find(this.productList, {id:id});
+            //debugger
             let obj = {
                 productName:product.name,
                 model:product.model,
@@ -568,7 +577,7 @@ export default {
             let crm = _.find(this.crmList, {'id':id});
             return crm.name;
         },
-		
+
         _setValue(key, value){
             switch(key){
                 case 'orderDate':
@@ -749,7 +758,7 @@ export default {
             }
         }
     }
-    
+
 </style>
 
 

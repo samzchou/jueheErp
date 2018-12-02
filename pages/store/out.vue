@@ -9,7 +9,7 @@
             <div>
                 <div v-if="!isEdit" >
                     <el-button @click="handleAdd" type="text" size="medium" icon="el-icon-plus">新增出库单</el-button>
-                    <el-button v-print="'#printTable'" type="text" size="medium" icon="el-icon-plus">打印</el-button>
+                    <el-button v-if="gridList.length" type="text" size="medium" icon="el-icon-plus" @click="viewExport">导出出库单</el-button>
                 </div>
                 <div v-else>
                     <el-button @click="isEdit=false" type="text" size="medium" icon="el-icon-close">取消返回</el-button>
@@ -51,8 +51,8 @@
                     </el-form-item>
                 </el-form>
             </div>
-            <div id="printTable">
-                <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" max-height="400">
+            <div>
+                <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini">
                     <el-table-column label="No." width="70px" align="center">
                         <template slot-scope="scope">
                             <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
@@ -73,19 +73,29 @@
                             <el-button type="text" @click="showOrderInfo(scope.row)">{{scope.row.serial}}</el-button>
                         </template>
                     </el-table-column>
-                    <el-table-column label="货品名称">
+                    <el-table-column label="客户" width="250">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.crmName}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="货品名称" width="220">
                         <template slot-scope="scope">
                             <span>{{scope.row.productName}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column label="物料号">
+                    <el-table-column label="物料号" width="120">
                         <template slot-scope="scope">
                             <span>{{scope.row.materialNo}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column label="客户">
+                    <el-table-column label="规格/梯型">
                         <template slot-scope="scope">
-                            <span>{{scope.row.crmName}}</span>
+                            <span>{{scope.row.order.model}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="型号/梯号" width="90">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.order.modelNo}}</span>
                         </template>
                     </el-table-column>
                     <el-table-column label="单位" width="70">
@@ -131,7 +141,7 @@
                 </el-table>
             </div>
             <div class="page-container" style="padding: 10px 0;">
-                <el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total">
+                <el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200, 500]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total">
                 </el-pagination>
             </div>
         </div>
@@ -152,9 +162,10 @@
                             <el-table-column prop="productName" label="出库货品"/>
                             <el-table-column prop="count" label="出库数量" width="70">
                                 <template slot-scope="scope">
-                                    <div v-if="!scope.row.edit" class="edit-content" @click="scope.row.edit=true" title="点击编辑数量">
+                                    <!-- <div v-if="!scope.row.edit" class="edit-content" @click="scope.row.edit=true" title="点击编辑数量"> -->
+                                    <div v-if="!scope.row.edit" class="edit-content">
                                         <span>{{scope.row.outcount}}</span>
-                                        <i class="el-icon-edit"/>
+                                        <!-- <i class="el-icon-edit"/> -->
                                     </div>
                                     <div v-else class="edit-content">
                                         <input v-model="scope.row.outcount" @blur="checkOutCount(scope.row)"/>
@@ -213,7 +224,7 @@
                 </div>
             </div>
         </div>
-        <el-dialog title="订单明细查阅" :visible.sync="openDialogVisible" width="450px">
+        <el-dialog title="订单明细查阅" append-to-body :visible.sync="openDialogVisible" width="40%">
             <div class="compare" v-if="currItem">
                 <div>
                     <ul>
@@ -232,6 +243,22 @@
                 </div>
             </div>
         </el-dialog>
+        <el-dialog title="导出本页出库单" append-to-body :visible.sync="viewDialogExport" width="80%">
+          <div style="margin-top:-10px;">
+            <div>选择需要导出的数据列名</div>
+            <div style="padding:10px 0">
+              <el-checkbox-group v-model="checkColumnList">
+                <el-checkbox v-for="col in columnList" :key="col.value" :label="col.value">{{col.label}}</el-checkbox>
+              </el-checkbox-group>
+            </div>
+            <el-table :data="exportList" border fit highlight-current-row size="mini" max-height="400">
+              <el-table-column v-for="col in columnList" v-if="checkColumnList.includes(col.value)" :label="col.label" :key="col.value" :prop="col.value"/>
+            </el-table>
+            <div style="padding:15px 0; text-align:right">
+              <el-button type="primary" @click="exportData" size="small" :loading="exportLoading">导出出库单</el-button>
+            </div>
+          </div>
+        </el-dialog>
     </section>
 </template>
 
@@ -239,296 +266,371 @@
 //import settings from '@/config/files/dataList.json';
 export default {
     data(){
-        return {
-            openDialogVisible:false,
-            currItem:null,
-            searchInput:'',
-            listLoading:false,
-            isEdit:false,
-            editRow:null,
-            flowStateList:[
-                {label:'待入库',value:1},{label:'已入库',value:2}
-            ],
-            total:0,
-            query:{
-                page:1,
-                pagesize:20
-            },
-            storeTotal:0,
-            queryStore:{
-                page:1,
-                pagesize:20
-            },
-            typeList:[],//settings.type,
-            storeList:[],
-            crmList:[],
-            sList:[],
-            storeNoList:[],//settings.storeNo,
-            gridList:[],
-            rowData:[],
-            searchForm:{
-                serial:'',
-                outTypeId:'',
-                storeNoId:'',
-                crmId:'',
-                materialNo:'',
-                productName:'',
-                updateDate:'',
-            },
-            ruleForm:{
-                typeId:1,
-                outTypeId:'',
-                outcount:'',
-                updateContent:''
-            },
-            rules:{
-                outTypeId: [
-                    { required: true, message: '请选择出库去向', trigger: 'change'},
-                ]
-            }
-        }
+      return {
+        openDialogVisible:false,
+        viewDialogExport:false,
+        currItem:null,
+        searchInput:'',
+        listLoading:false,
+        isEdit:false,
+        editRow:null,
+        flowStateList:[
+          {label:'待入库',value:1},{label:'已入库',value:2}
+        ],
+        total:0,
+        query:{
+          page:1,
+          pagesize:20
+        },
+        storeTotal:0,
+        queryStore:{
+          page:1,
+          pagesize:20
+        },
+        typeList:[],//settings.type,
+        storeList:[],
+        crmList:[],
+        sList:[],
+        storeNoList:[],//settings.storeNo,
+        gridList:[],
+        rowData:[],
+        searchForm:{
+          serial:'',
+          outTypeId:'',
+          storeNoId:'',
+          crmId:'',
+          materialNo:'',
+          productName:'',
+          updateDate:'',
+        },
+        ruleForm:{
+          typeId:1,
+          outTypeId:'',
+          outcount:'',
+          updateContent:''
+        },
+        rules:{
+          outTypeId: [
+            { required: true, message: '请选择出库去向', trigger: 'change'},
+          ]
+        },
+        checkColumnList:['serial','crmName','productName','materialNo','model','modelNo','util','price','outcount','allPrice','outDate'],
+        columnList:[
+          {label:'订单编号',value:'serial'},
+          {label:'客户名称',value:'crmName'},
+          {label:'货品名称',value:'productName'},
+          {label:'物料号',value:'materialNo'},
+          {label:'规格/梯型',value:'model'},
+          {label:'型号/梯号',value:'modelNo'},
+          {label:'单位',value:'util'},
+          {label:'单价',value:'price'},
+          {label:'出库量',value:'outcount'},
+          {label:'总价',value:'allPrice'},
+          {label:'出库日期',value:'outDate'}
+        ],
+        exportList:[],
+        exportLoading:false
+      }
     },
     methods:{
-        showOrderInfo(row){
-            this.openDialogVisible = true;
-            this.currItem = row;
-            //console.log('showOrderInfo',row)
-        },
-        handlePrint(){
-            this.$print(this.$refs.print) 
-        },
-        checkOutCount(row){
-            console.log(row);
-            if(row.outcount > row.incount || row.outcount <=0 ){
-                this.$message.error('请正确出库数量不符！最大出库量：' + row.incount);
-                return;
+      viewExport(){
+        this.exportList = [];
+        this.gridList.forEach(item=>{
+          let obj = {};
+          this.columnList.forEach(col=>{
+            if(item[col.value]){
+              obj[col.value] = item[col.value];
+            }else{
+              switch (col.value) {
+                case 'util':
+                  obj[col.value] = item.order.util;
+                  break;
+                case 'price':
+                  obj[col.value] = item.order.price;
+                  break;
+                case 'model':
+                  obj[col.value] = item.order.model;
+                  break;
+                case 'modelNo':
+                  obj[col.value] = item.order.modelNo;
+                  break;
+                case 'allPrice':
+                  obj[col.value] = this.parseReleaseMoney(item);
+                  break;
+                case 'outDate':
+                  obj[col.value] = this.parseDate(item.updateDate);
+                  break;
+              }
             }
-            row.edit = false;
-        },
-        parseDate(date, format){
-            return moment(date).format(format||'YYYY-MM-DD');
-        },
-        parseMoney(row){
-            return this.$options.filters['currency'](row.count*row.price);
-        },
-        parseReleaseMoney(row){
-            return this.$options.filters['currency'](row.outcount*row.order.price);
-        },
-        parseType(id){
-            if(!id || id=='') return '';
-            let type = _.find(this.$store.state.storeTarget, {id:id});
-            return type.name || '';
-        },
-        parseStoreNo(id){
-            if(!id || id=='') return '';
-            let type = _.find(this.storeNoList, {id:id});
-            return type.name || '';
-        },
-        selectionRow(selection){
-            this.rowData = [];
-            selection.forEach(item=>{
-                this.rowData.push({
-                    id:item.id,
-                    orderId:item.orderId,
-                    productName:item.productName,
-                    incount:item.incount,
-                    outcount:item.incount,
-                    edit:false
-                });
-            })
-        },
-        submitSave(){
-            let orderIds = [];
-            let dataList = this.rowData.map((item,index)=>{
-                item = _.merge({}, this.ruleForm, item);
-                item.outcount = parseInt(item.outcount);
-                item.incount -= item.outcount;
-                item.updateByUser = this.$store.state.user.name;
-                orderIds.push(item.orderId);
-                delete item.edit;
-                return item;
-            });
-            this.$refs['ruleForm'].validate((valid) => {
-                if(valid) {
-                    let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
-                    let condition = {
-                        type:'updateArr',
-                        collectionName: 'store',
-                        data:dataList
-                    }
-                    //console.log('submitSave', condition);
-                    this.$axios.$post('mock/db', {data:condition}).then(result=>{
-                        /* loadingMask.close();
-                        this.isEdit = false;
-                        this.query.page = 1;
-                        this.getList(); */
-                    });
-                    // 更新订单流程状态
-                    let cn = {
-                        type:'updatePatch',
-                        collectionName: 'order',
-                        param:{'id':{$in:orderIds}},
-                        set:{$set:{'flowStateId':this.ruleForm.typeId==1?3:8}}
-                    }
-                    //console.log('submitSave', cn);
-                    this.$axios.$post('mock/db', {data:cn}).then(result=>{
-                        loadingMask.close();
-                        this.isEdit = false;
-                        this.query.page = 1;
-                        this.getList();
-                    });
-                }
-
-            });
-        },
-        handleAdd(){
-            this.isEdit = true;
-            this.getStoreList({typeId:1});
-        },
-        handleSizeChange(val){
-            this.query.pagesize = val;
-            this.submitSearch(true);
-        },
-        handleCurrentChange(val){
-            this.query.page = val;
-            this.submitSearch(true);
-        },
-        
-        submitSearch(flag){
-            let params = {};
-            for(let k in this.searchForm){
-                if(this.searchForm[k] != '' && this.searchForm[k]){
-                    if(_.isNumber(this.searchForm[k])){
-                        params[k] = Number(this.searchForm[k]);
-                    }else if(_.isArray(this.searchForm[k]) && k==='updateDate'){
-                        params[k] = {
-                            $gte:this.searchForm[k][0],
-                            $lte:this.searchForm[k][1]
-                        }
-                    }else if(_.isArray(this.searchForm[k])){
-                        params[k] = {$in:this.searchForm[k]}
-                    }else{
-                        params[k] = {$regex:this.searchForm[k]};
-                    }
-                }
-            };
-            if(!flag){ // 不需要再做分页复位
-                this.query = {
-                    page:1,
-                    pagesize:20
-                }
+          });
+          this.exportList.push(obj);
+        });
+        console.log(this.exportList);
+        this.viewDialogExport = true;
+      },
+      exportData(){
+        this.exportLoading = true;
+        import ('@/components/Export2Excel').then(excel=>{
+          let tHeader = [];
+          this.columnList.forEach(item=>{
+            if(this.checkColumnList.includes(item.value)){
+              tHeader.push(item.label);
             }
-            this.getList(params);
-        },
-        filterPtype(val){
-            //console.log(val);
-            this.queryStore = {page:1,pagesize:20};
-            this.rowData = [];
-            this.getStoreList({typeId:val});
-        },
-        searchFilter(){
-            this.sList = [];
-            this.storeList.map(item=>{
-                if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput)  || item.materialNo.includes(this.searchInput) || item.crmName.includes(this.searchInput)){
-                    this.sList.push(item);
-                }
-            });
-        },
-        storeSizeChange(val){
-            this.queryStore.pagesize = val;
-            this.getStoreList();
-        },
-        storeCurrentChange(val){
-            this.queryStore.page = val;
-            this.getStoreList();
-        },
-        async getStoreList(match={}){
-            let condition = {
-                type:'aggregate',
-                collectionName: 'store',
-                data:_.merge({storeTypeId:1,typeId:this.ruleForm.typeId},match),
-                aggregate:[
-                    {
-                        $lookup:{
-                            from: "order",
-                            localField: "orderId",
-                            foreignField: "id",
-                            as: "order"
-                        }
-                    },
-                    {
-                        $unwind: { // 拆分子数组
-                            path: "$order",
-                            preserveNullAndEmptyArrays: true // 空的数组也拆分
-                        }
-                    },
-                    {$match:_.merge({storeTypeId:1, incount:{$gt:0}},match)},
-                    {$skip:this.queryStore.page-1},
-                    {$limit:this.queryStore.pagesize}
-                ]
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.storeTotal = result.total;
-            this.storeList = result.list;
-            this.sList = _.cloneDeep(result.list);
-        },
-        
-        async getList(match={}){
-            this.listLoading = true;
-            let condition = {
-                type:'aggregate',
-                collectionName: 'store',
-                data:_.merge({outcount:{$gt:0}},match),
-                aggregate:[
-                    {
-                        $lookup:{
-                            from: "order",
-                            localField: "orderId",
-                            foreignField: "id",
-                            as: "order"
-                        }
-                    },
-                    {
-                        $unwind: { // 拆分子数组
-                            path: "$order",
-                            preserveNullAndEmptyArrays: true // 空的数组也拆分
-                        }
-                    },
-                    {$match:_.merge({outcount:{$gt:0}},match)},
-                    /* {
-                        $addFields: {flowStateName:"$order.name"}
-                    }, */
-                    {$sort:{id:-1}},
-                    {$skip:this.query.page-1},
-                    {$limit:this.query.pagesize}
-                ]
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            this.total = result.total;
-            this.gridList = result.list;
-            this.listLoading = false;
-        },
-        async getSetting(){
-            let condition = {
-                type:"getData",
-                collectionName:"setting",
-                data:{}
-            }
-            let result = await this.$axios.$post('mock/db', {data:condition});
-            if(result){
-                console.log('getSetting',result)
-                this.setting = result.content;
-                this.typeList = this.setting.type;
-                this.crmList = this.setting.crm;
-                this.storeNoList = this.setting.storeNo;
-
-                this.getList();
-            }
+          });
+          const data = this.formatJson(this.checkColumnList, this.exportList);
+          excel.export_json_to_excel({
+              header: tHeader,
+              data,
+              filename: '出库单-' + new Date().getTime(),
+              autoWidth: true,
+              bookType: 'xlsx'
+          });
+        });
+        setTimeout(() => {
+          this.exportLoading = false;
+        }, 1500);
+      },
+      formatJson(filterVal, jsonData) {
+        return jsonData.map(v => filterVal.map(j => {
+          return v[j];
+        }))
+      },
+      showOrderInfo(row){
+        this.openDialogVisible = true;
+        this.currItem = row;
+        //console.log('showOrderInfo',row)
+      },
+      handlePrint(){
+        this.$print(this.$refs.print)
+      },
+      checkOutCount(row){
+        console.log(row);
+        if(row.outcount > row.incount || row.outcount <=0 ){
+          this.$message.error('请正确出库数量不符！最大出库量：' + row.incount);
+          return;
         }
-    },
-    created(){
-        this.getSetting();
-    }
+        row.edit = false;
+      },
+      parseDate(date, format){
+        return moment(date).format(format||'YYYY-MM-DD');
+      },
+      parseMoney(row){
+        return this.$options.filters['currency'](row.count*row.price);
+      },
+      parseReleaseMoney(row){
+        return this.$options.filters['currency'](row.outcount*row.order.price);
+      },
+      parseType(id){
+        if(!id || id=='') return '';
+        let type = _.find(this.$store.state.storeTarget, {id:id});
+        return type.name || '';
+      },
+      parseStoreNo(id){
+        if(!id || id=='') return '';
+        let type = _.find(this.storeNoList, {id:id});
+        return type.name || '';
+      },
+      selectionRow(selection){
+        this.rowData = [];
+        selection.forEach(item=>{
+          this.rowData.push({
+            id:item.id,
+            orderId:item.orderId,
+            productName:item.productName,
+            incount:item.incount,
+            outcount:item.incount,
+            edit:false
+          });
+        })
+      },
+      submitSave(){
+        let orderIds = [];
+        let dataList = this.rowData.map((item,index)=>{
+          item = _.merge({}, this.ruleForm, item);
+          item.outcount = parseInt(item.outcount);
+          item.incount -= item.outcount;
+          item.updateByUser = this.$store.state.user.name;
+          orderIds.push(item.orderId);
+          delete item.edit;
+          return item;
+        });
+        this.$refs['ruleForm'].validate((valid) => {
+          if(valid) {
+            let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
+            let condition = {
+              type:'updateArr',
+              collectionName: 'store',
+              data:dataList
+            }
+            //更新库品数据
+            this.$axios.$post('mock/db', {data:condition}).then(result=>{
+              /* loadingMask.close();
+              this.isEdit = false;
+              this.query.page = 1;
+              this.getList(); */
+            });
+            // 更新订单流程状态
+            let cn = {
+              type:'updatePatch',
+              collectionName: 'order',
+              param:{'id':{$in:orderIds}},
+              set:{$set:{'flowStateId':this.ruleForm.typeId==1?3:8}}
+            }
+            //console.log('submitSave', cn);
+            this.$axios.$post('mock/db', {data:cn}).then(result=>{
+              loadingMask.close();
+              this.isEdit = false;
+              this.query.page = 1;
+              this.getList();
+            });
+          }
+        });
+      },
+      handleAdd(){
+        this.isEdit = true;
+        this.getStoreList({typeId:1});
+      },
+      handleSizeChange(val){
+        this.query.pagesize = val;
+        this.submitSearch(true);
+      },
+      handleCurrentChange(val){
+        this.query.page = val;
+        this.submitSearch(true);
+      },
+
+      submitSearch(flag){
+        let params = {};
+        for(let k in this.searchForm){
+          if(this.searchForm[k] != '' && this.searchForm[k]){
+            if(_.isNumber(this.searchForm[k])){
+              params[k] = Number(this.searchForm[k]);
+            }else if(_.isArray(this.searchForm[k]) && k==='updateDate'){
+              params[k] = {
+                $gte:this.searchForm[k][0],
+                $lte:this.searchForm[k][1]
+              }
+            }else if(_.isArray(this.searchForm[k])){
+              params[k] = {$in:this.searchForm[k]}
+            }else{
+              params[k] = {$regex:this.searchForm[k]};
+            }
+          }
+        };
+        if(!flag){ // 不需要再做分页复位
+          this.query = {
+            page:1,
+            pagesize:20
+          }
+        }
+        this.getList(params);
+      },
+      filterPtype(val){
+        //console.log(val);
+        this.queryStore = {page:1,pagesize:20};
+        this.rowData = [];
+        this.getStoreList({typeId:val});
+      },
+      searchFilter(){
+        this.sList = [];
+        this.storeList.map(item=>{
+          if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput)  || item.materialNo.includes(this.searchInput) || item.crmName.includes(this.searchInput)){
+            this.sList.push(item);
+          }
+        });
+      },
+      storeSizeChange(val){
+        this.queryStore.pagesize = val;
+        this.getStoreList();
+      },
+      storeCurrentChange(val){
+        this.queryStore.page = val;
+        this.getStoreList();
+      },
+      async getStoreList(match={}){
+        let condition = {
+            type:'aggregate',
+            collectionName: 'store',
+            data:_.merge({storeTypeId:1,typeId:this.ruleForm.typeId},match),
+            aggregate:[
+              {
+                $lookup:{
+                  from: "order",
+                  localField: "orderId",
+                  foreignField: "id",
+                  as: "order"
+                }
+              },
+              {
+                $unwind: { // 拆分子数组
+                  path: "$order",
+                  preserveNullAndEmptyArrays: true // 空的数组也拆分
+                }
+              },
+              {$match:_.merge({storeTypeId:1, incount:{$gt:0}},match)},
+              {$skip:this.queryStore.page-1},
+              {$limit:this.queryStore.pagesize}
+            ]
+        };
+        let result = await this.$axios.$post('mock/db', {data:condition});
+        this.storeTotal = result.total;
+        this.storeList = result.list;
+        this.sList = _.cloneDeep(result.list);
+      },
+
+      async getList(match={}){
+        this.listLoading = true;
+        let condition = {
+          type:'aggregate',
+          collectionName: 'store',
+          data:_.merge({outcount:{$gt:0}},match),
+          aggregate:[
+            {
+              $lookup:{
+                from: "order",
+                localField: "orderId",
+                foreignField: "id",
+                as: "order"
+              }
+            },
+            {
+              $unwind: { // 拆分子数组
+                path: "$order",
+                preserveNullAndEmptyArrays: true // 空的数组也拆分
+              }
+            },
+            {$match:_.merge({outcount:{$gt:0}},match)},
+            {$sort:{id:-1}},
+            {$skip:(this.query.page-1)*this.query.pagesize},
+            {$limit:this.query.pagesize}
+          ]
+        };
+        let result = await this.$axios.$post('mock/db', {data:condition});
+        this.total = result.total;
+        this.gridList = result.list;
+        this.listLoading = false;
+      },
+      async getSetting(){
+        let condition = {
+          type:"getData",
+          collectionName:"setting",
+          data:{}
+        }
+        let result = await this.$axios.$post('mock/db', {data:condition});
+        if(result){
+          console.log('getSetting',result)
+          this.setting = result.content;
+          this.typeList = this.setting.type;
+          this.crmList = this.setting.crm;
+          this.storeNoList = this.setting.storeNo;
+
+          this.getList();
+        }
+      }
+  },
+  created(){
+    this.getSetting();
+  }
 }
 </script>
 
@@ -536,12 +638,12 @@ export default {
     .edit-count{
         color:#999;
         >i{
-            margin-left:5px; 
-            color:#e85810; 
+            margin-left:5px;
+            color:#e85810;
             font-size:16px;
             cursor: pointer;
         }
-        
+
     }
     .editrow-form{
         /deep/ .el-input{
@@ -581,7 +683,7 @@ export default {
         }
     }
     .form-plist{
-        //padding-right:25px; 
+        //padding-right:25px;
         box-sizing:border-box;
         .edit-content{
             >span,>i{
@@ -597,7 +699,7 @@ export default {
                 padding: 3px 5px;
                 text-align: center;
                 border-radius: 3px;
-                
+
             }
         }
     }

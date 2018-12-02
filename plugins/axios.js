@@ -9,7 +9,7 @@ export default function ({ $axios, redirect }) {
 	$axios.onRequest(config => {
 		// mock开头走本地模拟数据
 		if (config.url.indexOf('mock') === 0 ) {
-			let host = `localhost:${process.env.PORT || 2222}`;
+			let host = `localhost:${process.env.PORT || 80}`;
 			if(process.browser){
 				host = location.host;
 			}

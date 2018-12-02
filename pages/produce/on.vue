@@ -4,9 +4,6 @@
             <div>
                 <span>订单生产列表</span>
             </div>
-            <div>
-                <el-button v-print="'#printTable'" type="text" size="medium" icon="el-icon-plus">打印</el-button>
-            </div>
         </div>
         <div class="grid-container">
             <div class="search-content">
@@ -45,7 +42,7 @@
                     </el-form-item>
                 </el-form>
             </div>
-            <div id="printTable">
+            <div>
                 <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" max-height="400">
                     <el-table-column label="No." width="70px" align="center">
                         <template slot-scope="scope">
@@ -81,7 +78,7 @@
                     <el-table-column prop="projectNo" label="项目号" width="150px"/>
                     <el-table-column prop="materialNo" label="物料号/版本号" width="150px"/>
                     <el-table-column prop="caselNo" label="图号/版本号" width="150px"/>
-                    
+
                     <el-table-column prop="productName" label="订单产品名称" width="200px"/>
                     <el-table-column prop="count" label="订单数量"/>
                     <el-table-column prop="util" label="单位"/>
@@ -98,7 +95,7 @@
                 </el-pagination>
             </div>
         </div>
-        <el-dialog title="客户生产订单" :visible.sync="openDialogVisible" width="950px">
+        <el-dialog title="客户生产订单" :visible.sync="openDialogVisible" width="65%">
             <div class="form-dialog">
                 <el-form :inline="true" :model="dialogForm" ref="dialogForm" size="mini">
                     <el-form-item label="客户：" prop="crmId">
@@ -128,17 +125,19 @@
                 :data="crmOrderList"
                 border fit highlight-current-row
                 size="mini" max-height="400">
-                    <el-table-column prop="serial" label="订单号" width="250px"/>
-                    <el-table-column prop="materialNo" label="型号/物料号" width="100px"/>
-                    <el-table-column prop="productName" label="生产产品名称" width="250px"/>
+                    <el-table-column prop="serial" label="订单号" width="120px"/>
+                    <el-table-column prop="materialNo" label="型号/物料号" width="150px"/>
+                    <el-table-column prop="productName" label="产品名称" width="250px"/>
+                    <el-table-column prop="model" label="规格/梯型" width="100px"/>
+                    <el-table-column prop="modelNo" label="梯号" width="80px"/>
+                    <el-table-column prop="count" label="数量"/>
+                    <el-table-column prop="price" label="单价"/>
+                    <el-table-column prop="allPrice" label="合计"/>
                     <el-table-column prop="deliveryDate" label="交付日期" width="100px">
                         <template slot-scope="scope">
                             <span>{{parseDate(scope.row.deliveryDate)}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="count" label="生产数量"/>
-                    <el-table-column prop="price" label="生产单价"/>
-                    <el-table-column prop="allPrice" label="合计" width="120px"/>
                 </el-table>
             </div>
             <div class="btns">
@@ -191,8 +190,8 @@ export default {
     methods:{
         exportOrder(){
             import ('@/components/Export2Excel').then(excel=>{
-                const tHeader = ['订单号', '型号/物料号', '生产产品名称', '交付日期','生产数量', '订单单价', '合计'];
-                const filterVal = ['serial', 'materialNo', 'productName', 'deliveryDate','count', 'price', 'allPrice'];
+                const tHeader = ['订单号', '型号/物料号', '产品名称','规格/梯型','梯号', '交付日期','数量', '单价', '合计'];
+                const filterVal = ['serial', 'materialNo', 'productName', 'model','modelNo','deliveryDate','count', 'price', 'allPrice'];
                 const data = this.formatJson(filterVal, this.crmOrderList);
                 console.log('exportOrder', data);
                 excel.export_json_to_excel({
@@ -421,5 +420,5 @@ export default {
             }
         }
     }
-    
+
 </style>
