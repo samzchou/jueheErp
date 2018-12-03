@@ -89,6 +89,7 @@ export default {
 				height: calc(100% - 35px);
 				overflow: hidden;
 				box-sizing: border-box;
+				overflow:auto;
 				.scrollbar{
 					height: 100%;
 					/deep/ .el-scrollbar__wrap {

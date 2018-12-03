@@ -43,7 +43,7 @@
                 </el-form>
             </div>
             <div>
-                <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" max-height="400">
+                <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini">
                     <el-table-column label="No." width="70px" align="center">
                         <template slot-scope="scope">
                             <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
