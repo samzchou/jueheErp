@@ -9,54 +9,43 @@
 			<div class="upload-container">
 				<el-form :inline="true" :model="tableForm" ref="tableForm" size="mini" v-if="sourceData.length">
           <el-form-item label="筛选客户：" prop="crmId">
-						<el-select v-model="tableForm.crmId" placeholder="请选择客户" filterable clearable  style="width:250px" @change="filterByCrm">
+						<el-select v-model="tableForm.crmId" placeholder="请选择" filterable clearable  style="width:250px" @change="filterByForm">
 							<el-option v-for="crm in crmList" :key="crm.id" :label="crm.name" :value="crm.id"/>
+						</el-select>
+					</el-form-item>
+          <el-form-item label="筛选类型：" prop="crmId">
+						<el-select v-model="tableForm.typeId" placeholder="请选择" filterable clearable  @change="filterByForm">
+							<el-option v-for="item in typeList" :key="item.id" :label="item.name" :value="item.id"/>
 						</el-select>
 					</el-form-item>
 					<el-form-item>
 						<el-button type="primary" @click="saveTable" v-if="tableData.length" :loading="uploading">保存数据</el-button>
             <el-button type="" @click="sourceData=[]">重新上传</el-button>
 						<el-button type="" @click="removeRepeat" v-if="repeatCount">删除重复梯号、项目号的订单(共：{{repeatCount}})</el-button>
-						<el-button type="" @click="removeNotIn" v-if="notInList.length" :disabled="openDialogNotin">显示无法匹配元数据的订单(共：{{notInList.length}})</el-button>
+						<el-button type="" @click="openDialogNotin=true" v-if="notInList.length" :disabled="openDialogNotin">显示无法匹配元数据的订单(共：{{notInList.length}})</el-button>
 					</el-form-item>
 				</el-form>
 				<upload-excel-component v-else size="mini" :on-success="handleSuccess" :before-upload="beforeUpload"/>
 			</div>
       <div v-if="uploading">正在导入订单中，请等待处理完成...</div>
 			<!--批量导入-->
-			<div v-if="tableData.length">
+			<div>
 				<el-table size="mini"
 				:data="tableData.slice((queryUpload.page-1)*queryUpload.pagesize, queryUpload.page*queryUpload.pagesize)"
-				border highlight-current-row fit @selection-change="selectionChange">
+				border highlight-current-row fit @selection-change="selectionChange" max-height="500" v-loading="uploading">
           <el-table-column type="selection" fixed="left" align="center"></el-table-column>
 					<el-table-column label="No." fixed="left" width="70px" align="center">
 							<template slot-scope="scope">
 									<span>{{scope.$index+(queryUpload.page - 1) * queryUpload.pagesize + 1}} </span>
 							</template>
 					</el-table-column>
-					<el-table-column v-for="item of tableHeader" :prop="item" :label="item" :key="item" v-if="item!=='物料描述'" :width="(item=='客户名称'||item=='产品名称'||item=='备注')?250:150">
-						<template slot-scope="scope">
-							<div v-if="item=='元数据匹配'">
-								<span :class="{'warning':!scope.row[item]}">
-									{{!scope.row[item]?'无法匹配元数据':scope.row[item]}}
-								</span>
-							</div>
-							<div v-else-if="item=='产品名称'">
-								<span>
-									{{scope.row['产品名称']?scope.row['产品名称']:scope.row['物料描述']}}
-								</span>
-							</div>
-							<div v-else-if="item=='元数据产品单价'">
-								<span :class="{'warning':!scope.row[item]}">
-									{{!scope.row[item]?'无法匹配元数据':scope.row[item]}}
-								</span>
-							</div>
-							<div v-else>
-								<span :class="{'warning':(item=='isMake'||item=='isRepeat')}">
-									{{scope.row[item]}}
-								</span>
-							</div>
-						</template>
+          <!--订单数据列表-->
+					<el-table-column v-for="item of tableKeys" :prop="item.value" :label="item.label" :key="item.value" :width="item.width">
+            <template slot-scope="scope">
+              <div class="row-list" :title="scope.row[item.value]">
+                <span>{{parseStr(scope.row,item.value)}}</span>
+              </div>
+            </template>
 					</el-table-column>
 					<el-table-column label="操作" fixed="right" align="center" width="100">
 						<template slot-scope="scope">
@@ -74,18 +63,17 @@
 
     <el-dialog title="无法匹配元数据的订单列表" :visible.sync="openDialogNotin" append-to-body width="60%">
       <el-table size="mini" :data="notInList" border highlight-current-row fit max-height="500">
-        <el-table-column label="订单类型" prop="isMake" width="70">
+        <el-table-column label="订单类型" prop="typeId" width="70">
           <template slot-scope="scope">
-            <span v-if="scope.row['isMake']">生产</span>
-            <span v-else>采购</span>
+            <span>{{parseStr(scope.row,'typeId')}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="产品名称" prop="产品名称"/>
-        <el-table-column label="物料号/版本号" prop="物料号/版本号" width="120"/>
-        <el-table-column label="梯型" prop="梯型" width="100"/>
-        <el-table-column label="梯号" prop="梯号" width="80"/>
-        <el-table-column label="项目号" prop="项目号" width="120"/>
-        <el-table-column label="单价" prop="单价" width="100"/>
+        <el-table-column label="物料描述" prop="productName"/>
+        <el-table-column label="物料号/版本号" prop="materialNo" width="120"/>
+        <el-table-column label="梯型" prop="model" width="100"/>
+        <el-table-column label="梯号" prop="modelNo" width="80"/>
+        <el-table-column label="项目号" prop="projectNo" width="120"/>
+        <el-table-column label="单价" prop="price" width="100"/>
         <el-table-column label="操作" fixed="right" align="center" width="100">
           <template slot-scope="scope">
               <el-button size="mini" type="text" @click="handleEdit(scope.row)" v-if="scope.row.notin">加入产品</el-button>
@@ -95,7 +83,7 @@
     </el-dialog>
 
     <el-dialog title="新增产品" :visible.sync="openDialogVisible" append-to-body>
-      <editProduct :editRow="product" :setting="setting" @back="finishedEdit"/>
+      <editProduct :editRow="editRow" :setting="setting" @back="finishedEdit"/>
     </el-dialog>
 
 	</section>
@@ -110,27 +98,25 @@ export default {
 	data(){
 		return {
       tableKeys : [
-        {label:'isMake',value:'isMake'},
-        {label:'isRepeat',value:'isRepeat'},
-        {label:'客户名称',value:'crmName'},
-        {label:'订单编号',value:'serial'},
-				{label:'产品名称',value:'productName'},
-				{label:'物料描述',value:'productName'},
-				{label:'元数据匹配',value:'meta'},
-				{label:'物料号/版本号',value:'materialNo'},
-        {label:'梯型',value:'model'},
-        {label:'梯号',value:'modelNo'},
-       	{label:'数量',value:'count'},
-        {label:'单位',value:'util'},
-				{label:'单价',value:'price'},
-				{label:'元数据产品单价',value:'metaprice'},
-        {label:'项目号',value:'projectNo'},
-        {label:'箱号',value:'boxNo'},
-        {label:'制单日期',value:'orderDate'},
-        {label:'交货日期',value:'deliveryDate'},
-        {label:'图号/版本号',value:'caselNo'},
-        {label:'项目名称',value:'projectName'},
-        {label:'备注',value:'content'}
+        {label:'订单类型',value:'typeId',width:80},
+        {label:'重复订单',value:'isRepeat',width:80},
+        {label:'客户名称',value:'crmName',width:200},
+        {label:'订单编号',value:'sourceserial',width:100},
+				{label:'物料描述',value:'productName',width:200},
+        {label:'物料号/版本号',value:'materialNo',width:120},
+        {label:'项目号',value:'projectNo',width:120},
+        {label:'梯型',value:'model',width:100},
+        {label:'梯号',value:'modelNo',width:60},
+       	{label:'数量',value:'count',width:50},
+        {label:'单位',value:'util',width:50},
+				{label:'单价',value:'price',width:80},
+				{label:'元单价',value:'metaprice',width:80},
+        {label:'箱号',value:'boxNo',width:70},
+        {label:'制单日期',value:'orderDate',width:100},
+        {label:'交货日期',value:'deliveryDate',width:100},
+        {label:'图号/版本号',value:'caselNo',width:120},
+        {label:'项目名称',value:'projectName',width:150},
+        {label:'备注',value:'content',width:150}
       ],
 			uploading:false,
 			setting:{},
@@ -146,11 +132,11 @@ export default {
 			},
 			lastId:0,
 			tableForm:{
-				crmId:''
+        crmId:'',
+        typeId:''
       },
       openDialogVisible:false,
       editRow:null,
-      product:{},
 			repeatCount:0,
 			checkOut:0,
 			uploadRepeatCount:0,
@@ -163,13 +149,27 @@ export default {
 		}
 	},
 	methods:{
-    filterByCrm(){
-      if(this.tableForm.crmId){
-        this.tableData = _.filter(this.sourceData,{crmId:this.tableForm.crmId});
+    parseStr(row, field){
+      switch(field){
+        case 'typeId':
+          let type = _.find(this.typeList,{id:row[field]});
+          return type.name;
+        default:
+          return row[field];
+      }
+    },
+    filterByForm(){
+      let filterObj = {};
+      for(let k in this.tableForm){
+        if(this.tableForm[k]){
+          filterObj[k] = this.tableForm[k];
+        }
+      }
+      if(!_.isEmpty(filterObj)){
+        this.tableData = _.filter(this.sourceData, filterObj);
       }else{
         this.tableData = _.cloneDeep(this.sourceData);
       }
-
       this.uploadTotal = this.tableData.length;
     },
     selectionChange(selection){
@@ -188,63 +188,42 @@ export default {
     },
     // 新增产品后处理
     finishedEdit(row){
-      this.openDialogVisible = false;
       if(row){
-        row.productName = row.name;
-        //console.log('finishedEdit',row);
-        for(let key in row){
-          let obj = _.find(this.tableKeys, {'value':key});
-          if(obj){
-            let k = obj.label;
-            if(this.editRow[k]){
-              this.editRow[k] = row[key];
-            }
-          }
+        let crm = _.find(this.setting.crm, {'id':row.crmId});
+        this.editRow.typeId = row.typeId;
+        this.editRow.materialNo = row.materialNo;
+        this.editRow.productId = row.id;
+        this.editRow.productName = row.name;
+        this.editRow.price = row.price;
+        this.editRow.util = row.util;
+        this.editRow.metaprice = row.price;
+        this.editRow.ptypeId = row.ptypeId;
+        this.editRow.model = row.model;
+        this.editRow.modelNo = row.modelNo;
+        this.editRow.crmId = row.crm;
+        this.editRow.crmName = crm.name;
+        delete this.editRow.notin;
+        //console.log(row);
+        let index = _.findIndex(this.sourceData, {'index': this.editRow.index});
+        if(index>-1){
+          this.$set(this.sourceData, index, this.editRow);
         }
-        console.log('finishedEdit',this.editRow);
-        // 列出所有匹配row属性的订单，统一处理
-        let lists = _.filter(this.sourceData,{'typeId':this.editRow['typeId'],'产品名称':this.editRow['产品名称'],'物料号/版本号':this.editRow['物料号/版本号']});
-        lists.forEach(item=>{
-          let index = _.findIndex(this.sourceData, {'index': item.index});
-          if(index>-1){
-            //delete item.notin;
-            let crm = _.find(this.setting.crm, {'id':row.crmId});
-            item.notin = false;
-            item['crmId'] = crm.id;
-            item['crmNo'] = crm.crmNo;
-            item['客户名称'] = crm.name;
-            item['ptypeId'] = row.ptypeId;
-            item['元数据匹配'] = '匹配产品:ID=' + row.id;
-            item['元数据产品单价'] = row.price;
-            this.$set(this.sourceData, index, item);
-            let notIndex = _.findIndex(this.notInList, {'index': item.index});
-            if(notIndex>-1){
-              this.notInList.splice(notIndex, 1);
-            }
-          }
-        })
-        this.tableData = _.cloneDeep(this.sourceData);
+        let tindex = _.findIndex(this.tableData, {'index': this.editRow.index});
+        if(tindex>-1){
+          this.$set(this.tableData, tindex, this.editRow);
+        }
         this.$message.success('已添加产品，同步完成订单的产品匹配');
-
-        //let index = _.findIndex(this.sourceData, {'index': this.editRow.index});
-
+        let notIndex = _.findIndex(this.notInList, {'index': this.editRow.index});
+        if(notIndex>-1){
+          this.notInList.splice(notIndex, 1);
+        }
       }
+      this.openDialogVisible = false;
     },
     // 编辑订单（新建产品数据）
     handleEdit(row){
       this.editRow = row;
-      console.log('handleEdit',row);
-      let product = {typeId:row.typeId};
-      for(let key in row){
-        let obj = _.find(this.tableKeys, {'label':key});
-        if(obj){
-          let k = obj.value;
-          product[k] = this._setValue(k, row[key]);
-        }
-      }
       this.openDialogVisible = true;
-      this.product = product;
-      console.log('handleEdit',product)
     },
 		removeRepeat(){
 			let list = [];
@@ -259,11 +238,7 @@ export default {
 			this.tableData = list;
 			this.uploadTotal = list.length;
 		},
-		// 移除无法匹配元数据的点单
-		removeNotIn(){
-			this.notInList = _.orderBy(this.notInList,['产品名称'],['asc'])
-      this.openDialogNotin = true;
-		},
+
 		// 检查订单梯号是否重复
     checkRepeat(arr){
 			//this.repeatCount = 0;
@@ -304,79 +279,88 @@ export default {
         });
       }).catch();
 		},
-    checkSerial(){
-      let serial = this.handleSerial(true);
-      if(this.serialList.includes(serial)){
-        serial = this.checkSerial();
-      }
+    checkSerial(index){
+      let now =  moment(new Date()).format('YYYY-MM-DD HH:mm');
+      now = now.split(' ');
+      let dd = now[0].split('-');
+      let tt = now[1].split(':')
+      let serial = index+'-JH' + dd[0] +''+ dd[1] +''+ dd[2]+''+tt[0]+''+tt[1];
       return serial;
     },
 		handleSuccess({results, header}) {
       this.crmList = [];
 			// 处理列名
-			this.tableHeader = [];//['isMake','isRepeat'];
+      this.tableHeader = [];//['isMake','isRepeat'];
+      this.notInList = [];
       // 重复订单量
-      this.tableKeys.forEach(item=>{
+      this.uploadRepeatCount = 0;
+      /* this.tableKeys.forEach(item=>{
         this.tableHeader.push(item.label);
-      })
-			//处理导入的数据
-      var index = 1;
-			results = results.map(item=>{
-        index += 1;
-        let obj = {};
-				for(let k in item){
-          item.index = index;
-					if(k === '订单编号'){
-            let serial = this.checkSerial();
-            this.serialList.push(serial);
-						item[k] = serial;
-					}else if(k ==='产品名称'|| k ==='物料描述'){
-            item['产品名称'] = item[k];
-						let str = item[k].replace(/\s+/g, "");
-            if(str.indexOf('轿顶防护栏')>-1 || str.indexOf('线槽')>-1 || str.indexOf('挂钩')>-1 || str.indexOf('救援装置柜')>-1){
-              item['isMake'] = '属于生产订单';
-              item.typeId = 2;
-            }else{
-              item.typeId = 1;
-            }
-            // 匹配产品分类和产品ID
-						let product = _.find(this.productList,(p)=>{
-							if(p['name'].replace(/\s+/g, "") == str && p['materialNo'] == item['物料号/版本号'] && p.typeId == item.typeId){
-								return p;
-							}
-						});
-            if(product){
-              let crm = _.find(this.setting.crm,{'id':product.crmId});
-              if(crm){
-                item['客户名称'] = crm.name;
-                item['crmId'] = crm.id;
-                item['crmNo'] = crm.crmNo;
-                if(_.findIndex(this.crmList,{id:crm.id})<0){
-                  this.crmList.push(crm);
-                }
+      }) */
+      let listData = [];
+      results.forEach((item, index)=>{
+        let obj = {'index':index+1};
+        for(let k in item){
+          let value = item[k];
+          k = k.replace(/(^\s+)|(\s+$)/g,""); // 去除空格
+          let head = _.find(this.tableKeys,{'label':k});
+          if(head){
+            obj[head.value] = value;
+            //生产订单
+            if(head.value == 'productName'){
+              if(value.includes('轿顶防护栏') || value.includes('线槽') || value.includes('挂钩') || value.includes('救援装置柜')){
+                obj.typeId = 2;
+                obj.flowStateId = 5;
+              }else{
+                obj.typeId = 1;
+                obj.flowStateId = 1;
               }
-              item['productId'] = product.id;
-              item['ptypeId'] = product.ptypeId;
-							item['元数据匹配'] = '匹配产品:ID='+product.id;
-							item['元数据产品单价'] = product.price;
-            }else{
-              this.notInList.push(item);
-							item.notin = true;
-						}
-					}else if(k ==='梯号' && this.checkModelNo(item)){
-            item['isRepeat'] = '订单梯号、项目号重复';
+            }
           }
-				}
-				return item;
-			});
-			this.sourceData = _.orderBy(results,['isMake','isRepeat'],['asc']);
-			this.tableData = _.cloneDeep(this.sourceData);
-			this.checkRepeat(this.tableData);
+        }
+        // 判断采购订单是否相同并合并数量
+        let dataIndex = _.findIndex(listData,{'typeId':obj.typeId,'productName':obj.productName,'materialNo':obj.materialNo,'price':obj.price,'caselNo':obj.caselNo})
+        if(dataIndex>-1){ // && !obj.isMake
+          listData[dataIndex]['sourceserial'] += ','+obj.sourceserial;
+          if(listData[dataIndex]['projectNo'].indexOf(obj.projectNo)<0){
+            listData[dataIndex]['projectNo'] += ','+obj.projectNo;
+          }
+          listData[dataIndex]['count'] += obj.count;
+        }else{
+          // 匹配产品分类和产品ID
+          let product = _.find(this.productList,{'name':obj.productName,'materialNo':obj.materialNo,'typeId':obj.typeId});
+          if(product){
+            let crm = _.find(this.setting.crm,{'id':product.crmId});
+            if(_.findIndex(this.crmList,{id:product.crmId})<0){
+              this.crmList.push(crm);
+            }
+            obj = _.merge(obj,{
+              metaprice:product.price,
+              productId:product.id,
+              ptypeId:product.ptypeId,
+              crmId:product.crmId,
+              crmName:crm.name,
+            })
+          }else{
+            obj.notin = true;
+            this.notInList.push(obj);
+          }
+          // 检查重复订单 notInList
+          if(this.checkModelNo(obj)){
+            obj.isRepeat = "是";
+            this.uploadRepeatCount += 1;
+          }
+          listData.push(obj);
+        }
+      });
+
+      this.sourceData = listData; //_.orderBy(listData,['typeId'],['desc']);
+      this.tableData = _.cloneDeep(this.sourceData);
 			this.uploadTotal = this.sourceData.length;
       this.uploading = false;
 		},
     checkModelNo(row){
-      if(_.find(this.modelNoList, {'modelNo':row['梯号'],'projectNo':row['项目号'],'materialNo':row['物料号/版本号']}) ){
+      if(_.find(this.modelNoList, {'productName':row.productName,'modelNo':row.modelNo,'projectNo':row.projectNo,'materialNo':row.materialNo}) ){
         return true;
       }
       return false;
@@ -387,9 +371,7 @@ export default {
 		uploadCurrentChange(val){
 			this.queryUpload.page = val;
 		},
-		handleSerial(flag){
-			return Math.random().toString(36).substr(2).toLocaleUpperCase();
-		},
+
 		saveTable(){
       if(!this.uploadTable.length){
         this.$alert('请勾选需要保存的数据行');
@@ -399,8 +381,10 @@ export default {
         this.$alert('有'+this.uploadRepeatCount+'个重复的梯号和项目号的订单，请清理后再提交保存！');
         return;
       }
-      if(this.checkOut>0){
-        this.$alert('提交订单中有'+this.checkOut+'个无法匹配元数据的产品，请处理后再提交保存！');
+      // 检查订单的完善
+      let checkNotIn = _.filter(this.uploadTable,{'notin':true})
+      if(checkNotIn.length){
+        this.$alert('提交订单中有'+checkNotIn.length+'个无法匹配元数据的产品，请处理后再提交保存！');
         return;
       }
       this.saveData();
@@ -425,25 +409,12 @@ export default {
 			//let crm = _.find(this.setting.crm,{'id':this.tableForm.crmId});
 			let indexs = [];
 			let dataList = this.uploadTable.map((item, index)=>{
-				indexs.push(item.index)
+				indexs.push(item.index);
         this.lastId = this.lastId + index + 1;
-        //let obj = {'id':this.lastId,'typeId':1,'flowStateId':1,'crmId':crm.id,'crmName':crm.name,'crmNo':crm.crmNo,'createByUser':this.$store.state.user.name};
-        let obj = {'id':this.lastId,'typeId':1,'flowStateId':1,'createByUser':this.$store.state.user.name};
-				for(let key in item){
-					if(key === 'isMake'){
-						obj = _.merge(obj, {typeId:2,flowStateId:4});
-          }
-          // 判断KEY
-          if(!['crmId','productId','ptypeId','crmNo'].includes(key)){
-            let o = _.find(this.tableKeys, {label:key});
-            if(o){
-              let k = o.value;
-						  obj[k] = this._setValue(k, item[key]);
-            }
-          }else{
-            obj[key] = item[key];
-          }
-        };
+        let serial = this.checkSerial(item.index);
+        let obj = _.merge(item,{'id':this.lastId,'serial':serial,'createByUser':this.$store.state.user.name});
+        obj.orderDate = new Date(obj.orderDate).getTime();
+        obj.deliveryDate = new Date(obj.deliveryDate).getTime();
 				return obj;
 			});
 			let condition = {
@@ -460,23 +431,30 @@ export default {
 				});
         this.uploadTable = [];
         // 根据客户过滤
-        this.filterByCrm();
-				this.getModelNoList();
-				//this._getLastId();
+        this.filterByForm();
+				//this.getModelNoList();
 				this.uploading = false;
 				loadingMask.close();
 			});
 		},
 		// 获取所有订单列表,列出梯号,校验是否重复
 		async getModelNoList(match = {}){
-			let condition = {
+      let now = new Date();
+      let sd = new Date(now.setDate(now.getDate() -1));
+		  let ed = new Date(now.setDate(now.getDate() + 6));
+			let params = {
 				type:"getColumns",
-				collectionName: 'order',
-				cols:{modelNo:1,crmId:1,serial:1, projectNo:1,materialNo:1}
-			}
-			let result = await this.$axios.$post('mock/db', {data:condition});
+        collectionName: 'order',
+        condition:{
+          flowStateId:{$in:[1,5]},
+          updateDate:{'$gte':sd.getTime(),'$lte':ed.getTime()},
+        },
+				cols:{productName:1,modelNo:1,crmId:1,serial:1, projectNo:1,materialNo:1}
+      }
+
+			let result = await this.$axios.$post('mock/db', {data:params});
 			//console.log('getModelNoList',result);
-			this.modelNoList = result;
+      this.modelNoList = result;
       result.forEach(item=>{
         this.serialList.push(item.serial);
       });
@@ -526,8 +504,14 @@ export default {
 		display:flex;
 		align-item:center;
 	}
-	.warning{
-		color:red;
-	}
+
+  .row-list{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    &.warning{
+      color:red;
+    }
+  }
 </style>
 

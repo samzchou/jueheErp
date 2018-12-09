@@ -796,12 +796,22 @@ module.exports = {
                 widgetType:'input',
                 width:250,
                 subtype:'text',
-                label:'订单编号',
+                label:'系统订单号',
                 key:'serial',
                 autoHash:true,
                 rules: [
                     {"required": true,"message": "请填写编号","trigger": "blur"}
                 ],
+                sort:4
+            },
+            sourceserial:{
+                type:String,
+                default:'',
+                widgetType:'input',
+                width:250,
+                subtype:'text',
+                label:'原始订单号',
+                key:'sourceserial',
                 sort:4
             },
             crmId:{

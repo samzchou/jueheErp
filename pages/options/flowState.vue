@@ -9,11 +9,11 @@
             </div>
         </div>
         <div class="grid-container" v-if="!isEdit">
-            <el-table v-loading="listLoading" 
-            :data="gridList" 
-            border fit highlight-current-row 
-            size="mini" 
-            max-height="400" 
+            <el-table v-loading="listLoading"
+            :data="gridList"
+            border fit highlight-current-row
+            size="mini"
+            max-height="400"
             style="width: 100%">
 				<el-table-column prop="id" label="状态ID" width="60px"/>
                 <el-table-column prop="name" label="流程状态名称" width="200px"/>
@@ -153,7 +153,7 @@ export default {
                         this.dataId = undefined;
                         this.writeFile();
                     });
-                    
+
                 }
             });
         },
@@ -190,7 +190,8 @@ export default {
                             path: "$type",
                             preserveNullAndEmptyArrays: true // 空的数组也拆分
                         }
-                    }
+                    },
+                    {$sort:{id:1}}
                 ]
             });
             let result = await this.$axios.$post('mock/db', {data:condition});

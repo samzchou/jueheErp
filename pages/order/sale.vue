@@ -8,50 +8,66 @@
             </div>
             <div>
                 <el-button v-if="!isEdit" @click="handleAdd" type="text" size="medium" icon="el-icon-plus">新增销售订单</el-button>
-                <el-button v-else @click="isEdit=false" type="text" size="medium" icon="el-icon-close">取消返回</el-button>
+                <el-button v-else @click="cancelBack" type="text" size="medium" icon="el-icon-close">取消返回</el-button>
             </div>
         </div>
         <div class="grid-container" v-if="!isEdit">
             <div class="search-content">
-                <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
-                    <el-form-item label="订单编号：" prop="serial">
-                        <el-input v-model="searchForm.serial" clearable  style="width:150px"/>
-                    </el-form-item>
-                    <el-form-item label="订单状态：" prop="flowStateId">
-                        <el-select v-model="searchForm.flowStateId" placeholder="请选择" clearable>
-                            <el-option v-for="(flow,idx) in flowList" :key="idx" :label="flow.name" :value="flow.id"/>
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item label="供应商：" prop="crmId">
-                        <el-select v-model="searchForm.crmId" placeholder="请选择" clearable>
-                            <el-option v-for="(crm,idx) in crmList" :key="idx" :label="crm.name" :value="crm.id"/>
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item label="产品名称：" prop="productName">
-                        <el-input v-model="searchForm.productName" clearable  style="width:150px"/>
-                    </el-form-item>
-                    <el-form-item label="项目号：" prop="projectNo">
-                        <el-input v-model="searchForm.projectNo" clearable  style="width:150px"/>
-                    </el-form-item>
-                    <el-form-item label="箱号：" prop="boxNo">
-                        <el-input v-model="searchForm.boxNo" clearable  style="width:150px"/>
-                    </el-form-item>
-                    <el-form-item label="型号/梯号：" prop="modelNo">
-                        <el-input v-model="searchForm.modelNo" clearable  style="width:150px"/>
-                    </el-form-item>
-                    <el-form-item label="物料号/版本号：" prop="materialNo">
-                        <el-input v-model="searchForm.materialNo" clearable style="width:150px"/>
-                    </el-form-item>
-                    <el-form-item label="制单日期：" prop="orderDate">
-                        <el-date-picker v-model="searchForm.orderDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels  style="width:250px"/>
-                    </el-form-item>
-                    <el-form-item label="交付日期：" prop="deliveryDate">
-                        <el-date-picker v-model="searchForm.deliveryDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px"/>
-                    </el-form-item>
-                    <el-form-item>
-                        <el-button type="primary" @click="submitSearch">搜索</el-button>
-                    </el-form-item>
-                </el-form>
+              <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
+                <template v-if="isLike">
+                  <el-form-item label="模糊查找：" prop="keyword">
+                      <el-input v-model="searchLike.keyword" clearable  style="width:150px"/>
+                  </el-form-item>
+                  <el-form-item>
+                    <el-button type="text" @click="isLike=false">高级查找</el-button>
+                  </el-form-item>
+                </template>
+                <template v-else>
+                  <el-form-item label="系统订单号：" prop="serial">
+                      <el-input v-model="searchForm.serial" clearable  style="width:150px"/>
+                  </el-form-item>
+                  <el-form-item label="原始订单号：" prop="sourceserial">
+                      <el-input v-model="searchForm.sourceserial" clearable  style="width:150px"/>
+                  </el-form-item>
+                  <el-form-item label="订单状态：" prop="flowStateId">
+                      <el-select v-model="searchForm.flowStateId" placeholder="请选择" clearable>
+                          <el-option v-for="(flow,idx) in flowList" :key="idx" :label="flow.name" :value="flow.id"/>
+                      </el-select>
+                  </el-form-item>
+                  <el-form-item label="供应商：" prop="crmId">
+                      <el-select v-model="searchForm.crmId" placeholder="请选择" clearable>
+                          <el-option v-for="(crm,idx) in crmList" :key="idx" :label="crm.name" :value="crm.id"/>
+                      </el-select>
+                  </el-form-item>
+                  <el-form-item label="产品名称：" prop="productName">
+                      <el-input v-model="searchForm.productName" clearable  style="width:150px"/>
+                  </el-form-item>
+                  <el-form-item label="项目号：" prop="projectNo">
+                      <el-input v-model="searchForm.projectNo" clearable  style="width:150px"/>
+                  </el-form-item>
+                  <el-form-item label="箱号：" prop="boxNo">
+                      <el-input v-model="searchForm.boxNo" clearable  style="width:150px"/>
+                  </el-form-item>
+                  <el-form-item label="型号/梯号：" prop="modelNo">
+                      <el-input v-model="searchForm.modelNo" clearable  style="width:150px"/>
+                  </el-form-item>
+                  <el-form-item label="物料号/版本号：" prop="materialNo">
+                      <el-input v-model="searchForm.materialNo" clearable style="width:150px"/>
+                  </el-form-item>
+                  <el-form-item label="制单日期：" prop="orderDate">
+                      <el-date-picker v-model="searchForm.orderDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels  style="width:250px"/>
+                  </el-form-item>
+                  <el-form-item label="交付日期：" prop="deliveryDate">
+                      <el-date-picker v-model="searchForm.deliveryDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px"/>
+                  </el-form-item>
+                </template>
+                <el-form-item>
+                    <el-button type="primary" @click="submitSearch">搜索</el-button>
+                </el-form-item>
+                <el-form-item v-if="!isLike">
+                  <el-button type="text" @click="isLike=true">模糊查找</el-button>
+                </el-form-item>
+              </el-form>
             </div>
             <el-table v-loading="listLoading"
             :data="gridList"
@@ -120,7 +136,7 @@
                 </el-table-column>
                 <el-table-column label="操作" fixed="right" align="center" width="100">
                     <template slot-scope="scope">
-                        <span v-if="scope.row.flowStateId==4">
+                        <span v-if="scope.row.flowStateId==5">
                             <el-button size="mini" type="text" @click="handleUpdate(scope.row)">编辑</el-button>
                             <el-button size="mini" type="text" @click="handleDelete(scope.row)">删除</el-button>
                         </span>
@@ -289,8 +305,13 @@ export default {
             total:0,
             dataId:undefined,
             editRow:null,
+            isLike:true,
+            searchLike:{
+              keyword:''
+            },
             searchForm:{
                 serial:'',
+                sourceserial:'',
                 crmId:'',
                 flowStateId:'',
                 productName:'',
@@ -461,7 +482,18 @@ export default {
             this.ruleForm.crmNo = crm.crmNo;
         },
         handleSerial(){
-            this.ruleForm.serial = Math.random().toString(36).substr(2).toLocaleUpperCase();
+          let now =  moment(new Date()).format('YYYY-MM-DD HH:mm');
+          now = now.split(' ');
+          let dd = now[0].split('-');
+          let tt = now[1].split(':');
+          let no = this.editRow?this.editRow.id:this.lastId;
+          this.ruleForm.serial = no+'-JH' + dd[0] +''+ dd[1] +''+ dd[2]+''+tt[0]+''+tt[1];
+          //return serial;
+          //this.ruleForm.serial = Math.random().toString(36).substr(2).toLocaleUpperCase();
+        },
+        cancelBack(){
+          this.editRow = null;
+          this.isEdit=false
         },
         handleAdd(){
             this.isEdit = true;
@@ -612,22 +644,44 @@ export default {
         },
         submitSearch(flag){
             let params = {};
-            for(let k in this.searchForm){
-                if(this.searchForm[k] != '' && this.searchForm[k]){
-                    if(_.isNumber(this.searchForm[k])){
-                        params[k] = Number(this.searchForm[k]);
-                    }else if(_.isArray(this.searchForm[k]) && (k==='deliveryDate' || k==='orderDate')){
-                        params[k] = {
-                            $gte:this.searchForm[k][0],
-                            $lte:this.searchForm[k][1]
-                        }
-                    }else if(_.isArray(this.searchForm[k])){
-                        params[k] = {$in:this.searchForm[k]}
-                    }else{
-                        params[k] = {$regex:this.searchForm[k]};
-                    }
-                }
-            };
+            if(this.isLike){
+              let keyWord = this.searchLike.keyword;
+              if(keyWord){
+                params = {
+                  $or:[
+                    {'serial':{'$regex':keyWord}},
+                    {'sourceserial':{'$regex':keyWord}},
+                    {'productName':{'$regex':keyWord}},
+                    {'crmName':{'$regex':keyWord}},
+                    {'materialNo':{'$regex':keyWord}},
+                    {'projectNo':{'$regex':keyWord}},
+                    {'boxNo':{'$regex':keyWord}},
+                    {'model':{'$regex':keyWord}},
+                    {'modelNo':{'$regex':keyWord}},
+                    {'projectName':{'$regex':keyWord}},
+                    {'caselNo':{'$regex':keyWord}},
+                    {'content':{'$regex':keyWord}}
+                  ]
+                };
+              }
+            }else{
+              for(let k in this.searchForm){
+                  if(this.searchForm[k] != '' && this.searchForm[k]){
+                      if(_.isNumber(this.searchForm[k])){
+                          params[k] = Number(this.searchForm[k]);
+                      }else if(_.isArray(this.searchForm[k]) && (k==='deliveryDate' || k==='orderDate')){
+                          params[k] = {
+                              $gte:this.searchForm[k][0],
+                              $lte:this.searchForm[k][1]
+                          }
+                      }else if(_.isArray(this.searchForm[k])){
+                          params[k] = {$in:this.searchForm[k]}
+                      }else{
+                          params[k] = {$regex:this.searchForm[k]};
+                      }
+                  }
+              };
+            }
             if(!flag){ // 不需要再做分页复位
                 this.query = {
                     page:1,
@@ -703,10 +757,10 @@ export default {
                 this.setting = result.content;
                 this.typeList = this.setting.type;
                 this.flowList = _.filter(this.setting.flowState, item=>{
-                    return item.id>3;
+                    return item.id>4;
                 });
                 this.initProduct();
-                this.getList({flowStateId:{'$gte':4}});
+                this.getList({flowStateId:{'$gte':5}});
             }
         }
     },
