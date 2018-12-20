@@ -61,21 +61,22 @@
                 <el-table-column prop="sourceserial" label="原始订单号"/>
                 <el-table-column prop="projectNo" label="项目号"/>
                 <el-table-column prop="projectName" label="项目名称"/>
-                <el-table-column prop="modelNo" label="梯号"/>
+                <el-table-column prop="modelNo" label="梯号" width="80"/>
                 <el-table-column prop="productName" label="部件名称"/>
-                <el-table-column prop="count" label="数量" width="80"/>
+                <el-table-column prop="count" label="箱数" width="80"/>
                 <el-table-column label="开票金额">
                     <template slot-scope="scope">
                         <span>{{parseMoney(scope.row)}}</span>
                     </template>
                 </el-table-column>
                 <el-table-column prop="invoiceNumber" label="发票号"/>
-                <el-table-column prop="createDate" label="开票日期">
+                <el-table-column prop="createDate" label="开票日期" width="100">
                      <template slot-scope="scope">
                         <span>{{parseDate(scope.row.createDate)}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="createByUser" label="开票人"/>
+                <el-table-column prop="createByUser" label="开票人" width="80"/>
+                <el-table-column prop="content" label="备注"/>
             </el-table>
             <div class="page-container">
                 <div>本页合计金额：{{totalMoney | currency}}</div>
@@ -499,13 +500,13 @@ export default {
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.total = result.total;
             this.gridList = result.list;
+
+            this.totalMoney = 0;
             result.list.forEach(item=>{
                 this.totalMoney += item.count*item.price;
             });
-            console.log('this.gridList', this.gridList);
+            //console.log('this.gridList', this.gridList);
             this.listLoading = false;
-            this.totalMoney = 0;
-            
         },
         async setChildren(orderIds){
             let condition = {
