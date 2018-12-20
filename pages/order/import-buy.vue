@@ -2,90 +2,136 @@
 	<section>
 		<div class="page-title">
 			<div>
-					<span>采购订单导入（注：导入的订单如有涉及为生产订单的请选择客户后分开保存数据）</span>
+				<span>原始采购订单导入</span>
 			</div>
 		</div>
 		<div class="form-container">
 			<div class="upload-container">
 				<el-form :inline="true" :model="tableForm" ref="tableForm" size="mini" v-if="sourceData.length">
-          <el-form-item label="筛选客户：" prop="crmId">
-						<el-select v-model="tableForm.crmId" placeholder="请选择" filterable clearable  style="width:250px" @change="filterByForm">
-							<el-option v-for="crm in crmList" :key="crm.id" :label="crm.name" :value="crm.id"/>
+					<el-form-item label="订单类型：">
+						<el-select v-model="tableForm.typeId" placeholder="请选择" clearable  @change="filterByForm">
+							<el-option v-for="type in setting.type" :key="type.id" :label="type.name" :value="type.id"/>
 						</el-select>
 					</el-form-item>
-          <el-form-item label="筛选类型：" prop="crmId">
-						<el-select v-model="tableForm.typeId" placeholder="请选择" filterable clearable  @change="filterByForm">
-							<el-option v-for="item in typeList" :key="item.id" :label="item.name" :value="item.id"/>
-						</el-select>
-					</el-form-item>
+					<el-form-item label="模糊筛选：">
+						<el-input v-model="tableForm.keyword" placeholder="请输入关键字" clearable  @change="filterByForm"/>
+					</el-form-item>  
 					<el-form-item>
-						<el-button type="primary" @click="saveTable" v-if="tableData.length" :loading="uploading">保存数据</el-button>
-            <el-button type="" @click="sourceData=[]">重新上传</el-button>
+						<el-button type="warning" @click="filterByForm" v-if="tableData.length" icon="el-icon-search">查找</el-button>
+							<el-button type="primary" @click="saveTable" v-if="tableData.length" :loading="uploading" icon="my-icon-save">导入全部订单({{sourceData.length}})</el-button>
+							<el-button type="" @click="sourceData=[]" icon="el-icon-refresh">重新上传</el-button>
 						<el-button type="" @click="removeRepeat" v-if="repeatCount">删除重复梯号、项目号的订单(共：{{repeatCount}})</el-button>
 						<el-button type="" @click="openDialogNotin=true" v-if="notInList.length" :disabled="openDialogNotin">显示无法匹配元数据的订单(共：{{notInList.length}})</el-button>
 					</el-form-item>
 				</el-form>
 				<upload-excel-component v-else size="mini" :on-success="handleSuccess" :before-upload="beforeUpload"/>
 			</div>
-      <div v-if="uploading">正在导入订单中，请等待处理完成...</div>
+      		<div v-if="uploading">正在导入订单中，请等待处理完成...</div>
 			<!--批量导入-->
-			<div>
-				<el-table size="mini"
+			<div v-if="sourceData.length">
+				<el-table size="mini" ref="listTable"
 				:data="tableData.slice((queryUpload.page-1)*queryUpload.pagesize, queryUpload.page*queryUpload.pagesize)"
-				border highlight-current-row fit @selection-change="selectionChange" max-height="500" v-loading="uploading">
-          <el-table-column type="selection" fixed="left" align="center"></el-table-column>
-					<el-table-column label="No." fixed="left" width="70px" align="center">
-							<template slot-scope="scope">
-									<span>{{scope.$index+(queryUpload.page - 1) * queryUpload.pagesize + 1}} </span>
-							</template>
-					</el-table-column>
-          <!--订单数据列表-->
-					<el-table-column v-for="item of tableKeys" :prop="item.value" :label="item.label" :key="item.value" :width="item.width">
-            <template slot-scope="scope">
-              <div class="row-list" :title="scope.row[item.value]">
-                <span>{{parseStr(scope.row,item.value)}}</span>
-              </div>
-            </template>
-					</el-table-column>
-					<el-table-column label="操作" fixed="right" align="center" width="100">
-						<template slot-scope="scope">
-								<el-button size="mini" type="text" @click="handleDelete(scope.row)">移除</el-button>
-                <el-button size="mini" type="text" v-if="scope.row.notin" @click="handleEdit(scope.row)">编辑</el-button>
-						</template>
-					</el-table-column>
+				border highlight-current-row fit stripe max-height="500" v-loading="uploading" @row-click="listRowClick">
+				<el-table-column type="expand">
+					<template slot-scope="props">
+						<el-form label-position="left" size="mini" inline label-width="100px">
+							<el-form-item label="订单类型:">
+								<span>{{parseStr(props.row,'typeId')}}</span>
+							</el-form-item>
+							<el-form-item label="重复订单:">
+								<span :class="{'warning':props.row.isRepeat}">{{props.row.isRepeat}}</span>
+							</el-form-item>
+							<el-form-item label="物料号/版本号:">
+								<span>{{props.row.materialNo}}</span>
+							</el-form-item>
+							<el-form-item label="物料号/版本号:">
+								<span>{{props.row.materialNo}}</span>
+							</el-form-item>
+							<el-form-item label="图号/版本号:">
+								<span>{{props.row.caselNo}}</span>
+							</el-form-item>
+							<el-form-item label="物料名称:">
+								<span>{{props.row.productName}}</span>
+							</el-form-item>
+							<el-form-item label="项目号:">
+								<span :title="props.row.projectNo">{{props.row.projectNo}}</span>
+							</el-form-item>
+							<el-form-item label="项目名称:">
+								<span>{{props.row.projectName}}</span>
+							</el-form-item>
+							<el-form-item label="梯型:">
+								<span>{{props.row.model}}</span>
+							</el-form-item>
+							<el-form-item label="梯号:">
+								<span>{{props.row.modelNo}}</span>
+							</el-form-item>
+							<el-form-item label="数量:">
+								<span>{{props.row.count}} {{props.row.util}}</span>
+							</el-form-item>
+							<el-form-item label="单价:">
+								<span>{{props.row.price | currency}}</span>
+							</el-form-item>
+							<el-form-item label="元数据单价:">
+								<span>{{props.row.metaprice | currency}}</span>
+							</el-form-item>
+						</el-form>
+					</template>
+				</el-table-column>
+				<el-table-column label="No." fixed="left" width="70px" align="center">
+					<template slot-scope="scope">
+						<span>{{scope.$index+(queryUpload.page - 1) * queryUpload.pagesize + 1}} </span>
+					</template>
+				</el-table-column>
+				<!--订单数据列表-->
+				<el-table-column v-for="item of tableKeys.filter(o=>o.show)" :prop="item.value" :label="item.label" :key="item.value" :width="item.width">
+					<template slot-scope="scope">
+					<div class="row-list" :title="scope.row[item.value]">
+						<span>{{parseStr(scope.row,item.value)}}</span>
+					</div>
+					</template>
+				</el-table-column>
+				<el-table-column label="操作" fixed="right" align="center" width="100">
+					<template slot-scope="scope">
+						<el-button size="mini" type="text" @click="handleDelete(scope.row)">移除</el-button>
+						<el-button size="mini" type="text" v-if="scope.row.notin" @click="handleEdit(scope.row)">编辑</el-button>
+					</template>
+				</el-table-column>
 				</el-table>
 				<div class="page-container" style="padding: 10px 0;">
-						<el-pagination size="mini" @size-change="uploadSizeChange" @current-change="uploadCurrentChange" :current-page.sync="queryUpload.page" :page-sizes="[20, 50, 100, 200, 500]" :page-size="queryUpload.pagesize" layout="total,sizes, prev, pager, next" :total="uploadTotal">
-						</el-pagination>
+					<div>查询条件 -> <span v-if="tableForm.typeId">订单类型：{{parseStr(tableForm,'typeId')}}；</span><span v-if="tableForm.keyword">模糊查询：{{parseStr(tableForm,'keyword')}}</span></div>
+					<el-pagination size="mini" @size-change="uploadSizeChange" @current-change="uploadCurrentChange" :current-page.sync="queryUpload.page" :page-sizes="[20, 50, 100, 200, 500]" :page-size="queryUpload.pagesize" layout="total,sizes, prev, pager, next" :total="uploadTotal">
+					</el-pagination>
 				</div>
 			</div>
 		</div>
 
-    <el-dialog title="无法匹配元数据的订单列表" :visible.sync="openDialogNotin" append-to-body width="60%">
-      <el-table size="mini" :data="notInList" border highlight-current-row fit max-height="500">
-        <el-table-column label="订单类型" prop="typeId" width="70">
-          <template slot-scope="scope">
-            <span>{{parseStr(scope.row,'typeId')}}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="物料描述" prop="productName"/>
-        <el-table-column label="物料号/版本号" prop="materialNo" width="120"/>
-        <el-table-column label="梯型" prop="model" width="100"/>
-        <el-table-column label="梯号" prop="modelNo" width="80"/>
-        <el-table-column label="项目号" prop="projectNo" width="120"/>
-        <el-table-column label="单价" prop="price" width="100"/>
-        <el-table-column label="操作" fixed="right" align="center" width="100">
-          <template slot-scope="scope">
-              <el-button size="mini" type="text" @click="handleEdit(scope.row)" v-if="scope.row.notin">加入产品</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-dialog>
-
-    <el-dialog title="新增产品" :visible.sync="openDialogVisible" append-to-body>
-      <editProduct :editRow="editRow" :setting="setting" @back="finishedEdit"/>
-    </el-dialog>
-
+		<el-dialog title="无法匹配元数据的订单列表" :visible.sync="openDialogNotin" append-to-body width="60%">
+			<el-table size="mini" :data="notInList" border highlight-current-row fit max-height="500">
+				<el-table-column label="订单类型" prop="typeId" width="70">
+				<template slot-scope="scope">
+					<span>{{parseStr(scope.row,'typeId')}}</span>
+				</template>
+				</el-table-column>
+				<el-table-column label="物料描述" prop="productName"/>
+				<el-table-column label="物料号/版本号" prop="materialNo" width="120"/>
+				<el-table-column label="梯型" prop="model" width="100"/>
+				<el-table-column label="梯号" prop="modelNo" width="80"/>
+				<el-table-column label="项目号" prop="projectNo" width="120">
+				<template slot-scope="scope">
+					<span :title="scope.row.projectNo">{{scope.row.projectNo}}</span>
+				</template>
+				</el-table-column>
+				<el-table-column label="单价" prop="price" width="100"/>
+				<el-table-column label="操作" fixed="right" align="center" width="100">
+				<template slot-scope="scope">
+					<el-button size="mini" type="text" @click="handleEdit(scope.row)" v-if="scope.row.notin">加入产品</el-button>
+				</template>
+				</el-table-column>
+			</el-table>
+		</el-dialog>
+		<el-dialog title="新增产品" :visible.sync="openDialogVisible" append-to-body>
+			<editProduct :editRow="editRow" :setting="setting" @back="finishedEdit"/>
+		</el-dialog>
 	</section>
 </template>
 <script>
@@ -97,82 +143,94 @@ export default {
 	components: { editProduct, UploadExcelComponent },
 	data(){
 		return {
-      tableKeys : [
-        {label:'订单类型',value:'typeId',width:80},
-        {label:'重复订单',value:'isRepeat',width:80},
-        {label:'客户名称',value:'crmName',width:200},
-        {label:'订单编号',value:'sourceserial',width:100},
-				{label:'物料描述',value:'productName',width:200},
-        {label:'物料号/版本号',value:'materialNo',width:120},
-        {label:'项目号',value:'projectNo',width:120},
-        {label:'梯型',value:'model',width:100},
-        {label:'梯号',value:'modelNo',width:60},
-       	{label:'数量',value:'count',width:50},
-        {label:'单位',value:'util',width:50},
-				{label:'单价',value:'price',width:80},
-				{label:'元单价',value:'metaprice',width:80},
-        {label:'箱号',value:'boxNo',width:70},
-        {label:'制单日期',value:'orderDate',width:100},
-        {label:'交货日期',value:'deliveryDate',width:100},
-        {label:'图号/版本号',value:'caselNo',width:120},
-        {label:'项目名称',value:'projectName',width:150},
-        {label:'备注',value:'content',width:150}
-      ],
+			tableKeys : [
+				{label:'订单类型',value:'typeId',width:80,show:true},
+				{label:'重复订单',value:'isRepeat',width:80,show:true},
+				{label:'匹配客户名称',value:'crmName',show:true},
+				{label:'订单编号',value:'sourceserial',show:true},
+						{label:'物料描述',value:'productName',show:true},
+				{label:'物料号/版本号',value:'materialNo',show:true},
+				{label:'项目号',value:'projectNo',show:true},
+				{label:'梯型',value:'model',width:100},
+				{label:'梯号',value:'modelNo',width:60},
+				{label:'数量',value:'count',width:50},
+				{label:'单位',value:'util',width:50},
+						{label:'单价',value:'price',width:80},
+						{label:'元单价',value:'metaprice',width:80},
+				{label:'箱号',value:'boxNo',width:70},
+				{label:'制单日期',value:'orderDate',width:100,show:true},
+				{label:'交货日期',value:'deliveryDate',width:100,show:true},
+				{label:'图号/版本号',value:'caselNo',width:120},
+				{label:'项目名称',value:'projectName',width:150},
+				{label:'备注',value:'content',width:150}
+			],
 			uploading:false,
 			setting:{},
 			typeList:[],
-      crmList:[],
+			crmList:[],
+			pList:[],
+			sourceserialList:[],
 			productList:[],
 			modelNoList:[],
-      serialList:[],
+      		serialList:[],
 			uploadTotal:0,
 			queryUpload:{
 				page:1,
 				pagesize:100
 			},
 			lastId:0,
+			lastUploadId:0,
 			tableForm:{
-        crmId:'',
-        typeId:''
-      },
-      openDialogVisible:false,
-      editRow:null,
+				keyword:'',
+				typeId:''
+			},
+			openDialogVisible:false,
+			editRow:null,
 			repeatCount:0,
 			checkOut:0,
 			uploadRepeatCount:0,
-      uploadTable:[],
+			uploadTable:[],
 			sourceData:[],
 			tableData: [],
-      tableHeader: [],
-      openDialogNotin:false,
-      notInList:[],
+			tableHeader: [],
+			openDialogNotin:false,
+			notInList:[],
 		}
 	},
 	methods:{
-    parseStr(row, field){
-      switch(field){
-        case 'typeId':
-          let type = _.find(this.typeList,{id:row[field]});
-          return type.name;
-        default:
-          return row[field];
-      }
-    },
-    filterByForm(){
-      let filterObj = {};
-      for(let k in this.tableForm){
-        if(this.tableForm[k]){
-          filterObj[k] = this.tableForm[k];
-        }
-      }
-      if(!_.isEmpty(filterObj)){
-        this.tableData = _.filter(this.sourceData, filterObj);
-      }else{
-        this.tableData = _.cloneDeep(this.sourceData);
-      }
-      this.uploadTotal = this.tableData.length;
-    },
-    selectionChange(selection){
+		listRowClick(row){
+			row.extend = !row.extend?true:false;
+			this.$refs['listTable'].toggleRowExpansion(row, row.extend);
+		},
+		parseStr(row, field){
+			switch(field){
+				case 'typeId':
+				let type = _.find(this.typeList,{id:row[field]});
+				return type.name;
+				default:
+				return row[field];
+			}
+		},
+		filterByForm(){
+			this.tableData = [];
+			let lists = _.cloneDeep(this.sourceData);
+			if(this.tableForm.typeId){
+				lists = _.filter(lists,{'typeId':this.tableForm.typeId});
+			}
+
+			lists.forEach(item=>{
+				for(let k in item){
+					if(['crmName','sourceserial','productName','materialNo','projectNo','model','modelNo','boxNo','caselNo','projectName'].includes(k) && item[k].includes(this.tableForm.keyword)){
+						let tIndex = _.findIndex(this.tableData, {'id':item.id});
+						if(!~tIndex){
+							this.tableData.push(item);
+						}
+					}
+				}
+			})
+			this.uploadTotal = this.tableData.length;
+		},
+		selectionChange(selection){
 			this.uploadTable = selection;
 			this.uploadRepeatCount= 0;
 			this.checkOut = 0;
@@ -185,76 +243,75 @@ export default {
 				}
 			})
 			console.log('this.uploadRepeatCount', this.uploadRepeatCount, this.checkOut);
-    },
-    // 新增产品后处理
-    finishedEdit(row){
-      if(row){
-        let crm = _.find(this.setting.crm, {'id':row.crmId});
-        this.editRow.typeId = row.typeId;
-        this.editRow.materialNo = row.materialNo;
-        this.editRow.productId = row.id;
-        this.editRow.productName = row.name;
-        this.editRow.price = row.price;
-        this.editRow.util = row.util;
-        this.editRow.metaprice = row.price;
-        this.editRow.ptypeId = row.ptypeId;
-        this.editRow.model = row.model;
-        this.editRow.modelNo = row.modelNo;
-        this.editRow.crmId = row.crm;
-        this.editRow.crmName = crm.name;
-        delete this.editRow.notin;
-        //console.log(row);
-        let index = _.findIndex(this.sourceData, {'index': this.editRow.index});
-        if(index>-1){
-          this.$set(this.sourceData, index, this.editRow);
-        }
-        let tindex = _.findIndex(this.tableData, {'index': this.editRow.index});
-        if(tindex>-1){
-          this.$set(this.tableData, tindex, this.editRow);
-        }
-        this.$message.success('已添加产品，同步完成订单的产品匹配');
-        let notIndex = _.findIndex(this.notInList, {'index': this.editRow.index});
-        if(notIndex>-1){
-          this.notInList.splice(notIndex, 1);
-        }
-      }
-      this.openDialogVisible = false;
-    },
-    // 编辑订单（新建产品数据）
-    handleEdit(row){
-      this.editRow = row;
-      this.openDialogVisible = true;
-    },
+		},
+		// 新增产品后处理
+		finishedEdit(row){
+			if(row){
+				let crm = _.find(this.setting.crm, {'id':row.crmId});
+				this.editRow.typeId = row.typeId;
+				this.editRow.materialNo = row.materialNo;
+				this.editRow.productId = row.id;
+				this.editRow.productName = row.name;
+				this.editRow.price = row.price;
+				this.editRow.util = row.util;
+				this.editRow.metaprice = row.price;
+				this.editRow.ptypeId = row.ptypeId;
+				this.editRow.model = row.model;
+				this.editRow.modelNo = row.modelNo;
+				this.editRow.crmId = row.crm;
+				this.editRow.crmName = crm.name;
+				delete this.editRow.notin;
+				//console.log(row);
+				let index = _.findIndex(this.sourceData, {'index': this.editRow.index});
+				if(index>-1){
+				this.$set(this.sourceData, index, this.editRow);
+				}
+				let tindex = _.findIndex(this.tableData, {'index': this.editRow.index});
+				if(tindex>-1){
+				this.$set(this.tableData, tindex, this.editRow);
+				}
+				this.$message.success('已添加产品，同步完成订单的产品匹配');
+				let notIndex = _.findIndex(this.notInList, {'index': this.editRow.index});
+				if(notIndex>-1){
+				this.notInList.splice(notIndex, 1);
+				}
+			}
+			this.openDialogVisible = false;
+		},
+		// 编辑订单（新建产品数据）
+		handleEdit(row){
+			this.editRow = row;
+			this.openDialogVisible = true;
+		},
 		removeRepeat(){
 			let list = [];
 			this.sourceData.forEach(item=>{ //sourceData
 				if(!item['isRepeat']){
 					list.push(item);
 				}
-      });
-      this.tableForm.crmId = '';
+			});
+			this.tableForm.crmId = '';
 			this.repeatCount = 0;
 			this.sourceData = list;
 			this.tableData = list;
 			this.uploadTotal = list.length;
 		},
-
 		// 检查订单梯号是否重复
-    checkRepeat(arr){
+		checkRepeat(arr){
 			//this.repeatCount = 0;
 			let counts = 0;
-      arr.forEach(item=>{
+			arr.forEach(item=>{
 				if(item.isRepeat !== undefined){
 					counts++;
 				}
 			})
 			this.repeatCount = counts;
-    },
+		},
 		beforeUpload(file) {
 			this.tableData = [];
 			const isLt1M = file.size / 1024 / 1024 < 1
 			if (isLt1M) {
-        this.uploading = true;
+				this.uploading = true;
 				return true;
 			}
 			this.$message({
@@ -264,137 +321,130 @@ export default {
 			return false;
 		},
 		handleDelete(row){
-      this.$confirm('确定删除该订单?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        let index = _.findIndex(this.sourceData, {'index':row.index})
-        this.sourceData.splice(index, 1);
-        this.tableData = _.cloneDeep(this.sourceData);
-        this.uploadTotal = this.tableData.length;
-        this.$message({
-          type: 'success',
-          message: '删除成功!'
-        });
-      }).catch();
+			this.$confirm('确定删除该订单?', '提示', {
+				confirmButtonText: '确定',
+				cancelButtonText: '取消',
+				type: 'warning'
+			}).then(() => {
+				let index = _.findIndex(this.sourceData, {'index':row.index})
+				this.sourceData.splice(index, 1);
+				this.tableData = _.cloneDeep(this.sourceData);
+				this.uploadTotal = this.tableData.length;
+				this.$message({
+					type: 'success',
+					message: '删除成功!'
+				});
+			}).catch(()=>{});
 		},
-    checkSerial(index){
-      let now =  moment(new Date()).format('YYYY-MM-DD HH:mm');
-      now = now.split(' ');
-      let dd = now[0].split('-');
-      let tt = now[1].split(':')
-      let serial = index+'-JH' + dd[0] +''+ dd[1] +''+ dd[2]+''+tt[0]+''+tt[1];
-      return serial;
-    },
+		checkSerial(index){
+			let now =  moment(new Date()).format('YYYY-MM-DD HH:mm');
+			now = now.split(' ');
+			let dd = now[0].split('-');
+			let tt = now[1].split(':');
+			let serial = index+'-JH' + dd[0] +''+ dd[1] +''+ dd[2]+''+tt[0]+''+tt[1];
+			return serial;
+		},
 		handleSuccess({results, header}) {
-      this.crmList = [];
+			this.crmList = [];
+			this.pList = [];
 			// 处理列名
-      this.tableHeader = [];//['isMake','isRepeat'];
-      this.notInList = [];
-      // 重复订单量
-      this.uploadRepeatCount = 0;
-      /* this.tableKeys.forEach(item=>{
-        this.tableHeader.push(item.label);
-      }) */
-      let listData = [];
-      results.forEach((item, index)=>{
-        let obj = {'index':index+1};
-        for(let k in item){
-          let value = item[k];
-          k = k.replace(/(^\s+)|(\s+$)/g,""); // 去除空格
-          let head = _.find(this.tableKeys,{'label':k});
-          if(head){
-            obj[head.value] = value;
-            //生产订单
-            if(head.value == 'productName'){
-              if(value.includes('轿顶防护栏') || value.includes('线槽') || value.includes('挂钩') || value.includes('救援装置柜')){
-                obj.typeId = 2;
-                obj.flowStateId = 5;
-              }else{
-                obj.typeId = 1;
-                obj.flowStateId = 1;
-              }
-            }
-          }
-        }
-        // 判断采购订单是否相同并合并数量
-        let dataIndex = _.findIndex(listData,{'typeId':obj.typeId,'productName':obj.productName,'materialNo':obj.materialNo,'price':obj.price,'caselNo':obj.caselNo})
-        if(dataIndex>-1){ // && !obj.isMake
-          listData[dataIndex]['sourceserial'] += ','+obj.sourceserial;
-          if(listData[dataIndex]['projectNo'].indexOf(obj.projectNo)<0){
-            listData[dataIndex]['projectNo'] += ','+obj.projectNo;
-          }
-          listData[dataIndex]['count'] += obj.count;
-        }else{
-          // 匹配产品分类和产品ID
-          let product = _.find(this.productList,{'name':obj.productName,'materialNo':obj.materialNo,'typeId':obj.typeId});
-          if(product){
-            let crm = _.find(this.setting.crm,{'id':product.crmId});
-            if(_.findIndex(this.crmList,{id:product.crmId})<0){
-              this.crmList.push(crm);
-            }
-            obj = _.merge(obj,{
-              metaprice:product.price,
-              productId:product.id,
-              ptypeId:product.ptypeId,
-              crmId:product.crmId,
-              crmName:crm.name,
-            })
-          }else{
-            obj.notin = true;
-            this.notInList.push(obj);
-          }
-          // 检查重复订单 notInList
-          if(this.checkModelNo(obj)){
-            obj.isRepeat = "是";
-            this.uploadRepeatCount += 1;
-          }
-          listData.push(obj);
-        }
-      });
+			this.tableHeader = [];//['isMake','isRepeat'];
+			this.notInList = [];
+			// 重复订单量
+			this.uploadRepeatCount = 0;
+			let listData = [];
+			results.forEach((item, index)=>{
+				let obj = {'index':index+1, id:this.lastUploadId+index+1,'createByUser':this.$store.state.user.name};
+				for(let k in item){
+					let value = item[k];
+					k = k.replace(/(^\s+)|(\s+$)/g,""); // 去除空格
+					let head = _.find(this.tableKeys,{'label':k});
+					if(head){
+						obj[head.value] = this._setValue(head.value, value);
+						//生产订单
+						if(head.value == 'productName'){
+							if(value.includes('轿顶防护栏') || value.includes('线槽') || value.includes('挂钩') || value.includes('救援装置柜')){
+								obj.typeId = 2;
+								obj.flowStateId = 5;
+							}else{
+								obj.typeId = 1;
+								obj.flowStateId = 1;
+							}
+							// 汇总产品
+							if(_.findIndex(this.pList,{productName:value})<0){
+								this.pList.push({productName:value});
+							}
+						}
+						// 汇总订单号
+						if(head.value=='sourceserial' && _.findIndex(this.sourceserialList,{sourceserial:value})<0){
+							this.sourceserialList.push({sourceserial:value});
+						}
+					}
+				}
+				// 匹配产品分类和产品ID
+				let product = _.find(this.productList,{'name':obj.productName,'materialNo':obj.materialNo,'typeId':obj.typeId});
+				if(product){
+					let crm = _.find(this.setting.crm,{'id':product.crmId});
+					if(_.findIndex(this.crmList,{id:product.crmId})<0){
+						this.crmList.push(crm);
+					}
+					obj = _.merge(obj,{
+						metaprice:product.price,
+						productId:product.id,
+						ptypeId:product.ptypeId,
+						crmId:product.crmId,
+						crmName:crm.name,
+					})
+				}else{
+					obj.notin = true;
+					this.notInList.push(obj);
+				}
+				// 检查重复订单 notInList
+				if(this.checkModelNo(obj)){
+					obj.isRepeat = "是";
+					this.uploadRepeatCount += 1;
+				}
+				listData.push(obj);
 
-      this.sourceData = listData; //_.orderBy(listData,['typeId'],['desc']);
-      this.tableData = _.cloneDeep(this.sourceData);
+			});
+			this.sourceData = listData; //_.orderBy(listData,['typeId'],['desc']);
+			this.tableData = _.cloneDeep(this.sourceData);
 			this.uploadTotal = this.sourceData.length;
-      this.uploading = false;
+			this.uploading = false;
 		},
-    checkModelNo(row){
-      if(_.find(this.modelNoList, {'productName':row.productName,'modelNo':row.modelNo,'projectNo':row.projectNo,'materialNo':row.materialNo}) ){
-        return true;
-      }
-      return false;
-    },
+    	checkModelNo(row){
+			if(_.find(this.modelNoList, {'productName':row.productName,'modelNo':row.modelNo,'projectNo':row.projectNo,'materialNo':row.materialNo}) ){
+				return true;
+			}
+			return false;
+		},
 		uploadSizeChange(val){
 			this.queryUpload.pagesize = val;
 		},
 		uploadCurrentChange(val){
 			this.queryUpload.page = val;
 		},
-
 		saveTable(){
-      if(!this.uploadTable.length){
-        this.$alert('请勾选需要保存的数据行');
-        return;
-      }
-      if(this.uploadRepeatCount>0){
-        this.$alert('有'+this.uploadRepeatCount+'个重复的梯号和项目号的订单，请清理后再提交保存！');
-        return;
-      }
-      // 检查订单的完善
-      let checkNotIn = _.filter(this.uploadTable,{'notin':true})
-      if(checkNotIn.length){
-        this.$alert('提交订单中有'+checkNotIn.length+'个无法匹配元数据的产品，请处理后再提交保存！');
-        return;
-      }
-      this.saveData();
+			if(this.uploadRepeatCount>0){
+				this.$alert('有'+this.uploadRepeatCount+'个重复的梯号和项目号的订单，请清理后再提交保存！');
+				return;
+			}
+			// 检查订单的完善
+			let checkNotIn = _.filter(this.sourceData,{'notin':true})
+			if(checkNotIn.length){
+				this.$alert('提交订单中有'+checkNotIn.length+'个无法匹配元数据的产品，请处理后再提交保存！');
+				return;
+			}
+			this.$confirm('确定导入订单?', '提示', {
+				confirmButtonText: '确定',
+				cancelButtonText: '取消',
+				type: 'warning'
+			}).then(() => {
+				this.saveData();
+			}).catch(() => {});
 		},
 		_setValue(key, value){
 			switch(key){
-				case 'orderDate':
-					return new Date(value).getTime();
-				case 'deliveryDate':
-					return new Date(value).getTime();
 				case 'count':
 					return Number(value);
 				case 'price':
@@ -403,75 +453,121 @@ export default {
 					return  _.trim(String(value));
 			}
 		},
+		// 采购订单是否相同并合并数量,根据类型，产品名称，物料号，价格，项目号
+		concatData(sourceData){
+			let listData = [];
+			sourceData.forEach(item=>{
+				let dataIndex = _.findIndex(listData,{'typeId':item.typeId,'productName':item.productName,'materialNo':item.materialNo,'price':item.price,'caselNo':item.caselNo});
+				if(dataIndex>-1){
+					let sIndex = listData[dataIndex]['sourceserial'].split(',');
+					if(!~sIndex){
+						listData[dataIndex]['sourceserial'] += ','+item.sourceserial;
+					}
+					if(listData[dataIndex]['projectNo'].indexOf(item.projectNo)<0){
+						listData[dataIndex]['projectNo'] += ','+item.projectNo;
+					}
+					listData[dataIndex]['count'] += item.count;
+				}else{
+					listData.push(item);
+				}
+			});
+			return listData;
+		},
+		parseSource(datas){
+			let list = datas.map(item=>{
+				delete item.index, delete item.flowStateId;
+				item.orderDate = new Date(item.orderDate).getTime();
+				item.deliveryDate = new Date(item.deliveryDate).getTime();
+				return item;
+			});
+			return list;
+		},
+
 		async saveData(){
 			this.uploading = true;
 			let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
-			//let crm = _.find(this.setting.crm,{'id':this.tableForm.crmId});
-			let indexs = [];
-			let dataList = this.uploadTable.map((item, index)=>{
-				indexs.push(item.index);
-        this.lastId = this.lastId + index + 1;
-        let serial = this.checkSerial(item.index);
-        let obj = _.merge(item,{'id':this.lastId,'serial':serial,'createByUser':this.$store.state.user.name});
-        obj.orderDate = new Date(obj.orderDate).getTime();
-        obj.deliveryDate = new Date(obj.deliveryDate).getTime();
+			//let arrs = this.concatData(_.cloneDeep(this.sourceData));
+			let dataList = this.sourceData.map((item, index)=>{
+				//indexs.push(item.index);
+				this.lastId = this.lastId + index + 1;
+				let serial = this.checkSerial(index + 1);
+				let obj = _.merge(item,{'id':this.lastId,'serial':serial});
+				obj.orderDate = new Date(obj.orderDate).getTime();
+				obj.deliveryDate = new Date(obj.deliveryDate).getTime();
 				return obj;
 			});
+      
 			let condition = {
 				type:'addPatch',
 				collectionName: 'order',
 				data:dataList
 			};
-      console.log(condition);
-      //return;
+      		console.log('saveData',dataList, this.sourceData);
+      		//return;
+			// 订单保存
 			this.$axios.$post('mock/db', {data:condition}).then(result=>{
-        indexs.forEach(i=>{
-					let index = _.findIndex(this.sourceData,{'index':i}); //this.sourceData
-					this.sourceData.splice(index,1);
-				});
-        this.uploadTable = [];
-        // 根据客户过滤
-        this.filterByForm();
-				//this.getModelNoList();
+				this.sourceData = [];
+				this.tableData = [];
 				this.uploading = false;
 				loadingMask.close();
+				window.location.reload();
+				/* // 备份原始订单
+				let uploadCondition = {
+				type:'addPatch',
+				collectionName: 'orderUpload',
+				notNotice:true,
+				data:this.parseSource(this.sourceData)
+				};
+				this.$axios.$post('mock/db', {data:uploadCondition}).then(res=>{
+				}); */
 			});
 		},
 		// 获取所有订单列表,列出梯号,校验是否重复
 		async getModelNoList(match = {}){
-      let now = new Date();
-      let sd = new Date(now.setDate(now.getDate() -1));
-		  let ed = new Date(now.setDate(now.getDate() + 6));
+			let now = new Date();
+			let sd = new Date(now.setDate(now.getDate() -1));
+			let ed = new Date(now.setDate(now.getDate() + 6));
 			let params = {
 				type:"getColumns",
-        collectionName: 'order',
-        condition:{
-          flowStateId:{$in:[1,5]},
-          updateDate:{'$gte':sd.getTime(),'$lte':ed.getTime()},
-        },
+				collectionName: 'order',
+				condition:{
+					flowStateId:{$in:[1,5]},
+					updateDate:{'$gte':sd.getTime(),'$lte':ed.getTime()},
+				},
 				cols:{productName:1,modelNo:1,crmId:1,serial:1, projectNo:1,materialNo:1}
-      }
+			}
 
 			let result = await this.$axios.$post('mock/db', {data:params});
 			//console.log('getModelNoList',result);
-      this.modelNoList = result;
-      result.forEach(item=>{
-        this.serialList.push(item.serial);
-      });
-      //console.log('serialList',this.serialList);
+			this.modelNoList = result;
+			result.forEach(item=>{
+				this.serialList.push(item.serial);
+			});
+			//console.log('serialList',this.serialList);
 		},
 		async _getLastId(){
 			let condition = {
 				type:"getId",
 				data:{
-						model:'order'
+					model:'order'
 				}
 			}
 			let result = await this.$axios.$post('mock/db', {data:condition});
 			if(result){
-				console.log('lastId',result)
+				console.log('lastId',result);
 				this.lastId = result;
 			}
+			/* let uploadCondition = {
+				type:"getId",
+				data:{
+					model:'orderUpload'
+				}
+			}
+			let uploadResult = await this.$axios.$post('mock/db', {data:uploadCondition});
+			if(uploadResult){
+				console.log('lastUploadId',uploadResult)
+				this.lastUploadId = uploadResult;
+			} */
 		},
 		async getSetting(){
 			let condition = {
@@ -483,8 +579,8 @@ export default {
 			if(result){
 				this.setting = result.content;
 				this.typeList = this.setting.type;
-        this.productList = this.setting.product;
-        //this.crmList = _.clone(this.setting.crm);
+				this.productList = this.setting.product;
+				//this.crmList = _.clone(this.setting.crm);
 				this.getModelNoList();
 			}
 		}
@@ -504,14 +600,53 @@ export default {
 		display:flex;
 		align-item:center;
 	}
+	.page-container{
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
 
-  .row-list{
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    &.warning{
-      color:red;
-    }
-  }
+	.row-list{
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		&.warning{
+		color:red;
+		}
+	}
+	/deep/ .el-table{
+		.cell{
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			>i{
+				font-size:14px;
+				color:#EEE;
+				margin-right:5px;
+				&.payed{
+					color:green;
+				}
+			}
+			.el-button{
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				max-width: 100%;
+			}
+		}
+		.warning{
+			color:red;
+		}
+		/deep/ .el-table__expanded-cell{
+			padding: 20px;
+			.el-form-item{
+				width:32%;
+				margin:0;
+				.el-form-item__label{
+					font-weight: bold;
+				}
+			}
+		}
+	}
 </style>
 

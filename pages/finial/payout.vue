@@ -14,54 +14,90 @@
         <div class="grid-container" v-if="!isEdit">
             <div class="search-content">
                 <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
-                    <el-form-item label="订单编号：" prop="serial">
-                        <el-input v-model="searchForm.serial" clearable  style="width:120px"/>
-                    </el-form-item>
-                    <el-form-item label="货品名称：" prop="productName">
-                        <el-input v-model="searchForm.productName" clearable  style="width:120px"/>
-                    </el-form-item>
-                    <el-form-item label="物料号：" prop="materialNo">
-                        <el-input v-model="searchForm.materialNo" clearable/>
-                    </el-form-item>
-                    <el-form-item label="客户：" prop="crmId">
-                        <el-select v-model="searchForm.crmId" placeholder="请选择" clearable style="width:200px">
-                            <el-option v-for="item in crmList" :key="item.id" :label="item.name" :value="item.id"/>
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item label="付款日期：" prop="createDate">
-                        <el-date-picker v-model="searchForm.createDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:220px"/>
-                    </el-form-item>
+                    <template v-if="isLike">
+                        <el-form-item label="模糊查找：" prop="keyword">
+                            <el-input v-model="searchLike.keyword" clearable  style="width:150px" @blur="submitSearch"/>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-button type="text" @click="isLike=false">高级查找</el-button>
+                        </el-form-item>
+                        </template>
+                    <template v-else>
+                        <el-form-item label="系统订单号：" prop="serial">
+                            <el-input v-model="searchForm.serial" clearable  style="width:120px"/>
+                        </el-form-item>
+                        <el-form-item label="货品名称：" prop="productName">
+                            <el-input v-model="searchForm.productName" clearable  style="width:120px"/>
+                        </el-form-item>
+                        <el-form-item label="物料号：" prop="materialNo">
+                            <el-input v-model="searchForm.materialNo" clearable/>
+                        </el-form-item>
+                        <el-form-item label="客户：" prop="crmId">
+                            <el-select v-model="searchForm.crmId" placeholder="请选择" clearable style="width:200px">
+                                <el-option v-for="item in crmList" :key="item.id" :label="item.name" :value="item.id"/>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="付款日期：" prop="createDate">
+                            <el-date-picker v-model="searchForm.createDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:220px"/>
+                        </el-form-item>
+                    </template>
                     <el-form-item>
-                        <el-button type="primary" @click="submitSearch">搜索</el-button>
+                        <el-button type="primary" @click="submitSearch" icon="el-icon-search">搜索</el-button>
+                    </el-form-item>
+                    <el-form-item v-if="!isLike">
+                        <el-button type="text" @click="isLike=true">模糊查找</el-button>
                     </el-form-item>
                 </el-form>
             </div>
-            <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row size="mini" max-height="400">
+            <el-table v-loading="listLoading" :data="gridList" border fit highlight-current-row stripe size="mini" max-height="500" ref="payedTable"  @row-click="detailPayedClick">
                 <el-table-column type="expand">
                     <template slot-scope="props">
-                        <el-form label-position="left" label-width="80" inline class="table-expand">
-                            <el-form-item label="客户名称：">
-                                <span>{{ props.row.crmName }}</span>
-                            </el-form-item>
-                            <el-form-item label="联系地址：">
-                                <span>{{ parseCrm(props.row.crmId,'address') }}</span>
-                            </el-form-item>
-                            <el-form-item label="联系人：">
-                                <span>{{ parseCrm(props.row.crmId,'contactName') }}</span>
-                            </el-form-item>
-                            <el-form-item label="联系电话：">
-                                <span>{{ parseCrm(props.row.crmId,'contactPhone') }}</span>
-                            </el-form-item>
-                            <el-form-item label="税号：">
-                                <span>{{ parseCrm(props.row.crmId,'revenueNo') }}</span>
-                            </el-form-item>
-                            <el-form-item label="开户银行：">
-                                <span>{{ parseCrm(props.row.crmId,'bank') }}</span>
-                            </el-form-item>
-                            <el-form-item label="银行账号：">
-                                <span>{{ parseCrm(props.row.crmId,'bankNo') }}</span>
-                            </el-form-item>
-                        </el-form>
+                        <el-row :gutter="20">
+                            <el-col :span="8">
+                                <span>原始订单号：</span>
+                                <span>{{props.row.order.sourceserial}}</span>
+                            </el-col>
+                            <el-col :span="8">
+                                <span>物料号：</span>
+                                <span>{{props.row.materialNo}}</span>
+                            </el-col>
+                            <el-col :span="8">
+                                <span>规格/梯型：</span>
+                                <span>{{props.row.order.model}}</span>
+                            </el-col>
+                            <el-col :span="8">
+                                <span>型号/梯号：</span>
+                                <span>{{props.row.order.modelNo}}</span>
+                            </el-col>
+                            <el-col :span="8" :title="props.row.order.projectNo">
+                                <span>项目号：</span>
+                                <span>{{props.row.order.projectNo}}</span>
+                            </el-col>
+                            <el-col :span="8">
+                                <span>项目名称：</span>
+                                <span>{{props.row.order.projectName}}</span>
+                            </el-col>
+                            <el-col :span="8">
+                                <span>制单日期：</span>
+                                <span>{{parseDate(props.row.order.orderDate)}}</span>
+                            </el-col>
+                            <el-col :span="8">
+                                <span>交付日期：</span>
+                                <span>{{parseDate(props.row.order.deliveryDate)}}</span>
+                            </el-col>
+                            <el-col :span="8">
+                                <span>付款日期：</span>
+                                <span>{{parseDate(props.row.order.createDate)}}</span>
+                            </el-col>
+                            <el-col :span="8">
+                                <span>付款人：</span>
+                                <span>{{props.row.createByUser}}</span>
+                            </el-col>
+                            <el-col :span="16">
+                                <span>备注：</span>
+                                <span>{{props.row.content}}</span>
+                            </el-col>
+                        </el-row>
                     </template>
                 </el-table-column>
                 <el-table-column label="No." width="70px" align="center">
@@ -69,69 +105,23 @@
                         <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="serial" label="订单编号" width="120">
-                    <template slot-scope="scope">
-                        <el-button type="text" @click="showOrderInfo(scope.row)">{{scope.row.serial}}</el-button>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="crmName" label="客户名称" width="250">
-                    <template slot-scope="scope">
-                        <span>{{scope.row.crmName}}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="productName" label="付款货品" width="250">
-                    <template slot-scope="scope">
-                        <span>{{scope.row.productName}}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="materialNo" label="物料号" width="120">
-                    <template slot-scope="scope">
-                        <span>{{scope.row.materialNo}}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="model" label="规格/梯型">
-                    <template slot-scope="scope">
-                        <span>{{scope.row.order.model}}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="modelNo" label="型号/梯号">
-                    <template slot-scope="scope">
-                        <span>{{scope.row.order.modelNo}}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="util" label="单位">
-                    <template slot-scope="scope">
-                        <span>{{scope.row.util}}</span>
-                    </template>
-                </el-table-column>
+                <el-table-column prop="serial" label="系统订单号"/>
+                <el-table-column prop="crmName" label="客户名称"/>
+                <el-table-column prop="productName" label="付款货品"/>
+                <el-table-column prop="materialNo" label="物料号"/>
                 <el-table-column prop="price" label="单价" width="100">
                     <template slot-scope="scope">
                         <span>{{scope.row.price | currency}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="count" label="订单量">
+                <el-table-column prop="count" label="数量">
                     <template slot-scope="scope">
-                        <span>{{scope.row.count}}</span>
+                        <span>{{scope.row.count}} {{scope.row.util}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="合计金额"  width="120">
+                <el-table-column label="合计金额">
                     <template slot-scope="scope">
                         <span>{{parseMoney(scope.row)}}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="createDate" label="创建日期" width="100">
-                    <template slot-scope="scope">
-                        <span>{{parseDate(scope.row.createDate)}}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="createByUser" label="创建人员" width="70">
-                    <template slot-scope="scope">
-                        <span>{{scope.row.createByUser}}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="content" label="备注说明">
-                    <template slot-scope="scope">
-                        <span>{{scope.row.content}}</span>
                     </template>
                 </el-table-column>
             </el-table>
@@ -141,13 +131,12 @@
                 </el-pagination>
             </div>
         </div>
-
         <div v-else class="form-plit">
             <el-form :model="ruleForm" ref="ruleForm" label-width="80px" size="mini">
                 <el-form-item label="付款单列表">
                     <div style="color:#e45c5c;font-size:12px;">{{rowData.length?'已选'+rowData.length+'件货品待付款':'请选择右侧待付款订单货品'}}</div>
                     <div class="form-plist">
-                        <el-table :data="rowData" size="mini" style="width: 100%">
+                        <el-table :data="rowData" size="mini" stripe style="width: 100%" max-height="400">
                             <div slot="empty">暂无选中的待付款货品</div>
                             <el-table-column prop="productName" label="订单货品名称"/>
                             <el-table-column prop="count" label="数量" width="70"/>
@@ -165,74 +154,116 @@
                         <div>总计付款金额：<span>{{payMoney | currency}}</span></div>
                     </div>
                 </el-form-item>
-
                 <el-form-item label="备注说明">
                     <el-input v-model="ruleForm.content"/>
                 </el-form-item>
                 <el-form-item>
-                    <el-button type="primary" @click="submitSave" :disabled="rowData.length==0">提交保存</el-button>
+                    <el-button type="primary" @click="submitSave" :disabled="rowData.length==0" icon="my-icon-save">确认付款</el-button>
                     <el-button type="infor" @click="isEdit=false">取消返回</el-button>
                 </el-form-item>
             </el-form>
             <div class="grid-list">
                 <h5>
-                    <span>已采购入库未付款订单列表</span>
-                    <span>
-                        <el-input size="mini" prefix-icon="el-icon-search" placeholder="快速查询" v-model="searchInput" @keyup.native="searchFilter"/>
-                    </span>
+                    <div><span>已采购入库未付款订单列表</span></div>
+                    <div>
+                        <el-form :inline="true" :model="searchInput" size="mini" @keyup.native.enter="searchFilter">
+                            <el-form-item>
+                                <el-select v-model="searchInput.crmId" placeholder="选择客户" @change="searchFilter" style="width:150px;">
+                                    <el-option v-for="crm in orderCrmList" :key="crm.id" :label="crm.name" :value="crm.id"/>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-date-picker v-model="searchInput.deliveryDate" value-format="timestamp" type="date" placeholder="选择交付日期" style="width:140px;"/>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-input suffix-icon="el-icon-search" placeholder="输入关键字" v-model="searchInput.keyword" clearable style="width:120px;"  @change="searchFilter"/>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-button type="primary" @click="searchFilter">查询</el-button>
+                            </el-form-item>
+                        </el-form>
+                    </div>
                 </h5>
                 <el-table
-                :data="oList" border fit highlight-current-row  size="mini" height="400" @selection-change="selectionRow">
+                :data="oList" border fit highlight-current-row stripe size="mini" ref="payTable" max-height="400" 
+                @selection-change="selectionRow" v-loading="orderLoading">
                     <el-table-column type="expand">
-                            <template slot-scope="props">
-                                <el-form label-position="left" label-width="80" inline class="table-expand">
-                                    <el-form-item label="客户名称：">
-                                        <span>{{ props.row.crmName }}</span>
-                                    </el-form-item>
-                                    <el-form-item label="联系地址：">
-                                        <span>{{ parseCrm(props.row.crmId,'address') }}</span>
-                                    </el-form-item>
-                                    <el-form-item label="联系人：">
-                                        <span>{{ parseCrm(props.row.crmId,'contactName') }}</span>
-                                    </el-form-item>
-                                    <el-form-item label="联系电话：">
-                                        <span>{{ parseCrm(props.row.crmId,'contactPhone') }}</span>
-                                    </el-form-item>
-                                    <el-form-item label="税号：">
-                                        <span>{{ parseCrm(props.row.crmId,'revenueNo') }}</span>
-                                    </el-form-item>
-                                    <el-form-item label="开户银行：">
-                                        <span>{{ parseCrm(props.row.crmId,'bank') }}</span>
-                                    </el-form-item>
-                                    <el-form-item label="银行账号：">
-                                        <span>{{ parseCrm(props.row.crmId,'bankNo') }}</span>
-                                    </el-form-item>
-                                </el-form>
-                            </template>
+                        <template slot-scope="props">
+                            <el-row :gutter="20">
+                                <el-col :span="8">
+                                    <span>系统订单号：</span><span>{{props.row.serial}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>原始订单号：</span><span>{{props.row.sourceserial}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>物料号：</span><span>{{props.row.materialNo}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>梯形：</span><span>{{props.row.model}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>梯号：</span><span>{{props.row.modelNo}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>项目号：</span><span>{{props.row.projectNo}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>项目名称：</span><span>{{props.row.projectName}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>制单日期：</span><span>{{parseDate(props.row.orderDate)}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>交付日期：</span><span>{{parseDate(props.row.deliveryDate)}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>供应商：</span><span>{{props.row.crmName}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>联系地址：</span><span>{{parseCrm(props.row.crmId,'address')}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>联系人：</span><span>{{parseCrm(props.row.crmId,'contactName')}} {{parseCrm(props.row.crmId,'contactPhone')}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>税号：</span><span>{{parseCrm(props.row.crmId,'revenueNo')}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>开户银行：</span><span>{{parseCrm(props.row.crmId,'bank')}}</span>
+                                </el-col>
+                                <el-col :span="8">
+                                    <span>银行账号：</span><span>{{parseCrm(props.row.crmId,'bankNo')}}</span>
+                                </el-col>
+                            </el-row>
+                        </template>
                     </el-table-column>
                     <el-table-column width="40px" type="selection"/>
-                    <el-table-column prop="serial" label="订单编号" width="120px"/>
-                    <el-table-column prop="deliveryDate" label="交付日期" width="100px">
+                    <el-table-column prop="serial" label="系统订单号"/>
+                    <el-table-column prop="deliveryDate" label="交付日期">
                         <template slot-scope="scope">
                             <span>{{parseDate(scope.row.deliveryDate)}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="crmName" label="客户名称" width="200px" sortable/>
-                    <el-table-column prop="productName" label="货品名称" width="220px"/>
-                    <el-table-column prop="materialNo" label="物料号" width="100px"/>
-                    <el-table-column prop="count" label="采购数量" width="80px"/>
-                    <el-table-column prop="util" label="单位" width="60px"/>
-                    <el-table-column prop="price" label="单价" width="100px">
+                    <el-table-column prop="productName" label="物料名称"/>
+                    <el-table-column prop="materialNo" label="物料号"/>
+                    <el-table-column prop="count" label="数量">
+                        <template slot-scope="scope">
+                            {{scope.row.count}} {{scope.row.util}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="price" label="单价">
                         <template slot-scope="scope">
                             {{scope.row.price | currency}}
                         </template>
                     </el-table-column>
-                    <el-table-column label="合计" width="150px">
+                    <el-table-column label="金额">
                         <template slot-scope="scope">
                             {{parseMoney(scope.row)}}
                         </template>
                     </el-table-column>
                 </el-table>
+                <div style="padding:10px 0">共有{{this.orderTotal}}个原始订单，已合并为{{this.oList.length}}个订单需付款</div>
             </div>
         </div>
         <el-dialog title="订单明细查阅" :visible.sync="openDialogVisible" width="40%">
@@ -268,18 +299,21 @@ export default {
             listLoading:false,
             isEdit:false,
             total:0,
-            searchInput:'',
+            searchInput:{
+                crmId:'',
+                deliveryDate:'',
+                keyword:''
+            },
             query:{
                 page:1,
-                pagesize:20
+                pagesize:50
             },
             orderTotal:0,
             queryOrder:{
                 page:1,
-                pagesize:20
+                pagesize:50
             },
             typeList:[],//settings.type,
-            orderList:[],
             oList:[],
             crmList:[],
             gridList:[],
@@ -287,6 +321,10 @@ export default {
             lastId:0,
             payMoney:0,
             totalMoney:0,
+            isLike:true,
+            searchLike:{
+              keyword:''
+            },
             searchForm:{
                 serial:'',
                 crmName:'',
@@ -299,10 +337,21 @@ export default {
                 payType:1,
                 createByUser:'',
                 content:''
-            }
+            },
+            orderCrmList:[],
+            crmOrderIds:[],
+            orderLoading:false,
         }
     },
     methods:{
+        detailPayedClick(row){
+            row.extend = !row.extend?true:false;
+            this.$refs['payedTable'].toggleRowExpansion(row, row.extend);
+        },
+        detailPayClick(row){
+            row.extend = !row.extend?true:false;
+            this.$refs['payTable'].toggleRowExpansion(row, row.extend);
+        },
         parseCrm(id, key){
             let crm = _.find(this.crmList,{'id':id});
             return crm[key] || '--';
@@ -310,7 +359,7 @@ export default {
         showOrderInfo(row){
             this.openDialogVisible = true;
             this.currItem = row;
-            console.log('showOrderInfo',row)
+            //console.log('showOrderInfo',row)
         },
         getCrm(id, key){
             let crm = _.find(this.setting.crm, {'id':id});
@@ -333,11 +382,17 @@ export default {
             return type.name;
         },
         selectionRow(selection){
+            this.crmOrderIds = [];
             this.rowData = [];
             this.payMoney = 0;
             selection.forEach(item=>{
+                this.crmOrderIds.push(item.id);
+                if(item.orderIds && item.orderIds.length){
+                    this.crmOrderIds = this.crmOrderIds.concat(item.orderIds);
+                }
                 this.rowData.push({
                     orderId:item.id,
+                    orderIds:item.orderIds,
                     serial:item.serial,
                     crmId:item.crmId,
                     crmName:item.crmName,
@@ -349,22 +404,24 @@ export default {
                 });
                 this.payMoney += item.price * item.count;
             })
-            //console.log(this.rowData)
         },
         submitSave(){
+            //debugger
             let dataList = this.rowData.map((item,index)=>{
                 item = _.merge({},this.ruleForm, item);
                 item.createByUser = this.$store.state.user.name;
                 item.id = this.lastId + index + 1;
                 return item;
             });
-            console.log('dataList', dataList);
+            console.log('dataList', dataList, this.crmOrderIds);
+            //return;
             this.$refs['ruleForm'].validate((valid) => {
                 if(valid) {
                     let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
                     let condition = {
                         type:'addPatch',
                         collectionName: 'finance',
+                        notNotice:true,
                         data:dataList
                     }
                     this.$axios.$post('mock/db', {data:condition}).then(result=>{
@@ -376,25 +433,27 @@ export default {
 
         },
         async updateOrderData(){
-            let ids = this.rowData.map(item=>{
-                return item.orderId;
-            });
             let condition = {
                 type:'updatePatch',
                 collectionName: 'order',
-                param:{'id':{$in:ids}},
+                param:{'id':{$in:this.crmOrderIds}},
                 set:{$set:{'isPayed':true}}
             }
-            //console.log('clearData', condition);
             let reuslt = await this.$axios.$post('mock/db', {data:condition});
-            this.isEdit = false;
+
+            this.rowData = [];
+            this.oList = [];
+            this.orderTotal = 0;
+            this.searchFilter();
+
+            //this.isEdit = false;
             this.query.page = 1;
             this.getList();
         },
         handleAdd(){
             this.isEdit = true;
             this._getLastId();
-            this.getOrderList({typeId:1, flowStateId:1});
+            this.searchFilter();
         },
         handleSizeChange(val){
             this.query.pagesize = val;
@@ -406,26 +465,41 @@ export default {
         },
         submitSearch(flag){
             let params = {};
-            for(let k in this.searchForm){
-                if(this.searchForm[k] != '' && this.searchForm[k]){
-                    if(_.isNumber(this.searchForm[k])){
-                        params[k] = Number(this.searchForm[k]);
-                    }else if(_.isArray(this.searchForm[k]) && k==='createDate'){
-                        params[k] = {
-                            $gte:this.searchForm[k][0],
-                            $lte:this.searchForm[k][1]
-                        }
-                    }else if(_.isArray(this.searchForm[k])){
-                        params[k] = {$in:this.searchForm[k]}
-                    }else{
-                        params[k] = {$regex:this.searchForm[k]};
-                    }
+            if(this.isLike){
+                let keyWord = this.searchLike.keyword;
+                if(keyWord){
+                    params = {
+                        $or:[
+                            {'serial':{'$regex':keyWord}},
+                            {'productName':{'$regex':keyWord}},
+                            {'crmName':{'$regex':keyWord}},
+                            {'materialNo':{'$regex':keyWord}},
+                            {'content':{'$regex':keyWord}}
+                        ]
+                    };
                 }
-            };
+            }else{
+                for(let k in this.searchForm){
+                    if(this.searchForm[k] != '' && this.searchForm[k]){
+                        if(_.isNumber(this.searchForm[k])){
+                            params[k] = Number(this.searchForm[k]);
+                        }else if(_.isArray(this.searchForm[k]) && k==='createDate'){
+                            params[k] = {
+                                $gte:this.searchForm[k][0],
+                                $lte:this.searchForm[k][1]
+                            }
+                        }else if(_.isArray(this.searchForm[k])){
+                            params[k] = {$in:this.searchForm[k]}
+                        }else{
+                            params[k] = {$regex:this.searchForm[k]};
+                        }
+                    }
+                };
+            }
             if(!flag){ // 不需要再做分页复位
                 this.query = {
                     page:1,
-                    pagesize:20
+                    pagesize:50
                 }
             }
             this.getList(params);
@@ -437,24 +511,67 @@ export default {
             this.queryOrder.pagesize = val;
         },
         searchFilter(){
-            this.oList = [];
-            this.orderList.map(item=>{
-                if(item.serial.includes(this.searchInput) || item.productName.includes(this.searchInput) || item.crmName.includes(this.searchInput) || item.materialNo.includes(this.searchInput)){
-                    this.oList.push(item);
-                }
-            });
+            let params = {};
+            if(this.searchInput.deliveryDate){
+                params.deliveryDate = this.searchInput.deliveryDate;
+            }
+            params.crmId = this.searchInput.crmId;
+            if(this.searchInput.keyword){
+                params['$or'] = [
+                    {'serial':{'$regex':this.searchInput.keyword}},
+                    {'sourceserial':{'$regex':this.searchInput.keyword}},
+                    {'productName':{'$regex':this.searchInput.keyword}},
+                    {'crmName':{'$regex':this.searchInput.keyword}},
+                    {'materialNo':{'$regex':this.searchInput.keyword}},
+                    {'projectNo':{'$regex':this.searchInput.keyword}},
+                    {'boxNo':{'$regex':this.searchInput.keyword}},
+                    {'model':{'$regex':this.searchInput.keyword}},
+                    {'modelNo':{'$regex':this.searchInput.keyword}},
+                    {'projectName':{'$regex':this.searchInput.keyword}},
+                    {'caselNo':{'$regex':this.searchInput.keyword}},
+                    {'content':{'$regex':this.searchInput.keyword}}
+                ]
+            }
+            this.getOrderList(params);
         },
         async getOrderList(params={}){
+            this.orderLoading = true;
             let condition = {
                 type:'listData',
                 collectionName: 'order',
-                data:{typeId:1,flowStateId:{$gt:1},isPayed:false}
+                data:_.merge({typeId:1,flowStateId:{$gt:2},isPayed:false}, params)
             };
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.orderTotal = result.total;
-            this.orderList = result.list;
-            this.oList = _.cloneDeep(result.list);
+            //this.orderList = result.list;
+            this.oList = this.mergeOrder(result.list);
+            this.orderLoading = false;
         },
+        // 合并订单数量,根据类型，产品名称，物料号，价格，项目号
+		mergeOrder(lists){
+			let listData = [];
+			//this.crmOrderIds = [];
+			lists.forEach(item=>{
+				//this.crmOrderIds.push(item.id);
+				let dataIndex = _.findIndex(listData,{'typeId':item.typeId,'productName':item.productName,'materialNo':item.materialNo,'price':item.price,'caselNo':item.caselNo});
+				if(dataIndex>-1){
+					let sIndex = listData[dataIndex]['sourceserial'].split(',');
+					if(!~sIndex){
+						listData[dataIndex]['sourceserial'] += ','+item.sourceserial;
+					}
+					if(listData[dataIndex]['projectNo'].indexOf(item.projectNo)<0){
+						listData[dataIndex]['projectNo'] += ','+item.projectNo;
+					}
+                    listData[dataIndex]['count'] += item.count;
+                    listData[dataIndex]['orderIds'].push(item.id);
+				}else{
+                    item.orderIds = [];
+					listData.push(item);
+				}
+            });
+            console.log('listData', listData)
+			return listData;
+		},
 
         async getList(match={}){
             this.listLoading = true;
@@ -478,22 +595,12 @@ export default {
                         }
                     },
                     {$match:_.merge({payType:1},match)},
-                    /* {
-                        $addFields: {flowStateName:"$order.name"}
-                    }, */
                     {$sort:{_id:-1}},
                     {$skip:(this.query.page-1)*this.query.pagesize},
                     {$limit:this.query.pagesize}
                 ]
             };
             let result = await this.$axios.$post('mock/db', {data:condition});
-
-            /* let condition = {
-                type:'listData',
-                collectionName: 'finance',
-                data:_.merge({payType:1},match),
-            };
-            let result = await this.$axios.$post('mock/db', {data:condition}); */
             this.total = result.total;
             this.gridList = result.list;
             this.listLoading = false;
@@ -506,7 +613,7 @@ export default {
             let condition = {
                 type:"getId",
                 data:{
-                    model:'store'
+                    model:'finance'
                 }
             }
             let result = await this.$axios.$post('mock/db', {data:condition});
@@ -522,13 +629,28 @@ export default {
             }
             let result = await this.$axios.$post('mock/db', {data:condition});
             if(result){
-                //console.log('getSetting',result)
                 this.setting = result.content;
                 this.typeList = this.setting.type;
                 this.crmList = _.filter(this.setting.crm, item=>{
                     return item.typeId == 1;
                 });
+                // 获取订单客户（未下单）
+                let cn = {
+                    type:'distinctData',
+                    collectionName: 'order',
+                    distinct:'crmId',
+                    data:{flowStateId:{'$gt':2}}
+                };
+                this.$axios.$post('mock/db', {data:cn}).then(res=>{
+                    res.forEach(id=>{
+                        let crm = _.find(this.setting.crm,{'id':id});
+                        this.orderCrmList.push(crm);
+                    });
+                    this.searchInput.crmId = res[0];
+                });
+                // 获取列表
                 this.getList();
+                
             }
         }
     },
@@ -567,13 +689,16 @@ export default {
         display: flex;
         padding:10px 0;
         h5{
-            line-height: 30px;
+            padding: 10px 0;
             font-size: 14px;
             display:flex;
             align-items:center;
             justify-content: space-between;
-            >span{
+            span{
                 color:#ff6c00;
+            }
+            /deep/ .el-form-item{
+                margin-bottom: 0;
             }
         }
         /deep/ .el-form{
@@ -638,9 +763,64 @@ export default {
             }
         }
     }
-    .table-expand{
-        /deep/ .el-form-item__label{
-            font-size: 14px;
+    /deep/ .el-table{
+        .cell{
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            >i{
+                font-size:14px;
+                color:#EEE;
+                margin-right:5px;
+                &.payed{
+                    color:green;
+                }
+            }
+            .el-button{
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 100%;
+            }
+        }
+        /deep/ .el-table__expanded-cell{
+            padding: 20px;
+            .el-form-item{
+                width:32%;
+                margin:0;
+                .el-form-item__label{
+                    font-weight: bold;
+                }
+            }
+            .el-row{
+              .el-col{
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                line-height: 25px;
+                >span{
+                  &:first-child{
+                    width:80px;
+                    display: inline-block;
+                    font-weight: bold;
+                  }
+                }
+              }
+            }
+            h5{
+                line-height: 30px;
+                border-bottom: 1px solid #DDD;
+            }
+            ul{
+                li{
+                    line-height: 30px;
+                    border-bottom: 1px solid #EEE;
+                    &:before{
+                        margin-right:5px;
+                        content:"●";
+                    }
+                }
+            }
         }
     }
 </style>

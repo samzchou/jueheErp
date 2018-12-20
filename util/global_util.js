@@ -1,4 +1,12 @@
 export default {
+	toDecimal(x){
+		var f = parseFloat(x); 
+		if (isNaN(f)) { 
+			return; 
+		} 
+		f = Math.round(x*100)/100; 
+		return f; 
+	},
 	difference(o1, o2) { 
         let props1 = Object.getOwnPropertyNames(o1);
         let props2 = Object.getOwnPropertyNames(o2);

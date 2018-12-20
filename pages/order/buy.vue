@@ -8,94 +8,162 @@
             </div>
             <div>
                 <span v-if="!isEdit">
-                  <el-button @click="handleAdd" type="text" size="medium" icon="el-icon-plus">新增采购订单</el-button>
-                  <el-button v-if="gridList.length" @click="showDetail(null)" type="text" size="medium" icon="el-icon-document">导出采购订单</el-button>
+                    <el-button @click="handleAdd" type="text" size="medium" icon="el-icon-plus">新增采购订单</el-button>
+                    <el-button v-if="gridList.length" @click="showDetail(null)" type="text" size="medium" icon="el-icon-document">导出采购订单</el-button>
                 </span>
                 <span v-else >
-                  <el-button @click="isEdit=false" type="text" size="medium" icon="el-icon-close">取消返回</el-button>
+                    <el-button @click="isEdit=false" type="text" size="medium" icon="el-icon-close">取消返回</el-button>
                 </span>
-               </div>
+            </div>
         </div>
         <div class="grid-container" v-if="!isEdit">
             <div class="search-content">
-              <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
-                <template v-if="isLike">
-                  <el-form-item label="模糊查找：" prop="keyword">
-                      <el-input v-model="searchLike.keyword" clearable  style="width:150px"/>
-                  </el-form-item>
-                  <el-form-item>
-                    <el-button type="text" @click="isLike=false">高级查找</el-button>
-                  </el-form-item>
-                </template>
-                <template v-else>
-                  <el-form-item label="系统订单号：" prop="serial">
-                    <el-input v-model="searchForm.serial" clearable  style="width:150px"/>
-                  </el-form-item>
-                  <el-form-item label="原始订单号：" prop="sourceserial">
-                    <el-input v-model="searchForm.sourceserial" clearable  style="width:150px"/>
-                  </el-form-item>
-                  <el-form-item label="订单状态：" prop="flowStateId">
-                    <el-select v-model="searchForm.flowStateId" placeholder="请选择" clearable>
-                      <el-option v-for="(flow,idx) in flowList" :key="idx" :label="flow.name" :value="flow.id"/>
-                    </el-select>
-                  </el-form-item>
-                  <el-form-item label="供应商：" prop="crmId">
-                    <el-select v-model="searchForm.crmId" placeholder="请选择" clearable>
-                      <el-option v-for="(crm,idx) in crmList" :key="idx" :label="crm.name" :value="crm.id"/>
-                    </el-select>
-                  </el-form-item>
-                  <el-form-item label="产品名称：" prop="productName">
-                    <el-input v-model="searchForm.productName" clearable  style="width:150px"/>
-                  </el-form-item>
-                  <el-form-item label="项目号：" prop="projectNo">
-                    <el-input v-model="searchForm.projectNo" clearable  style="width:150px"/>
-                  </el-form-item>
-                  <el-form-item label="箱号：" prop="boxNo">
-                      <el-input v-model="searchForm.boxNo" clearable  style="width:150px"/>
-                  </el-form-item>
-                  <el-form-item label="型号/梯号：" prop="modelNo">
-                    <el-input v-model="searchForm.modelNo" clearable  style="width:150px"/>
-                  </el-form-item>
-                  <el-form-item label="物料号/版本号：" prop="materialNo">
-                      <el-input v-model="searchForm.materialNo" clearable  style="width:150px"/>
-                  </el-form-item>
-                  <el-form-item label="制单日期：" prop="orderDate">
-                    <el-date-picker v-model="searchForm.orderDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels  style="width:250px"/>
-                  </el-form-item>
-                  <el-form-item label="交付日期：" prop="deliveryDate">
-                    <el-date-picker v-model="searchForm.deliveryDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels  style="width:250px"/>
-                  </el-form-item>
-                </template>
-                <el-form-item>
-                  <el-button type="primary" @click="submitSearch">搜索</el-button>
-                </el-form-item>
-                <el-form-item v-if="!isLike">
-                  <el-button type="text" @click="isLike=true">模糊查找</el-button>
-                </el-form-item>
-              </el-form>
+                <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
+                    <template v-if="isLike">
+                        <el-form-item label="模糊查找：" prop="keyword">
+                            <el-input v-model="searchLike.keyword" clearable  style="width:150px" @blur="submitSearch"/>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-button type="text" @click="isLike=false">高级查找</el-button>
+                        </el-form-item>
+                    </template>
+                    <template v-else>
+                        <el-form-item label="系统订单号：" prop="serial">
+                            <el-input v-model="searchForm.serial" clearable  style="width:150px"/>
+                        </el-form-item>
+                        <el-form-item label="原始订单号：" prop="sourceserial">
+                            <el-input v-model="searchForm.sourceserial" clearable  style="width:150px"/>
+                        </el-form-item>
+                        <el-form-item label="订单状态：" prop="flowStateId">
+                            <el-select v-model="searchForm.flowStateId" placeholder="请选择" clearable>
+                                <el-option v-for="(flow,idx) in flowList.filter(o=>o.typeId==1)" :key="idx" :label="flow.name" :value="flow.id"/>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="供应商：" prop="crmId">
+                            <el-select v-model="searchForm.crmId" placeholder="请选择" clearable>
+                            <el-option v-for="(crm,idx) in crmList" :key="idx" :label="crm.name" :value="crm.id"/>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="产品名称：" prop="productName">
+                            <el-input v-model="searchForm.productName" clearable  style="width:150px"/>
+                        </el-form-item>
+                        <el-form-item label="项目号：" prop="projectNo">
+                            <el-input v-model="searchForm.projectNo" clearable  style="width:150px"/>
+                        </el-form-item>
+                        <el-form-item label="箱号：" prop="boxNo">
+                            <el-input v-model="searchForm.boxNo" clearable  style="width:150px"/>
+                        </el-form-item>
+                        <el-form-item label="型号/梯号：" prop="modelNo">
+                            <el-input v-model="searchForm.modelNo" clearable  style="width:150px"/>
+                        </el-form-item>
+                        <el-form-item label="物料号/版本号：" prop="materialNo">
+                            <el-input v-model="searchForm.materialNo" clearable  style="width:150px"/>
+                        </el-form-item>
+                        <el-form-item label="制单日期：" prop="orderDate">
+                            <el-date-picker v-model="searchForm.orderDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels  style="width:250px"/>
+                        </el-form-item>
+                        <el-form-item label="交付日期：" prop="deliveryDate">
+                            <el-date-picker v-model="searchForm.deliveryDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels  style="width:250px"/>
+                        </el-form-item>
+                    </template>
+                    <el-form-item>
+                        <el-button type="primary" @click="submitSearch" icon="el-icon-search">搜索</el-button>
+                    </el-form-item>
+                    <el-form-item v-if="!isLike">
+                        <el-button type="text" @click="isLike=true">模糊查找</el-button>
+                    </el-form-item>
+                </el-form>
             </div>
-            <el-table class="table-container" v-loading="listLoading"
-            :data="gridList"
-            border fit highlight-current-row
-            size="mini" max-height="500">
-                <el-table-column label="No." width="70px" align="center">
-                    <template slot-scope="scope">
-                        <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
+            <el-table class="table-container" ref="listTable" v-loading="listLoading" :data="gridList" 
+                border fit highlight-current-row stripe size="mini" max-height="500" @row-click="listRowClick">
+                <el-table-column type="expand">
+                    <template slot-scope="props">
+                        <el-row :gutter="20">
+                            <el-col :span="8">
+                                <span>系统订单号:</span>
+                                <span>{{props.row.serial}}</span>
+                            </el-col>
+                            <el-col :span="8">
+                                <span>原始订单号:</span>
+                                <span>{{props.row.sourceserial}}</span>
+                            </el-col>
+                            <el-col :span="8">
+								<span>物料号/版本号:</span>
+								<span>{{props.row.materialNo}}</span>
+                            </el-col>
+                            <el-col :span="8">
+								<span>图号/版本号:</span>
+								<span>{{props.row.caselNo}}</span>
+                            </el-col>
+                            <el-col :span="8">
+								<span>物料名称:</span>
+								<span>{{props.row.productName}}</span>
+                            </el-col>
+                            <el-col :span="8">
+								<span>项目号:</span>
+								<span :title="props.row.projectNo">{{props.row.projectNo}}</span>
+                            </el-col>
+                            <el-col :span="8">
+								<span>项目名称:</span>
+								<span>{{props.row.projectName}}</span>
+                            </el-col>
+                            <el-col :span="8">
+								<span>梯型:</span>
+								<span>{{props.row.model}}</span>
+                            </el-col>
+                            <el-col :span="8">
+								<span>梯号:</span>
+								<span>{{props.row.modelNo}}</span>
+                            </el-col>
+                            <el-col :span="8">
+								<span>数量:</span>
+								<span>{{props.row.count}} {{props.row.util}}</span>
+                            </el-col>
+                            <el-col :span="8">
+								<span>单价:</span>
+								<span>{{props.row.price | currency}}</span>
+                            </el-col>
+                            <el-col :span="8">
+								<span>合计:</span>
+								<span>{{parseMoney(props.row)}}</span>
+                            </el-col>
+                            <el-col :span="8">
+								<span>制单人:</span>
+								<span>{{props.row.createByUser}}</span>
+                            </el-col>
+                            <el-col :span="8">
+								<span>备注:</span>
+								<span>{{props.row.content}}</span>
+                            </el-col>
+                        </el-row>
                     </template>
                 </el-table-column>
-                <el-table-column prop="id" label="ID" width="80px"/>
-                <el-table-column prop="isPayed" label="付款状态" width="100">
+                <el-table-column prop="isuse" label="流程状态" width="100">
                     <template slot-scope="scope">
-                        <span>{{scope.row.isPayed?'已结算':'未结算'}}</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="isuse" label="流程状态">
-                    <template slot-scope="scope">
+                        <i class="my-icon-rmb" :class="{'payed':scope.row.isPayed}"/>
                         <span>{{parseFlow(scope.row.flowStateId)}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="serial" label="系统订单号" width="150px"/>
-                <el-table-column prop="sourceserial" label="原始订单号" width="120px"/>
+                <el-table-column prop="serial" label="系统订单号"/>
+                <el-table-column prop="sourceserial" label="原始订单号">
+                    <template slot-scope="scope">
+                        <el-button type="text" title="点击查看原始订单号所对应的产品"  @click.stop="showSourceOrder(scope.row)">{{scope.row.sourceserial}}</el-button>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="projectNo" label="项目号"/>
+                <el-table-column prop="materialNo" label="物料号/版本号"/>
+                <el-table-column prop="crmName" label="供应商" width="180px">
+                    <template slot-scope="scope">
+                        <el-button title="导出客户的订单汇总" v-if="scope.row.flowStateId<=2" type="text" @click.stop="showDetail(scope.row)">{{scope.row.crmName}}</el-button>
+                        <span v-else>{{scope.row.crmName}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="productName" label="订单产品名称"/>
+                <el-table-column prop="count" label="数量" width="80px">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.count}} {{scope.row.util}}</span>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="orderDate" label="制单日期" width="100px">
                     <template slot-scope="scope">
                         <span>{{parseDate(scope.row.orderDate)}}</span>
@@ -106,49 +174,18 @@
                         <span>{{parseDate(scope.row.deliveryDate)}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="materialNo" label="物料号/版本号" width="150px"></el-table-column>
-                <el-table-column prop="crmName" label="客户名称" width="180px">
-                    <template slot-scope="scope">
-                        <el-button title="点击查看客户的订单汇总" type="text" @click="showDetail(scope.row)">{{scope.row.crmName}}</el-button>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="productName" label="订单产品名称" width="250px"></el-table-column>
-                <el-table-column prop="count" label="订单数量"></el-table-column>
-                <el-table-column prop="util" label="单位"></el-table-column>
-                <el-table-column prop="price" label="单价" width="100px">
-                    <template slot-scope="scope">
-                        {{scope.row.price | currency}}
-                    </template>
-                </el-table-column>
-                <el-table-column prop="price" label="总价" width="150px">
-                    <template slot-scope="scope">
-                        {{parseMoney(scope.row)}}
-                    </template>
-                </el-table-column>
-                <el-table-column prop="caselNo" label="图号/版本号" width="150px"></el-table-column>
-                <el-table-column prop="model" label="规格/梯型" width="100px"></el-table-column>
-                <el-table-column prop="modelNo" label="型号/梯号" width="100px"></el-table-column>
-                <el-table-column prop="boxNo" label="箱号" width="100px"></el-table-column>
-                <el-table-column prop="projectName" label="项目名称" width="150px"></el-table-column>
-                <el-table-column prop="projectNo" label="项目号" width="150px"></el-table-column>
-                <el-table-column prop="content" label="备注说明" width="250px"></el-table-column>
-                <el-table-column prop="createByUser" label="创建人"></el-table-column>
-                <el-table-column prop="updateDate" label="最后更新" width="150px">
-                    <template slot-scope="scope">
-                        <span>{{parseDate(scope.row.updateDate, 'YYYY-MM-DD hh:mm:ss')}}</span>
-                    </template>
-                </el-table-column>
                 <el-table-column label="操作" fixed="right" align="center" width="100">
                     <template slot-scope="scope">
-                        <span  v-if="scope.row.flowStateId==1">
+                        <span  v-if="scope.row.flowStateId<=2">
                             <el-button size="mini" type="text" @click="handleUpdate(scope.row)">编辑</el-button>
                             <el-button size="mini" type="text" @click="handleDelete(scope.row)">删除</el-button>
                         </span>
-                        <span v-else style="color:#CCC">已采购入库</span>
+                        <span v-else style="color:#CCC">{{parseFlow(scope.row.flowStateId)}}</span>
                     </template>
                 </el-table-column>
             </el-table>
-            <div class="page-container" style="padding: 10px 0;">
+            <div class="page-container">
+				<div>共有{{total}}个未采购订单，请点击供应商名称或导出采购订单操作流程</div>
                 <el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total">
                 </el-pagination>
             </div>
@@ -208,7 +245,6 @@
                 <el-form-item label="图号/版本号" prop="caselNo">
                     <el-input v-model="ruleForm.caselNo" placeholder="请输入" style="width:200px"/>
                 </el-form-item>
-
                 <el-form-item label="订单数量" prop="count">
                     <el-input v-model="ruleForm.count" placeholder="请输入" style="width:100px"/>
                 </el-form-item>
@@ -227,21 +263,21 @@
                 </el-form-item>
             </el-form>
         </div>
-        <el-dialog title="供应商采购清单" :visible.sync="openDialogVisible" width="75%">
+        <el-dialog title="供应商采购清单" append-to-body :visible.sync="openDialogVisible" width="75%">
             <div class="form-dialog">
                 <el-form :inline="true" :model="dialogForm" ref="dialogForm" size="mini">
                     <el-form-item label="供应商：" prop="crmId">
-                        <el-select v-model="dialogForm.crmId" placeholder="请选择" filterable style="width:300px">
-                            <el-option v-for="(crm,idx) in crmList" :key="idx" :label="crm.name" :value="crm.id"/>
+                        <el-select v-model="dialogForm.crmId" placeholder="请选择" filterable style="width:300px" @change="dialogSearch">
+                            <el-option v-for="(crm,idx) in orderCrmList" :key="idx" :label="crm.name" :value="crm.id"/>
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="订单状态：" prop="flowStateId">
-                        <el-select v-model="dialogForm.flowStateId" disabled placeholder="请选择">
-                            <el-option v-for="(flow,idx) in flowList" :key="idx" :label="flow.name" :value="flow.id"/>
+					<el-form-item label="订单状态：" prop="flowStateId">
+                        <el-select v-model="dialogForm.flowStateId" placeholder="请选择" style="width:100px" @change="dialogSearch">
+                            <el-option v-for="flow in flowList.filter(o=>{return [1,2].includes(o.id)})" :key="flow.id" :label="flow.name" :value="flow.id"/>
                         </el-select>
                     </el-form-item>
                     <el-form-item>
-                        <el-button type="primary" @click="dialogSearch">查询</el-button>
+                        <el-button type="primary" @click="dialogSearch" icon="el-icon-search" :loading="searchLoading">查询</el-button>
                     </el-form-item>
                 </el-form>
             </div>
@@ -249,21 +285,39 @@
                 <div class="order-title">
                     <span >供应商：{{currItem.crmName}}，地址：{{currItem.address}}，联系人：{{currItem.contactName}}，电话：{{currItem.contactPhone}}</span>
                 </div>
-                <div class="order-title" style="padding:10px 0">
-                    <span style="font-weight:bold">订单总价：{{currItem.crmOrderMoney}} 【*注：根据物料号，系统自动整合订单量】</span>
+                <div class="order-title" style="padding:10px 0" v-if="crmOrderList.length">
+                    <span style="font-weight:bold">订单总价：{{currItem.crmOrderMoney | currency}}</span>
                 </div>
-                <el-table
+                <el-table ref="exportTable"
                 :data="crmOrderList"
-                border fit highlight-current-row
-                size="mini" max-height="400">
+                border fit highlight-current-row stripe
+                size="mini" max-height="400" v-loading="searchLoading">
+					<el-table-column type="expand">
+						<template slot-scope="props">
+							<el-row :gutter="20">
+								<el-col :span="4">原始订单号：{{props.row.sourceserial}}</el-col>
+								<el-col :span="8">项目名称：{{props.row.projectName}}</el-col>
+								<el-col :span="12" :title="props.row.projectNo">项目号：{{props.row.projectNo}}</el-col>
+							</el-row>
+						</template>
+					</el-table-column>
+					<el-table-column prop="flowStateId" label="订单状态" width="70px">
+						<template slot-scope="scope">
+                            <span>{{parseFlow(scope.row.flowStateId)}}</span>
+                        </template>
+					</el-table-column>
                     <el-table-column prop="serial" label="订单编号" width="150px"/>
                     <el-table-column prop="materialNo" label="物料号" width="150px"/>
-                    <el-table-column prop="productName" label="物料名称" width="250px"/>
+                    <el-table-column prop="productName" label="物料名称"/>
                     <el-table-column prop="model" label="规格型号"/>
                     <el-table-column prop="util" label="单位"/>
                     <el-table-column prop="count" label="数量"/>
                     <el-table-column prop="price" label="单价"/>
-                    <el-table-column prop="allPrice" label="金额"/>
+                    <el-table-column prop="allPrice" label="金额">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.allPrice | currency}}</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column prop="deliveryDate" label="交货日期">
                       <template slot-scope="scope">
                         <span>{{parseDate(scope.row.deliveryDate)}}</span>
@@ -273,9 +327,81 @@
             </div>
             <div v-else>请选择供应商导出采购订单</div>
             <div class="btns" v-if="crmOrderList.length">
-                <el-button type="success" @click="exportOrder">导出采购单</el-button>
-                <el-button type="infor" size="medium" icon="el-icon-plus" v-print="'#printTable'">打印采购单</el-button>
+				<div>共计：{{crmOrderIds.length}}个原始订单；<span v-if="crmOrderIds.length>crmOrderList.length-1">已合并为{{crmOrderList.length-1}}个采购订单。(根据产品名称、物料号、价格、项目号做合并)</span></div>
+				<div>
+					<el-button type="success" @click="exportOrder" icon="el-icon-document">导出采购单</el-button>
+					<el-button type="infor" size="medium" icon="el-icon-plus" v-print="'#printTable'">打印采购单</el-button>
+				</div>
             </div>
+        </el-dialog>
+        <el-dialog :title="'采购单（原始订单号：'+sourceserial+'）'" append-to-body :visible.sync="openSourceVisible" width="80%">
+            <div class="detail-container">
+                <el-row :gutter="20" v-if="detailItem">
+                    <el-col :span="12">
+                        <div><span class="tl">采购单号：</span>{{detailItem.serial}}</div>
+                    </el-col>
+                    <el-col :span="12">
+                        <div><span class="tl">制单日期：</span>{{parseDate(detailItem.orderDate)}}</div>
+                    </el-col>
+                    <el-col :span="12">
+                        <div><span class="tl">项目号：</span>{{detailItem.projectNo}}</div>
+                    </el-col>
+                    <el-col :span="12">
+                        <div><span class="tl">项目名称：</span>{{detailItem.projectName}}</div>
+                    </el-col>
+                    <el-col :span="12">
+                        <div><span class="tl">交货日期：</span>{{parseDate(detailItem.deliveryDate)}}</div>
+                    </el-col>
+                    <el-col :span="12">
+                        <div><span class="tl">备注：</span>{{detailItem.content}}</div>
+                    </el-col>
+                </el-row>
+            </div>
+            <el-table size="mini" class="detail-table" ref="detailTable" border :data="sourceData" highlight-current-row fit stripe max-height="350" @row-click="detailRowClick">
+                <el-table-column type="expand">
+                    <template slot-scope="props">
+                        <el-form label-position="left" size="mini" inline label-width="100px">
+                            <el-form-item label="物料号/版本号:">
+                                <span>{{props.row.materialNo}}</span>
+                            </el-form-item>
+                            <el-form-item label="图号/版本号:">
+                                <span>{{props.row.caselNo}}</span>
+                            </el-form-item>
+                            <el-form-item label="物料名称:">
+                                <span>{{props.row.productName}}</span>
+                            </el-form-item>
+                            <el-form-item label="梯型:">
+                                <span>{{props.row.model}}</span>
+                            </el-form-item>
+                            <el-form-item label="梯号:">
+                                <span>{{props.row.modelNo}}</span>
+                            </el-form-item>
+                            <el-form-item label="数量:">
+                                <span>{{props.row.count}}</span>
+                            </el-form-item>
+                            <el-form-item label="单位:">
+                                <span>{{props.row.util}}</span>
+                            </el-form-item>
+                            <el-form-item label="单价:">
+                                <span>{{props.row.price}}</span>
+                            </el-form-item>
+                            <el-form-item label="小计:">
+                                <span>{{parseMoney(props.row)}}</span>
+                            </el-form-item>
+                        </el-form>
+                    </template>
+                </el-table-column>
+                <el-table-column type="index" width="50"/>
+                <el-table-column label="项目号" prop="projectNo" width="120"/>
+                <el-table-column label="物料号" prop="materialNo" width="120"/>
+                <el-table-column label="产品名称" prop="productName"/>
+                <el-table-column label="图号/版本号" prop="caselNo"/>
+                <el-table-column label="梯型" prop="model" width="100"/>
+                <el-table-column label="梯号" prop="modelNo" width="80"/>
+                <el-table-column label="数量" prop="count" width="60"/>
+                <el-table-column label="单位" prop="util" width="60"/>
+                <el-table-column label="单价" prop="price" width="80"/>
+            </el-table>
         </el-dialog>
     </section>
 </template>
@@ -291,8 +417,8 @@ export default {
             sourceCrmOrderList:[],
             isMergeSerial:false,
             dialogForm:{
-                crmId:'',
-                flowStateId:1,
+				crmId:'',
+				flowStateId:1
             },
             setting:{},
             isEdit:false,
@@ -300,7 +426,8 @@ export default {
             typeList:[],
             ptypeList:[],
             flowList:[],
-            crmList:[],
+			crmList:[],
+			orderCrmList:[],
             productList:[],
             proList:[],
             query:{
@@ -379,124 +506,175 @@ export default {
 			},
 			tableRules:{
 				crmId:[{ required: true, message: '请选择客户', trigger: 'change'}]
-			},
+            },
+            openSourceVisible:false,
+            detailItem:null,
+            sourceserial:'',
+			sourceData:[],
+			crmOrderIds:[],
+			searchLoading:false,
         }
     },
     methods:{
+        listRowClick(row){
+            row.extend = !row.extend?true:false;
+            this.$refs['listTable'].toggleRowExpansion(row, row.extend);
+        },
+        detailRowClick(row){
+            row.extend = !row.extend?true:false;
+            this.$refs['detailTable'].toggleRowExpansion(row, row.extend);
+        },
+        // 显示原始订单列表
+        showSourceOrder(row){
+            this.detailItem = row;
+            this.sourceData = [];
+            this.sourceserial = row.sourceserial;
+            let condition = {
+                type:"listData",
+                collectionName:"orderUpload",
+                data:{'sourceserial':this.sourceserial,'typeId':1}
+            }
+            this.$axios.$post('mock/db', {data:condition}).then(result=>{
+                this.sourceData = result.list;
+            });
+            this.openSourceVisible = true;
+        },
         exportOrder(){
             import ('@/components/Export2Excel').then(excel=>{
-              const tHeader = ['订单编号', '物料号', '物料名称', '规格型号','数量', '单价', '金额','交货日期'];
-              const filterVal = ['serial', 'materialNo', 'productName', 'model','count', 'price', 'allPrice','deliveryDate'];
-              const data = this.formatJson(filterVal, this.crmOrderList);
-              //console.log('exportOrder', data);
-              excel.export_json_to_excel({
-                header: tHeader,
-                data,
-                filename: this.currItem.crmName + '-' + new Date().getTime()
-              });
-              this.updateOrderByCrm();
-
+				const tHeader = ['订单编号','物料号','物料名称','图号/版本号','规格型号','数量','单价','金额','交货日期'];
+				const filterVal = ['serial','materialNo','productName','caselNo','model','count','price','allPrice','deliveryDate'];
+				const data = this.formatJson(filterVal, this.crmOrderList);
+				const now =  moment(new Date()).format('YYYYMMDD');
+				excel.export_json_to_excel({
+					header: tHeader,
+					data,
+					filename: this.currItem.crmName + '-' + now
+				});
+				this.updateOrderByCrm();
             })
         },
         formatJson(filterVal, jsonData) {
-          return jsonData.map(v => filterVal.map(j => {
-            if(j == 'deliveryDate'){
-              v[j] = this.parseDate(v[j]);
-            }
-            return v[j];
-          }))
+			return jsonData.map(v => filterVal.map(j => {
+				if(j == 'deliveryDate'){
+					v[j] = this.parseDate(v[j]);
+				}
+				return v[j];
+			}))
         },
         // 更新客户订单状态（已发单）
         updateOrderByCrm(){
-          let orderIds = [];
-          this.crmOrderList.forEach(item=>{
-            if(item.id) orderIds.push(item.id);
-          })
-          let cn = {
-              type:'updatePatch',
-              collectionName: 'order',
-              param:{'crmId':this.dialogForm.crmId,'id':{$in:orderIds}},
-              set:{$set:{'flowStateId':2}}
-          }
-          //this.openDialogVisible = false
-          //console.log('submitSave', cn);
-          this.$axios.$post('mock/db', {data:cn}).then(result=>{
-            debugger
-            this.crmOrderList.forEach(item=>{
-              if(item.id){
-                item.flowStateId = 2;
-                let index = _.findIndex(this.gridList,{id:item.id});
-                this.$set(this.gridList, index, item);
-              }
-            });
-            this.currItem = null;
-            this.crmOrderList = [];
-
-          });
+			let cn = {
+				type:'updatePatch',
+				collectionName: 'order',
+				param:{'crmId':this.dialogForm.crmId,'id':{$in:this.crmOrderIds}},
+				set:{$set:{'flowStateId':2}}
+			}
+			this.$axios.$post('mock/db', {data:cn}).then(result=>{
+				this.gridList.forEach((item,i)=>{
+					if(this.crmOrderIds.includes(item.id)){
+						item.flowStateId = 2;
+						this.$set(this.gridList, i, item);
+					}
+				});
+				this.crmOrderIds = [];
+				this.crmOrderList = [];
+			});
         },
         // 查看供应商订单汇总
         showDetail(row){
-          if(row){
-            let crm = _.find(this.crmList, {'id':row.crmId});
-            this.dialogForm.crmId = row.crmId;
-            this.currItem = {'address':crm.address,'contactName':crm.contactName,'contactPhone':crm.contactPhone,'crmName':crm.name};
-            this.listOrderByCrm({crmId:row.crmId});
-          }
-          this.openDialogVisible = true;
+			if(row){
+				let crm = _.find(this.crmList, {'id':row.crmId});
+				this.dialogForm.crmId = row.crmId;
+				this.currItem = {'address':crm.address,'contactName':crm.contactName,'contactPhone':crm.contactPhone,'crmName':crm.name};
+				this.listOrderByCrm({crmId:row.crmId});
+			}
+			this.openDialogVisible = true;
         },
         dialogSearch(){
-          let crm = _.find(this.crmList, {'id':this.dialogForm.crmId});
-          this.listOrderByCrm(this.dialogForm);
-          this.currItem = {'address':crm.address,'contactName':crm.contactName,'contactPhone':crm.contactPhone,'crmName':crm.name};
-          this.listOrderByCrm(this.dialogForm);
+			let crm = _.find(this.crmList, {'id':this.dialogForm.crmId});
+			this.currItem = {'address':crm.address,'contactName':crm.contactName,'contactPhone':crm.contactPhone,'crmName':crm.name};
+			let params = {crmId:this.dialogForm.crmId};
+			if(this.dialogForm.flowStateId){
+				params.flowStateId = this.dialogForm.flowStateId;
+			}
+			this.listOrderByCrm(this.dialogForm);
         },
+        // 加载客户的采购订单
         async listOrderByCrm(match={}){
-          this.crmOrderList = [];
-          let params = {
-            type:'listData',
-            collectionName: 'order',
-            data:_.merge({flowStateId:1}, match)
-          }
-          let data = await this.$axios.$post('mock/db', {data:params});
-          this.sourceCrmOrderList = data.list;
-          this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList), true);
-        },
+			this.searchLoading = true;
+			this.crmOrderList = [];
+			let params = {
+				type:'listData',
+				collectionName: 'order',
+				data:_.merge({flowStateId:{'$in':[1,2]}}, match)
+			}
+			let data = await this.$axios.$post('mock/db', {data:params});
+			this.sourceCrmOrderList = this.mergeOrder(data.list);
+			if(this.sourceCrmOrderList.length){
+				this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList), true);
+			}
+			this.searchLoading = false;
+		},
+		// 合并订单数量,根据类型，产品名称，物料号，价格，项目号
+		mergeOrder(lists){
+			let listData = [];
+			this.crmOrderIds = [];
+			lists.forEach(item=>{
+				this.crmOrderIds.push(item.id);
+				let dataIndex = _.findIndex(listData,{'typeId':item.typeId,'productName':item.productName,'materialNo':item.materialNo,'price':item.price,'caselNo':item.caselNo});
+				if(dataIndex>-1){
+					let sIndex = listData[dataIndex]['sourceserial'].split(',');
+					if(!~sIndex){
+						listData[dataIndex]['sourceserial'] += ','+item.sourceserial;
+					}
+					if(listData[dataIndex]['projectNo'].indexOf(item.projectNo)<0){
+						listData[dataIndex]['projectNo'] += ','+item.projectNo;
+					}
+					listData[dataIndex]['count'] += item.count;
+				}else{
+					listData.push(item);
+				}
+			});
+			return listData;
+		},
 
         filterCrmOrderList(arr,split){
-          if(!arr.length) return;
-          let list = [];
-          this.isMergeSerial = false;
-          arr.forEach(item=>{
-              let index = _.findIndex(list, {'materialNo':item.materialNo});
-              //debugger
-              if(index>-1 && split){
-                  this.isMergeSerial = true;
-                  list[index]['count'] += item.count;
-                  list[index]['serial'] += '；'+item.serial;
-                  list[index]['allPrice'] = list[index]['count'] * list[index]['price'];
-              }else{
-                  item.allPrice = item.count * item.price;
-                  list.push(item);
-              }
-          });
-          console.log('list', list);
-          this.currItem.crmOrderMoney = 0;
-          list.forEach(item=>{
-              this.currItem.crmOrderMoney += item.allPrice;
-          });
-          this.currItem.crmOrderMoney = this.$options.filters['currency'](this.currItem.crmOrderMoney);
-          list.push({
-            serial:'合计',
-            allPrice:this.currItem.crmOrderMoney
-          })
-          this.crmOrderList = list;
+			if(!arr.length) return;
+			let list = [], allcount = 0;
+			arr.forEach(item=>{
+				item.allPrice = item.count * item.price;
+				allcount += item.count;
+				list.push(item);
+			});
+			this.currItem.crmOrderMoney = 0;
+			list.forEach(item=>{
+				this.currItem.crmOrderMoney += item.allPrice;
+			});
+			list.push({
+				serial:'合计',
+				count:allcount,
+				allPrice:this.currItem.crmOrderMoney
+			})
+			this.crmOrderList = list;
         },
-
         initProduct(){
             this.ptypeList = _.filter(this.setting.ptype,{typeId:1});
             this.crmList = _.filter(this.setting.crm,{typeId:1});
             this.productList = _.filter(this.setting.product, {typeId:1});
             this.proList = {...this.productList};
+            // 获取订单客户（未下单）
+            let condition = {
+                type:'distinctData',
+                collectionName: 'order',
+                distinct:'crmId',
+                data:{flowStateId:{'$in':[1,2]}}
+            };
+            this.$axios.$post('mock/db', {data:condition}).then(result=>{
+                result.forEach(id=>{
+                    let crm = _.find(this.setting.crm,{'id':id});
+                    this.orderCrmList.push(crm);
+                });
+            });
         },
         setPtype(ptypeId){
             this.ruleForm.productId = '';
@@ -529,8 +707,12 @@ export default {
             this.ruleForm.crmName = crm.name;
             this.ruleForm.crmNo = crm.crmNo;
         },
-        handleSerial(flag){
-			let serial = Math.random().toString(36).substr(2).toLocaleUpperCase();
+        handleSerial(){
+            let now =  moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
+            now = now.split(' ');
+            let dd = now[0].split('-');
+            let tt = now[1].split(':');
+            let serial = 'JH' + dd[0] +''+ dd[1] +''+ dd[2]+''+tt[0]+''+tt[1]+''+tt[2];
             this.ruleForm.serial = serial;
         },
         handleAdd(){
@@ -617,7 +799,7 @@ export default {
         parseFlow(id){
             if(!id) return '';
             let flow = _.find(this.flowList, {'id':id});
-            return flow.name;
+            return flow?flow.name:'';
         },
         parseDate(date, format){
             return date?moment(date).format(format||'YYYY-MM-DD'):'';
@@ -768,7 +950,7 @@ export default {
             };
             let result = await this.$axios.$post('mock/db', {data:condition});
             this.total = result.total;
-            this.gridList = result.list;//_.orderBy(result.list,['crmId'], ['asc']);
+            this.gridList = _.orderBy(result.list,['crmId'], ['asc']);
             this.listLoading = false;
         },
         async _getLastId(){
@@ -795,13 +977,10 @@ export default {
                 console.log('getSetting',result)
                 this.setting = result.content;
                 this.typeList = this.setting.type;
-                this.flowList = _.filter(this.setting.flowState, item=>{
-                    return item.id<4;
-                });
+                this.flowList = this.setting.flowState;
                 this.flowList = _.orderBy(this.flowList,['id'],['asc']);
-
                 this.initProduct();
-                this.getList({flowStateId:{'$lte':3}});//{flowStateId:1}
+                this.getList({flowStateId:{'$in':[1,2]}});//{flowStateId:1}
             }
         }
     },
@@ -809,42 +988,102 @@ export default {
         this.getSetting();
     },
     mounted(){
-        /* this.initProduct();
-        this.getList();
-        console.log('testFile', testFile) */
+
     }
 }
 </script>
 
 <style lang="scss" scoped>
-    .order-main{
-        /deep/ .el-dialog{
-            .el-dialog__body{
-                padding:10px 20PX;
-
-                .compare{
-                    .order-title{
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        padding: 10px 0;
-                        border-top: 1px solid #DDD;
-                    }
-                }
-                .btns{
-                    padding:10px 0;
-                    text-align: right;
-                }
-            }
-        }
-        .table-container{
-          /deep/ .cell{
+    /deep/ .el-table{
+        .cell{
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-          }
+            >i{
+                font-size:14px;
+                color:#EEE;
+                margin-right:5px;
+                &.payed{
+                    color:green;
+                }
+            }
+            .el-button{
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 100%;
+            }
+        }
+        /deep/ .el-table__expanded-cell{
+            padding: 20px;
+            .el-row{
+              .el-col{
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                  line-height: 25px;
+                  >span{
+                      &:first-child{
+                          width:80px;
+                          display: inline-block;
+                          font-weight: bold;
+                      }
+                  }
+              }
+            }
+            .el-form-item{
+                width:32%;
+                margin:0;
+                .el-form-item__label{
+                    font-weight: bold;
+                }
+            }
         }
     }
+    /deep/ .el-dialog{
+        .el-dialog__body{
+            padding:20px 20px 30px 20px;
+            .compare{
+                .order-title{
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 10px 0;
+                    border-top: 1px solid #DDD;
+                }
+            }
+            .btns{
+                padding:10px 0;
+                display: flex;
+				align-items: center;
+				justify-content: space-between;
+            }
+            
+        }
+    }
+
+    .detail-container{
+        /deep/ .el-row{
+            .el-col{
+                margin:0 0 15px 0;
+                >div{
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    white-space: nowrap;
+                }
+                .tl{
+                    font-weight: bold;
+                }
+            }
+        }
+    }
+	.page-container{
+		padding: 10px 0;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
 
 </style>
 

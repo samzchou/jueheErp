@@ -27,9 +27,10 @@ export default {
             "label":"订单",
             "icon":"ils",
             "children":[
+				{"label": "采购订单导入", "icon": "list-ul", "path": "/order/import-buy"},
                 {"label":"产品采购", "icon":"list-ul", "path":"/order/buy"},
-                { "label": "采购订单导入", "icon": "list-ul", "path": "/order/import-buy"},
                 {"label":"生产销售", "icon":"list-ul", "path":"/order/sale"},
+				{"label":"导出送货单", "icon":"list-ul", "path":"/order/deliver"},
             ]
         },
         {

@@ -84,6 +84,26 @@ const dbFun = {
             }
         }
     },
+	/*--------去重查询数据--------*/
+    async distinctData(params){
+        const tn = params.collectionName;
+        let condition = params.data || {};
+        let list =  await mongoDB[tn].distinct(params.distinct,condition);
+        return {
+            success:true,
+            response:list
+        }
+    },
+	/*--------统计数量--------*/
+    async countData(params){
+        const tn = params.collectionName;
+        let condition = params.data || {};
+        let total =  await mongoDB[tn].find(condition).countDocuments();
+        return {
+            success:true,
+            response:total
+        }
+    },
 
     /*--------列出数据--------*/
     async listData(params){
@@ -113,36 +133,50 @@ const dbFun = {
             }
         }
     },
+	
     /*--------批量添加数据--------*/
     async addPatch(params){
         const tn = params.collectionName;
         const data = params.data;
         let result = mongoDB[tn].insertMany(data);
         let cc = await mongoDB.counters.findOneAndUpdate({'model':tn}, {$inc:{count:data.length}});
-        return {
-            success:true,
+		let response = {
+			success:true,
             msgDesc:'数据导入成功'
-        }
+		}
+		if(params.notNotice && response.success){
+			delete response.msgDesc;
+		}
+        return response;
     },
     /*--------批量更新数据--------*/
     async updatePatch(params){
         const tn = params.collectionName;
         let result = await mongoDB[tn].updateMany(params.param, params.set);
         //console.log('updatePatch', params, result);
-        return {
-            success:result.n?true:false,
+		let response = {
+			success:result.n?true:false,
             msgDesc:result.n?'数据更新成功':'数据更新失败'
-        }
+		}
+		if(params.notNotice && response.success){
+			delete response.msgDesc;
+		}
+        return response;
     },
     /*--------批量删除数据--------*/
     async removePatch(params){
         const tn = params.collectionName;
         const data = params.data;
         let result = mongoDB[tn].deleteMany(data);
-        return {
-            success:true,
+		
+		let response = {
+			success:true,
             msgDesc:'数据删除成功'
-        }
+		}
+		if(params.notNotice && response.success){
+			delete response.msgDesc;
+		}
+        return response;
     },
     /*--------添加数据--------*/
     async addData(params){
@@ -158,13 +192,14 @@ const dbFun = {
         if(result){
             await mongoDB.counters.findOneAndUpdate({'model':tn}, {$inc:{count:1}});
         }
+		
         return {
             success:true,
             msgDesc:'数据添加成功',
             response:result
         }
     },
-    /*--------更新一批数据--------*/
+    /*--------批量更新数据--------*/
     async updateArr(params){
         const tn = params.collectionName;
         let data = params.data;
@@ -174,13 +209,19 @@ const dbFun = {
             if(params.updateDate){
                 set.updateDate = new Date().getTime();
             }
-            let result = await mongoDB[tn].updateOne(condition, set, {upsert:true});
-            //console.log('updateArr',result);
+			console.log(condition, set);
+            //let result = await mongoDB[tn].updateOne(condition, set, $currentDate: { lastModified: true });//{upsert:true}
+			let result = await mongoDB[tn].updateOne(condition, {$set:set}, {upsert:true});
+			console.log('result',result);
         }
-        return {
-            success:true,
+		let response = {
+			success:true,
             msgDesc:'数据更新成功'
-        }
+		}
+		if(params.notNotice && response.success){
+			delete response.msgDesc;
+		}
+        return response;
     },
     /*--------更新数据--------*/
     async updateData(params){
@@ -195,7 +236,6 @@ const dbFun = {
         let total = await mongoDB[tn].countDocuments(condition);
         let result = null;
         if(total){
-            //console.log(condition, update)
             result =  await mongoDB[tn].updateOne(condition, update, options);
         }
         return {

@@ -6,7 +6,7 @@ const server_url = 'http://127.0.0.1/';
 module.exports = {
 	mode: 'universal',
 	head: {
-		title: '珏合ERP',
+		title: 'SYSTEM',
 		meta: [
 			{charset: 'utf-8'},
 			{name:'viewport', content:'width=device-width, initial-scale=1'},
