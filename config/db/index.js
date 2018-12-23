@@ -350,6 +350,10 @@ module.exports = {
                 type:String,
                 default:''
             },
+            dserial:{
+                type:String,
+                default:''
+            },
             sourceserial:{
                 type:String,
                 default:''
@@ -362,10 +366,6 @@ module.exports = {
                 type: String,
                 default:''
             },
-            crmNo:{
-                type: String,
-                default:''
-            },
             productId:{
                 type: Number,
                 default:0
@@ -375,6 +375,10 @@ module.exports = {
                 default:''
             },
             projectNo:{
+                type: String,
+                default:''
+            },
+            dprojectNo:{
                 type: String,
                 default:''
             },
@@ -391,6 +395,10 @@ module.exports = {
                 default:''
             },
             modelNo : {
+                type:String,
+                default:''
+            },
+            dmodelNo : {
                 type:String,
                 default:''
             },
@@ -445,14 +453,14 @@ module.exports = {
         },
         /*----------订单上传原始数据-----------*/
         orderUpload : {
-            id:{
-                type: Number,
-                default:0
-            },
-			isPayed:{
+ 			isPayed:{
 				type:Boolean,
 				default:false
 			},
+            flowStateId:{
+                type: Number,
+                default:0
+            },
             typeId:{
                 type: Number,
                 default:0
