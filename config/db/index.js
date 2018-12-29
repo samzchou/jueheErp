@@ -354,6 +354,10 @@ module.exports = {
                 type:String,
                 default:''
             },
+			sourceIds:{
+                type:String,
+                default:''
+            },
             sourceserial:{
                 type:String,
                 default:''
@@ -453,6 +457,10 @@ module.exports = {
         },
         /*----------订单上传原始数据-----------*/
         orderUpload : {
+			id:{
+                type: Number,
+                default:0
+            },
  			isPayed:{
 				type:Boolean,
 				default:false
@@ -576,6 +584,10 @@ module.exports = {
                 type:String,
                 default:''
             },
+			sourceserial:{
+                type:String,
+                default:''
+            },
 			crmId:{
                 type: Number,
                 default:0
@@ -600,6 +612,14 @@ module.exports = {
                 type: Number,
                 default:0
             },
+			price:{
+				type: Number,
+                default:0
+			},
+			util:{
+                type:String,
+                default:''
+            },
             count:{
                 type: Number,
                 default:0
@@ -616,6 +636,10 @@ module.exports = {
                 type: Number,
                 default:0
             },
+			deliveryDate:{
+				type: Number,
+                default:new Date().getTime()
+			},
             content:{
                 type:String,
                 default:''

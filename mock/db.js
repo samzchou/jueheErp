@@ -65,6 +65,21 @@ const dbFun = {
             }
         }
     },
+	async groupList(params){
+        const tn = params.collectionName;
+        let condition = params.data || {};
+        //console.log('aggregate condition', params.aggregate);
+        let total = await mongoDB[tn].distinct(params.distinct, condition);
+        let list = await mongoDB[tn].aggregate(params.aggregate);
+        return {
+            success:true,
+            response:{
+                total:total.length,
+                list : list
+            }
+        }
+    },
+	
 	/*--------列出几天后的所有采购订单数据--------*/
     async listOrderByDate(params){
         let now = new Date();
@@ -209,7 +224,7 @@ const dbFun = {
             if(params.updateDate){
                 set.updateDate = new Date().getTime();
             }
-			console.log(condition, set);
+			//console.log(condition, set);
             //let result = await mongoDB[tn].updateOne(condition, set, $currentDate: { lastModified: true });//{upsert:true}
 			let result = await mongoDB[tn].updateOne(condition, {$set:set}, {upsert:true});
 			console.log('result',result);
@@ -227,17 +242,20 @@ const dbFun = {
     async updateData(params){
         const tn = params.collectionName;
         let data = params.data;
-        let condition = {id:data.id};
+        let condition = data.id?{id:data.id}:params.condition;
         if(params.updateDate){
             data.updateDate = new Date().getTime();
         }
         let update = {$set : data};
-        let options = {upsert : true};
-        let total = await mongoDB[tn].countDocuments(condition);
-        let result = null;
-        if(total){
-            result =  await mongoDB[tn].updateOne(condition, update, options);
-        }
+		let result = null;
+		if(params.multi){ // 更新多个
+			result =  await mongoDB[tn].update(condition, update, {multi: true});
+		}else{
+			let total = await mongoDB[tn].countDocuments(condition);
+			if(total){
+				result =  await mongoDB[tn].updateOne(condition, update, {upsert : true});
+			}
+		}
         return {
             success:result?true:false,
             msgDesc:result?'数据更新成功':'数据更新失败'
@@ -279,9 +297,10 @@ const dbFun = {
         let tn = params.collectionName;
         let data = params.data;
         let result =  await mongoDB[tn].remove(data);
+		console.log(params, result)
         return {
-            success:result['n']==1?true:false,
-            msgDesc:result['n']==1?null:'删除数据失败'
+            success:result['n']==0?false:true,
+            msgDesc:result['n']==0?'删除数据失败':null
         }
     },
     /*--------基础数据和元数据更新--------*/

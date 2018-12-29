@@ -148,15 +148,15 @@ export default {
 				{label:'重复订单',value:'isRepeat',width:80,show:true},
 				{label:'匹配客户名称',value:'crmName',show:true},
 				{label:'订单编号',value:'sourceserial',show:true},
-        {label:'物料描述',value:'productName',show:true},
+				{label:'物料描述',value:'productName',show:true},
 				{label:'物料号/版本号',value:'materialNo',show:true},
 				{label:'项目号',value:'projectNo',show:true},
 				{label:'梯型',value:'model',width:100},
 				{label:'梯号',value:'modelNo',width:60},
 				{label:'数量',value:'count',width:50},
 				{label:'单位',value:'util',width:50},
-        {label:'单价',value:'price',width:80},
-        {label:'元单价',value:'metaprice',width:80},
+				{label:'单价',value:'price',width:80},
+				{label:'元单价',value:'metaprice',width:80},
 				{label:'箱号',value:'boxNo',width:70},
 				{label:'制单日期',value:'orderDate',width:100,show:true},
 				{label:'交货日期',value:'deliveryDate',width:100,show:true},
@@ -172,7 +172,7 @@ export default {
 			sourceserialList:[],
 			productList:[],
 			modelNoList:[],
-      serialList:[],
+			serialList:[],
 			uploadTotal:0,
 			queryUpload:{
 				page:1,
@@ -205,12 +205,12 @@ export default {
 		parseStr(row, field){
 			switch(field){
 				case 'typeId':
-          let type = _.find(this.typeList,{id:row[field]});
-          return type.name;
-        case 'orderDate':
-          return moment(row[field]).format('YYYY-MM-DD');
-        case 'deliveryDate':
-          return moment(row[field]).format('YYYY-MM-DD');
+					let type = _.find(this.typeList,{id:row[field]});
+					return type.name;
+				case 'orderDate':
+					return moment(row[field]).format('YYYY-MM-DD');
+				case 'deliveryDate':
+					return moment(row[field]).format('YYYY-MM-DD');
 				default:
 				  return row[field];
 			}
@@ -251,41 +251,43 @@ export default {
 		// 新增产品后处理
 		finishedEdit(row){
 			if(row){
+				this.productList.push(row);
 				let crm = _.find(this.setting.crm, {'id':row.crmId});
-        // 列出所有匹配的订单（物料号、物料描述、价格、订单类型）一致的订单;
-        let lists = _.filter(this.sourceData, {'materialNo':row.materialNo,'productName': row.name,'price':row.price,'typeId':row.typeId});
-        //debugger
-        lists.forEach(item=>{
-          item.materialNo = row.materialNo;
-          item.productId = row.id;
-          item.productName = row.name;
-          item.price = row.price;
-          item.util = row.util;
-          item.metaprice = row.price;
-          item.ptypeId = row.ptypeId;
-          item.model = row.model;
-          item.modelNo = row.modelNo;
-          item.crmId = row.crm;
-          item.crmName = crm.name;
-          let index = _.findIndex(this.sourceData, {'index': item.index});
-          if(index>-1){
-            delete item.notin;
-            this.$set(this.sourceData, index, item);
-          }
-          let notIndex = _.findIndex(this.notInList, {'index': item.index});
-          if(notIndex>-1){
-            this.notInList.splice(notIndex, 1);
-          }
-        });
-        this.tableData = _.cloneDeep(this.sourceData);
+				// 列出所有匹配的订单（物料号、物料描述、价格、订单类型）一致的订单;
+				let lists = _.filter(this.sourceData, {'materialNo':row.materialNo,'productName': row.name,'price':row.price,'typeId':row.typeId});
+				//debugger
+				lists.forEach(item=>{
+					item.materialNo = row.materialNo;
+					item.productId = row.id;
+					item.productName = row.name;
+					item.price = row.price;
+					item.util = row.util;
+					item.metaprice = row.price;
+					item.ptypeId = row.ptypeId;
+					item.model = row.model;
+					item.modelNo = row.modelNo;
+					item.crmId = row.crm;
+					item.crmName = crm.name;
+					let index = _.findIndex(this.sourceData, {'index': item.index});
+					if(index>-1){
+						delete item.notin;
+						this.$set(this.sourceData, index, item);
+					}
+					let notIndex = _.findIndex(this.notInList, {'index': item.index});
+					if(notIndex>-1){
+						this.notInList.splice(notIndex, 1);
+					}
+				});
+				this.tableData = _.cloneDeep(this.sourceData);
 			}
 			this.openDialogVisible = false;
 		},
 		// 编辑订单（新建产品数据）
 		handleEdit(row){
-      //debugger
+			//debugger
 			this.editRow = _.cloneDeep(row);
-      delete this.editRow.id;
+			this.editRow.name = this.editRow.productName;
+			delete this.editRow.id,delete this.editRow.deliveryDate,delete this.editRow.flowStateId,delete this.editRow.index,delete this.editRow.notin,delete this.editRow.orderDate,delete this.editRow.projectName,delete this.editRow.projectNo,delete this.editRow.sourceserial,delete this.editRow.productName;
 			this.openDialogVisible = true;
 		},
 		removeRepeat(){
@@ -359,7 +361,8 @@ export default {
 			this.uploadRepeatCount = 0;
 			let listData = [];
 			results.forEach((item, index)=>{
-				let obj = {'index':index+1, 'createByUser':this.$store.state.user.name};
+				this.lastUploadId++;
+				let obj = {'index':index+1, id:this.lastUploadId,'createByUser':this.$store.state.user.name};
 				for(let k in item){
 					let value = item[k];
 					k = k.replace(/(^\s+)|(\s+$)/g,""); // 去除空格
@@ -382,16 +385,16 @@ export default {
 						}
 						// 汇总订单号
 						if(head.value=='sourceserial'){
-              obj.dserial = value;
-              if(_.findIndex(this.sourceserialList,{'sourceserial':value})<0){
-                this.sourceserialList.push({sourceserial:value});
-              }
-            }
-            if(head.value=='projectNo'){
-              obj.dprojectNo = value;
-            }
-            if(head.value=='modelNo'){
-              obj.dmodelNo = value;
+              				obj.dserial = value;
+							if(_.findIndex(this.sourceserialList,{'sourceserial':value})<0){
+								this.sourceserialList.push({sourceserial:value});
+							}
+            			}
+						if(head.value=='projectNo'){
+							obj.dprojectNo = value;
+						}
+						if(head.value=='modelNo'){
+							obj.dmodelNo = value;
 						}
 					}
 				}
@@ -412,23 +415,21 @@ export default {
 				}else{
 					obj.notin = true;
 					this.notInList.push(obj);
-        }
-        obj.orderDate = new Date(obj.orderDate).getTime();
-				obj.deliveryDate = new Date(obj.deliveryDate).getTime();
+				}
 				// 检查重复订单 notInList
 				if(this.checkModelNo(obj)){
 					obj.isRepeat = "是";
 					this.uploadRepeatCount += 1;
-        }
+				}
 				listData.push(obj);
-      });
-      console.log('this.sourceserialList', this.sourceserialList);
+			});
+      		console.log('this.sourceserialList', this.sourceserialList);
 			this.sourceData = _.orderBy(listData,['typeId','deliveryDate'],['asc','asc']);
 			this.tableData = _.cloneDeep(this.sourceData);
 			this.uploadTotal = this.sourceData.length;
 			this.uploading = false;
 		},
-    checkModelNo(row){
+		checkModelNo(row){
 			if(_.find(this.modelNoList, {'sourceserial':row.sourceserial,'deliveryDate':row.deliveryDate,'materialNo':row.materialNo})){
 				return true;
 			}
@@ -465,6 +466,10 @@ export default {
 					return Number(value);
 				case 'price':
 					return Number(value);
+				case 'orderDate':
+					return new Date(value).getTime();
+				case 'deliveryDate':
+					return new Date(value).getTime();
 				default:
 					return  _.trim(String(value));
 			}
@@ -477,77 +482,57 @@ export default {
 			return list;
 		},
 		async saveData(){
-      let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
-      // 梳理数据做合并订单处理
-      let dataList = [], index = 0;
-      this.tableData.forEach(item=>{
-        let dataIndex = _.findIndex(dataList,{
-          'typeId':item.typeId,
-          'crmId':item.crmId,
-          'productName':item.productName,
-          //'dprojectNo':item.dprojectNo,
-          'materialNo':item.materialNo,
-          'price':item.price,
-          'deliveryDate':item.deliveryDate
-        });
-        // 判断是否存在数据中
-        if(dataIndex>-1){
-          if(item.sourceserial && dataList[dataIndex]['sourceserial'].indexOf(item.sourceserial)<0){ // 汇总原始订单号
-            dataList[dataIndex]['sourceserial'] += ','+item.sourceserial;
-          }
-          if(item.projectNo && dataList[dataIndex]['projectNo'].indexOf(item.projectNo)<0){ // 汇总项目号
-            dataList[dataIndex]['projectNo'] += ','+item.projectNo;
-          }
-          if(item.modelNo && dataList[dataIndex]['modelNo'].indexOf(item.modelNo)<0){ // 汇总梯号
-            dataList[dataIndex]['modelNo'] += ','+item.modelNo;
-          }
-          dataList[dataIndex]['count'] += item.count;
-        }else{
-          this.lastId++;
-          index++;
-          item.id =  this.lastId;
-          item.serial = this.checkSerial(index);
-          delete item.index, delete item.metaprice;
-          dataList.push(item);
-        }
-      })
-      console.log('saveData',dataList, this.sourceData);
-      //return;
+			let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
+			// 梳理数据做合并订单处理
+			let dataList = [], index = 0;
+			this.tableData.forEach(item=>{
+				this.lastId++;
+				index++;
+				item.id =  this.lastId;
+				item.serial = this.checkSerial(index);
+				delete item.index, delete item.metaprice;
+				dataList.push(item);
+			});
+			//let checkPeo = dataList.filter(item=>{return item.flowStateId==5});
+			
+			console.log('saveData',dataList, this.sourceData);
 			let condition = {
 				type:'addPatch',
-        collectionName: 'order',
-        notNotice:true,
+				collectionName: 'order',
+				notNotice:true,
 				data:dataList
 			};
 			// 订单保存
 			this.$axios.$post('mock/db', {data:condition}).then(result=>{
-				// 备份原始订单
+				loadingMask.close();
+				window.location.reload();
+				/* // 备份原始订单
 				let uploadCondition = {
-          type:'addPatch',
-          collectionName: 'orderUpload',
-          data:this.parseSource(this.sourceData)
+					type:'addPatch',
+          			collectionName: 'orderUpload',
+          			data:this.parseSource(this.sourceData)
 				};
 				this.$axios.$post('mock/db', {data:uploadCondition}).then(res=>{
-          loadingMask.close();
-          window.location.reload();
-        });
+					loadingMask.close();
+					window.location.reload();
+        		}); */
 			});
 		},
 		// 获取10天内所有已经导入的订单列表,列出物料号，交货日期,校验是否重复
 		async getModelNoList(match = {}){
 			//let now = new Date();
 			let sd = new Date(new Date().setDate(new Date().getDate() -9));
-      let ed = new Date(new Date().setDate(new Date().getDate() + 1));
+      		let ed = new Date(new Date().setDate(new Date().getDate() + 1));
 			let params = {
 				type:"getColumns",
-				collectionName: 'orderUpload',
+				collectionName: 'order',
 				condition:{
 					updateDate:{'$gte':sd.getTime(),'$lte':ed.getTime()},
 				},
 				cols:{productName:1,crmId:1,sourceserial:1, projectNo:1,materialNo:1,deliveryDate:1}
-      }
-      let result = await this.$axios.$post('mock/db', {data:params});
-      console.log('getModelNoList',result)
+      		}
+			let result = await this.$axios.$post('mock/db', {data:params});
+			console.log('getModelNoList',result)
 			this.modelNoList = result;
 		},
 		async _getLastId(){
@@ -562,7 +547,7 @@ export default {
 				console.log('lastId',result);
 				this.lastId = result;
 			}
-			/* let uploadCondition = {
+			let uploadCondition = {
 				type:"getId",
 				data:{
 					model:'orderUpload'
@@ -572,7 +557,7 @@ export default {
 			if(uploadResult){
 				console.log('lastUploadId',uploadResult)
 				this.lastUploadId = uploadResult;
-			} */
+			}
 		},
 		async getSetting(){
 			let condition = {

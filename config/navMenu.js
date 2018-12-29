@@ -27,10 +27,10 @@ export default {
             "label":"订单",
             "icon":"ils",
             "children":[
-				{"label": "采购订单导入", "icon": "list-ul", "path": "/order/import-buy"},
-                {"label":"产品采购", "icon":"list-ul", "path":"/order/buy"},
+				{"label":"订单导入", "icon": "list-ul", "path": "/order/import-buy"},
+                {"label":"采购制单", "icon":"list-ul", "path":"/order/buy"},
+                {"label":"采购订单管理", "icon":"list-ul", "path":"/order/buy-list"},
                 {"label":"生产销售", "icon":"list-ul", "path":"/order/sale"},
-				{"label":"导出送货单", "icon":"list-ul", "path":"/order/deliver"},
             ]
         },
         {
@@ -46,7 +46,8 @@ export default {
             "children":[
                 {"label":"入库", "icon":"list-ul", "path":"/store/in"},
                 {"label":"出库", "icon":"list-ul", "path":"/store/out"},
-                {"label":"库存盘点", "icon":"list-ul", "path":"/store/calc"}
+                {"label":"库存盘点", "icon":"list-ul", "path":"/store/calc"},
+                {"label":"导出送货单", "icon":"list-ul", "path":"/order/deliver"},
             ]
         },
         {
