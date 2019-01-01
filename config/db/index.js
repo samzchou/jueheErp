@@ -558,6 +558,105 @@ module.exports = {
                 default:new Date().getTime()
             }
         },
+        /*----------仓库数据（待入库）-----------*/
+        storeIn : {
+            id:{
+                type: Number,
+                default:0
+            },
+            isPayed:{
+                type: Boolean,
+                default:false
+            },
+            isAdded:{
+                type: Boolean,
+                default:false
+            },
+            typeId:{
+                type: Number,
+                default:0
+            },
+            orderId:{
+                type: Number,
+                default:0
+            },
+            orderIds:{
+                type:Array,
+                default:[]
+            },
+            serial:{
+                type:String,
+                default:''
+            },
+            sourceserial:{
+                type:String,
+                default:''
+            },
+            crmId:{
+                type: Number,
+                default:0
+            },
+            crmName:{
+                type: String,
+                default:''
+            },
+            productId:{
+                type: Number,
+                default:0
+            },
+            productName:{
+                type:String,
+                default:''
+            },
+            materialNo : {
+                type:String,
+                default:''
+            },
+            projectName:{
+                type:String,
+                default:''
+            },
+            model:{
+                type:String,
+                default:''
+            },
+            price:{
+                type: Number,
+                default:0
+            },
+            util:{
+                type:String,
+                default:''
+            },
+            count:{
+                type: Number,
+                default:0
+            },
+            incount:{
+                type: Number,
+                default:0
+            },
+            deliveryDate:{
+                type: Number,
+                default:new Date().getTime()
+            },
+            createByUser:{
+                type: String,
+                default:''
+            },
+            createDate:{
+                type: Number,
+                default:new Date().getTime()
+            },
+            updateByUser:{
+                type: String,
+                default:''
+            },
+            updateDate:{
+                type: Number,
+                default:new Date().getTime()
+            }
+        },
         /*----------仓库数据（入库出库）-----------*/
         store : {
             id:{
@@ -572,6 +671,7 @@ module.exports = {
                 type: Number,
                 default:0
             },
+            /*
             orderId:{
                 type: Number,
                 default:0
@@ -600,6 +700,7 @@ module.exports = {
                 type:String,
                 default:''
             },
+            */
 			materialNo : {
                 type:String,
                 default:''
@@ -636,6 +737,7 @@ module.exports = {
                 type: Number,
                 default:0
             },
+            /*
 			deliveryDate:{
 				type: Number,
                 default:new Date().getTime()
@@ -648,6 +750,7 @@ module.exports = {
                 type:String,
                 default:''
             },
+            */
             createByUser:{
                 type: String,
                 default:''

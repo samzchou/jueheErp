@@ -13,7 +13,7 @@
 			<div>
 				<span v-if="!isEdit">
 					<el-button @click="handleAdd" type="text" size="medium" icon="el-icon-plus">新增珏合采购订单</el-button>
-					<el-button v-if="gridList.length" @click="showDetail(null)" type="text" size="medium" icon="el-icon-document">导出采购订单</el-button>
+					<el-button v-if="gridList.length" @click="showDetail(null)" type="text" size="medium" icon="el-icon-document">制定采购订单</el-button>
 				</span>
 				<span v-else >
 					<el-button @click="isEdit=false" type="text" size="medium" icon="el-icon-close">取消返回</el-button>
@@ -28,11 +28,6 @@
 					</el-form-item>
 					<el-form-item label="珏合订单号：" v-else prop="serial">
 						<el-input v-model="searchForm.serial" clearable  style="width:150px"/>
-					</el-form-item>
-					<el-form-item label="订单状态：" prop="flowStateId">
-						<el-select v-model="searchForm.flowStateId" placeholder="请选择">
-							<el-option v-for="flow in flowList.filter(o=>o.typeId==1 && o.id<3)" :key="flow.id" :label="flow.name" :value="flow.id"/>
-						</el-select>
 					</el-form-item>
 					<el-form-item label="供应商：" prop="crmId">
 						<el-select v-model="searchForm.crmId" placeholder="请选择" clearable>
@@ -65,16 +60,9 @@
 					</el-form-item>
 				</el-form>
 			</div>
-			<el-table class="table-container" ref="listTable" v-loading="listLoading" :data="gridList"
+			<el-table class="table-container" v-loading="listLoading" :data="gridList"
 			border fit highlight-current-row stripe size="mini" max-height="500">
-				<el-table-column prop="isuse" label="订单状态" width="90">
-					<template slot-scope="scope">
-						<div v-if="needSource">
-							<span>已出单:{{scope.row.flowState-scope.row.total}} 件</span>
-						</div>
-						<div v-else>{{parseFlow(scope.row.flowStateId)}}</div>
-					</template>
-				</el-table-column>
+
 				<el-table-column :label="needSource?'蒂森订单号':'珏合订单号'" width="150">
 					<template slot-scope="scope">
 						<a v-if="needSource" href="javascript:void(0)" @click="showSourceOrder(scope.row)">{{scope.row.sourceserial}}</a>
@@ -89,8 +77,7 @@
 				</el-table-column>
 				<el-table-column prop="crmName" label="供应商" width="250px">
 					<template slot-scope="scope">
-						<el-button title="导出客户的订单汇总" v-if="scope.row.flowStateId<=2" type="text" @click.stop="showDetail(scope.row)">{{scope.row.crmName}}</el-button>
-						<span v-else>{{scope.row.crmName}}</span>
+						<el-button title="制定客户的采购订单" type="text" @click.stop="showDetail(scope.row)">{{scope.row.crmName}}</el-button>
 						<span v-if="needSource" style="margin-left:5px; color:#CCC">等...</span>
 					</template>
 				</el-table-column>
@@ -115,18 +102,10 @@
 						<span>{{parseDate(scope.row.deliveryDate)}}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" fixed="right" align="center" width="80">
+				<el-table-column label="操作" fixed="right" align="center" width="120">
 					<template slot-scope="scope">
-						<div v-if="scope.row.flowStateId == 1">
-							<span v-if="needSource">
-								<el-button size="mini" type="text" @click="handleDeleteBySerial(scope.row)" icon="el-icon-delete">删除</el-button>
-							</span>
-							<span v-else>
-								<el-button size="mini" type="text" @click="handleUpdate(scope.row)">编辑</el-button>
-								<el-button size="mini" type="text" @click="handleDelete(scope.row)">删除</el-button>
-							</span>
-						</div>
-						<span v-else style="color:#CCC">{{parseFlow(scope.row.flowStateId)}}</span>
+						<el-button size="mini" type="text" icon="el-icon-download" @click="showDetail(scope.row)">制单</el-button>
+            <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -212,11 +191,6 @@
 		<el-dialog :title="'供应商采购清单--'+(needSource?'蒂森采购清单':'珏合采购清单')" append-to-body :visible.sync="openDialogVisible" width="80%">
 			<div class="form-dialog">
 				<el-form :inline="true" :model="dialogForm" ref="dialogForm" size="mini">
-					<el-form-item label="订单状态：" prop="flowStateId">
-						<el-select v-model="dialogForm.flowStateId" placeholder="请选择" style="width:100px" @change="dialogSearch">
-							<el-option v-for="flow in flowList.filter(o=>{return [1,2].includes(o.id)})" :key="flow.id" :label="flow.name" :value="flow.id"/>
-						</el-select>
-					</el-form-item>
 					<el-form-item label="供应商：" prop="crmId">
 						<el-select v-model="dialogForm.crmId" placeholder="请选择" filterable style="width:200px" @change="dialogSearch">
 							<el-option v-for="(crm,idx) in orderCrmList" :key="idx" :label="crm.name" :value="crm.id"/>
@@ -238,13 +212,14 @@
 				<div class="order-title" style="padding:10px 0" v-if="crmOrderList.length">
 					<span style="font-weight:bold">订单总价：{{crmOrderList[crmOrderList.length-1]['allPrice'] | currency}}</span>
 				</div>
-				<el-table ref="exportTable" :data="crmOrderList" border fit highlight-current-row stripe size="mini" max-height="350" v-loading="searchLoading" style="width:100%">
+				<el-table ref="exportTable" :data="crmOrderList" border fit highlight-current-row stripe size="mini" max-height="350" v-loading="searchLoading" @selection-change="handleSelectionOrders" style="width:100%">
+          <el-table-column type="selection" width="55" align="center" :selectable="checkSelectable"/>
 					<el-table-column type="expand">
 						<template slot-scope="props">
 							<el-row :gutter="20" v-for="(item,idx) in props.row.children" :key="item.id">
 								<el-col :span="5" :title="item.sourceserial">
 									<span style="width:30px">{{idx+1}}、</span>
-									<span>原始订单号：{{item.sourceserial}}</span>
+									<span>蒂森订单号：{{item.sourceserial}}</span>
 								</el-col>
 								<el-col :span="5" :title="item.projectNo">项目号：{{item.projectNo}}</el-col>
 								<el-col :span="3">订单量：{{item.count}} {{item.util}}</el-col>
@@ -254,45 +229,25 @@
 							</el-row>
 						</template>
 					</el-table-column>
-					<el-table-column prop="flowStateId" label="订单状态" width="70px">
-						<template slot-scope="scope">
-							<span>{{parseFlow(scope.row.flowStateId)}}</span>
-						</template>
-					</el-table-column>
 					<el-table-column prop="serial" label="订单编号" width="120px"/>
 					<el-table-column prop="materialNo" label="物料号" width="120px"/>
 					<el-table-column prop="productName" label="物料名称"/>
 					<el-table-column prop="model" label="规格型号" width="100px"/>
 					<el-table-column prop="count" label="采购数量" width="80px"/>
-					<el-table-column prop="storeInCount" label="当前库存" width="70px">
-						<template slot-scope="scope">
-							<span>{{scope.row.storeInCount}}</span>
-						</template>
-					</el-table-column>
+					<el-table-column prop="storeInCount" label="当前库存" width="70px"/>
 					<el-table-column prop="releaseCount" label="实际采购量" width="100px">
 						<template slot-scope="scope">
-							<div v-if="scope.row.flowStateId==1">
 								<div v-if="scope.$index<crmOrderList.length-1">
 									<el-input-number size="mini" controls-position="right" :min="0" v-model="scope.row.releaseCount" @change="checkReleaseCount(scope.row,crmOrderList)" style="width:80px"/>
 								</div>
 								<div v-else>{{parseAllOrderCount()}}</div>
-							</div>
-							<div v-else>
-								<div v-if="scope.$index<crmOrderList.length-1">
-									<span>{{scope.row.store && scope.row.store.incount}}</span>
-								</div>
-								<div v-else>{{parseAllOrderCount()}}</div>
-							</div>
 						</template>
 					</el-table-column>
 					<el-table-column prop="price" label="采购单价" width="100px">
 						<template slot-scope="scope">
-							<div v-if="scope.row.flowStateId==1">
 								<div v-if="scope.$index<crmOrderList.length-1">
 									<el-input-number size="mini" controls-position="right" :min="0" :step="0.1" v-model="scope.row.price" style="width:80px"/>
 								</div>
-							</div>
-							<div v-else>{{scope.row.store && scope.row.store.price}}</div>
 						</template>
 					</el-table-column>
 					<el-table-column prop="allPrice" label="采购金额" width="100px">
@@ -301,38 +256,37 @@
 							<span v-else>{{parseAllOrderMoney()}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="deliveryDate" label="交货日期" width="160px">
+					<el-table-column prop="deliveryDate" label="交货日期" width="140px">
 						<template slot-scope="scope">
-							<div v-if="scope.row.flowStateId==1">
 								<div v-if="scope.$index<crmOrderList.length-1">
-									<el-date-picker size="mini" v-if="dialogForm.flowStateId==1" v-model="scope.row.deliveryDate"  type="date" value-format="timestamp" placeholder="选择日期" 
-									:clearable="false" style="width:125px"/>
+									<el-date-picker size="mini" v-model="scope.row.deliveryDate"  type="date" value-format="timestamp" placeholder="选择日期"
+									:clearable="false" style="width:120px"/>
 								</div>
-							</div>
-							<div v-else>{{scope.row.store && parseDate(scope.row.store.deliveryDate)}}</div>
 						</template>
 					</el-table-column>
-					<el-table-column label="操作" fixed="right" align="center" width="70" v-if="dialogForm.flowStateId==1">
+					<el-table-column label="操作" fixed="right" align="center" width="70">
 						<template slot-scope="scope">
-							<el-button v-if="scope.$index<crmOrderList.length-1" size="mini" type="text" @click="removeCrmOrder(scope.row)" icon="el-icon-delete">删除</el-button>
+							<el-button v-if="scope.$index<crmOrderList.length-1" size="mini" type="text" @click="removeCrmOrder(scope.row)" icon="el-icon-delete">移除</el-button>
 						</template>
 					</el-table-column>
 				</el-table>
 			</div>
 			<div class="btns" v-if="crmOrderList.length">
 				<div>
-					<span>合计：共{{crmOrderList.length-1}}个采购订单；</span>
-					<span v-if="dialogForm.flowStateId==2">已出单，如需再次制单，请至采购订单管理中操作</span>
+					<span>合计：共{{crmOrderList.length-1}}个采购订单；请勾选需要制定的采购订单</span>
 				</div>
 				<div>
-					<el-button type="success" @click="exportOrder" icon="el-icon-document" :disabled="dialogForm.flowStateId==2">制单采购</el-button>
+					<el-button type="success" @click="exportOrder" icon="el-icon-document" :loading="exportLoading">制单采购</el-button>
 				</div>
 			</div>
 		</el-dialog>
-		<el-dialog :title="'蒂森订单：'+sourceserial" append-to-body :visible.sync="openSourceVisible" width="80%">
+		<el-dialog :title="'蒂森订单：'+sourceserial+'；请点击供应商制定或查阅采购订单'" append-to-body :visible.sync="openSourceVisible" width="80%">
 			<div class="detail-container">
 				<el-row :gutter="20" v-if="detailItem">
 					<el-col :span="12">
+						<div><span class="tl">系统订单号：</span>{{splitSerial(detailItem.serial)}}</div>
+					</el-col>
+          <el-col :span="12">
 						<div><span class="tl">项目号：</span>{{detailItem.projectNo}}</div>
 					</el-col>
 					<el-col :span="12">
@@ -349,13 +303,8 @@
 					</el-col>
 				</el-row>
 			</div>
-			<el-table size="mini" class="detail-table" ref="detailTable" border :data="sourceData" highlight-current-row fit stripe max-height="350">
+			<el-table size="mini" class="detail-table" :data="sourceData" highlight-current-row border stripe max-height="350">
 				<el-table-column type="index" width="50"/>
-				<el-table-column label="状态" width="70">
-					<template slot-scope="scope">
-						<span>{{parseFlow(scope.row.flowStateId)}}</span>
-					</template>
-				</el-table-column>
 				<el-table-column label="项目号" prop="projectNo" width="120"/>
 				<el-table-column label="物料号" prop="materialNo" width="120"/>
 				<el-table-column label="产品名称" prop="productName"/>
@@ -378,24 +327,27 @@
 						<span>{{parseMoney(scope.row)}}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" fixed="right" align="center" width="100">
-                    <template slot-scope="scope">
-                        <span v-if="scope.row.flowStateId<7">
-                            <el-button size="mini" type="text" @click="handleUpdate(scope.row)">编辑</el-button>
-                            <el-button size="mini" type="text" @click="handleDelete(scope.row, sourceData)">删除</el-button>
-                        </span>
-                    </template>
-                </el-table-column>
+				<el-table-column label="操作" fixed="right" align="center" width="120" v-if="detailItem && detailItem.flowStateId==1">
+            <template slot-scope="scope">
+                <span>
+                    <el-button size="mini" type="text" icon="el-icon-download" @click="showDetail(scope.row)">制单</el-button>
+                    <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row, true)">删除</el-button>
+                </span>
+            </template>
+        </el-table-column>
 			</el-table>
 			<div class="update-form">
-				<div><el-button type="danger" size="mini" @click="handleDeleteBySerial(detailItem)">删除蒂森订单({{sourceserial}})</el-button></div>
+				<div>
+          <el-button v-if="detailItem && detailItem.flowStateId==1" type="danger" size="mini" @click="handleDelete(detailItem)">删除蒂森订单({{sourceserial}})</el-button>
+          <span v-else>已出单</span>
+        </div>
 				<div>
 					<el-form size="mini" :inline="true" :model="updateForm" :rules="updateRules">
 						<el-form-item label="修改交付日期：" prop="deliveryDate">
 							<el-date-picker v-model="updateForm.deliveryDate" value-format="timestamp" type="date" placeholder="选择日期" style="width:130px"/>
 						</el-form-item>
 						<el-form-item>
-							<el-button type="primary" @click="updateDeliveryDate">修改订单</el-button>
+							<el-button type="primary" @click="updateDeliveryDate">修改交付日期</el-button>
 							<el-button @click="openSourceVisible=false">取消关闭</el-button>
 						</el-form-item>
 					</el-form>
@@ -406,6 +358,7 @@
 </template>
 <script>
 import orderRow from './order-row';
+import $util from '~/util/global_util';
 export default {
 	name:'role',
 	components:{orderRow},
@@ -419,7 +372,6 @@ export default {
 			isMergeSerial:false,
 			dialogForm:{
 				crmId:'',
-				flowStateId:1,
 				deliveryDate:''
 			},
 			setting:{},
@@ -449,7 +401,6 @@ export default {
 				boxNo:'',
 				modelNo:'',
 				materialNo:'',
-				flowStateId:1,
 				orderDate:'',
 				deliveryDate:''
 			},
@@ -519,27 +470,46 @@ export default {
 			sourceserial:'',
 			sourceData:[],
 			crmOrderIds:[],
-			crmSerials:[],
+			//crmSerials:[],
 			searchLoading:false,
 			needSource:true,
-			storeLastId:0,
+      storeLastId:0,
+      exportOrders:[],
+      exportOrderIds:[],
+      exportLoading:false,
 		}
 	},
 	methods:{
+    splitSerial(serial){
+      let s = serial.split('-');
+      return s.length?s[1]:serial;
+    },
 		removeCrmOrder(row){
-			this.$confirm('仅删除该采购订单，是否继续?', '提示', {
+      let ids = row.children.map(item=>{
+        return item.id;
+      });
+      let msg = ids.length>1?'将同时删除系统已合并的'+ids.length+'条订单，是否继续?':'确定删除该订单';
+
+			this.$confirm(msg, '提示：请谨慎操作此删除', {
 				confirmButtonText: '确定',
 				cancelButtonText: '取消',
 				type: 'warning'
 			}).then(() => {
-				let index = _.findIndex(this.crmOrderList, {id:row.id});
-				this.crmOrderList.splice(index, 1);
-				//debugger
-				if(this.crmOrderList.length == 1){
-					this.crmOrderList = [];
-				}else{
-					this.checkReleaseCount(null, this.crmOrderList);
-				}
+        let condition = {
+					type:'removePatch',
+          collectionName: 'order',
+          data:{'id':{'$in':ids}}
+        };
+        this.$axios.$post('mock/db', {data:condition}).then(result=>{
+          let index = _.findIndex(this.crmOrderList, {id:row.id});
+          this.crmOrderList.splice(index, 1);
+          if(this.crmOrderList.length == 1){
+            this.crmOrderList = [];
+          }else{
+            this.checkReleaseCount(null, this.crmOrderList);
+          }
+          this.submitSearch(true);
+        });
 			}).catch(() => {});
 		},
 		parseReleaseMoney(row){
@@ -616,43 +586,56 @@ export default {
 			let result = await this.$axios.$post('mock/db', {data:condition});
 			return result.list;
 		},
-
-		listRowClick(row){
-			row.extend = !row.extend?true:false;
-			this.$refs['listTable'].toggleRowExpansion(row, row.extend);
-		},
-		detailRowClick(row){
-			row.extend = !row.extend?true:false;
-			this.$refs['detailTable'].toggleRowExpansion(row, row.extend);
-		},
 		// 显示原始订单列表
 		showSourceOrder(row){
-			this.detailItem = row;
+			this.detailItem = {...row};
 			this.sourceData = [];
 			this.sourceserial = row.sourceserial;
 			let condition = {
 				type:"listData",
 				collectionName:"order",
-				data:{'sourceserial':this.sourceserial,'typeId':1,'flowStateId':this.searchForm.flowStateId}
-			}
+				data:{'sourceserial':this.sourceserial,'typeId':1,'flowStateId':row.flowStateId}
+      }
 			this.$axios.$post('mock/db', {data:condition}).then(result=>{
-				this.sourceData = result.list;
+        this.sourceData = result.list;
 			});
 			this.updateForm.deliveryDate = row.deliveryDate;
 			this.openSourceVisible = true;
-		},
+    },
+    checkSelectable(row){
+      return row.id && row.releaseCount>0;
+    },
+    handleSelectionOrders(orders){
+      this.exportOrders = orders;
+    },
 		exportOrder(){
+      this.exportOrderIds = [];
+      let exportData = [], allCount = 0, allMoney = 0;
+      this.exportOrders.forEach(item=>{
+        if(item && item.id && item.releaseCount){
+          this.exportOrderIds = this.exportOrderIds.concat(this.getChildrenByid(item.children));
+          allCount += item.releaseCount;
+          allMoney += item.allPrice;
+          exportData.push(item);
+        }
+      });
+      if(!exportData.length){
+        this.$message.error('请勾选需要制定的采购订单');
+        return;
+      }
+      let excelData = _.cloneDeep(exportData);
+      excelData.push({serial:'合计',releaseCount:allCount,allPrice:allMoney});
 			import ('@/components/Export2Excel').then(excel=>{
 				const tHeader = ['订单编号','物料号','物料名称','规格型号','数量','单价','金额','交货日期'];
 				const filterVal = ['serial','materialNo','productName','model','releaseCount','price','allPrice','deliveryDate'];
-				const data = this.formatJson(filterVal, _.cloneDeep(this.crmOrderList));
+				const data = this.formatJson(filterVal, excelData);
 				const now =  moment(new Date()).format('YYYYMMDD');
 				excel.export_json_to_excel({
 					header: tHeader,
 					data,
 					filename: this.currItem.crmName + '-' + now
-				});
-				this.updateOrderByCrm(this.crmOrderList);
+        });
+				this.updateOrderByCrm(exportData);
 			})
 		},
 		formatJson(filterVal, jsonData) {
@@ -665,28 +648,34 @@ export default {
 		},
 		// 更新客户订单状态（已发单）
 		updateOrderByCrm(arr){
+      // 更新订单状态参数
 			let cn = {
 				type:'updatePatch',
 				collectionName: 'order',
 				notNotice:true,
-				param:{'crmId':this.dialogForm.crmId,'id':{$in:this.crmOrderIds}},
+				param:{'crmId':this.dialogForm.crmId,'id':{$in:this.exportOrderIds}},
 				set:{$set:{'flowStateId':2}}
-			}
-			let storeData = [];
+      }
+      //debugger
+      let storeData = [];
 			arr.map(item=>{
 				if(item.id){
 					this.storeLastId++;
 					storeData.push({
-						'id':this.storeLastId,
+            'id':this.storeLastId,
+            'isAdded':false,
 						'typeId':item.typeId,
 						'orderId':item.id,
 						'orderIds':this.getChildrenByid(item.children),
 						'serial':item.serial,
 						'sourceserial':item.sourceserial,
 						'crmId':item.crmId,
-						'crmName':item.crmName,
+            'crmName':item.crmName,
+            'productId':item.productId,
 						'productName':item.productName,
-						'materialNo':item.materialNo,
+            'materialNo':item.materialNo,
+            'model':item.model,
+            'projectName':item.projectName,
 						'price':item.price,
 						'util':item.util,
 						'count':item.count,
@@ -696,20 +685,21 @@ export default {
 					});
 				}
 			});
-			console.log('storeData', storeData);
+      console.log('storeData', storeData);
 			this.$axios.$post('mock/db', {data:cn}).then(result=>{
-				// 注意此处需保存数据到仓库中				
+				// 注意此处需保存数据到待入库仓库中
 				let condition = {
 					type:'addPatch',
-					collectionName: 'store',
+					collectionName: 'storeIn',
 					data:storeData
 				};
-				//debugger
 				// 订单保存
 				this.$axios.$post('mock/db', {data:condition}).then(result=>{
+          this.exportLoading = false;
 					this.crmOrderIds = [];
-					this.crmOrderList = [];
-					this.getList({flowStateId:{$in:[1]}});
+          this.crmOrderList = [];
+          this.openDialogVisible = false;
+					this.submitSearch(true);
 				});
 			});
 		},
@@ -726,7 +716,7 @@ export default {
 		showDetail(row){
 			if(row){
 				let crm = _.find(this.setting.crm, {'id':row.crmId});
-				this.dialogForm.crmId = row.crmId;
+        this.dialogForm.crmId = row.crmId;
 				this.currItem = {'address':crm.address,'contactName':crm.contactName,'contactPhone':crm.contactPhone,'crmName':crm.name};
 				this.listOrderByCrm({crmId:row.crmId});
 			}
@@ -761,21 +751,17 @@ export default {
 		async listOrderByCrm(match={}){
 			this.searchLoading = true;
 			this.crmOrderList = [];
-			let bySerial = {'sourceserial':{$ne:''}};
-			if(!this.needSource){
-                bySerial = {'sourceserial':''};
-            } 
-			match = _.merge(match, bySerial);
+
 			let params = {
 				type:'aggregate',
 				collectionName: 'order',
-				data:_.merge({flowStateId:{'$in':[1]}}, match),
+				data:_.merge({flowStateId:1}, match),
 				aggregate:[
 					{
 						$lookup:{
 							from: "store",
-							localField: "id", //materialNo
-							foreignField: "orderId", //materialNo
+							localField: "materialNo", //materialNo
+							foreignField: "materialNo", //materialNo
 							as: "store"
 						}
 					},
@@ -785,15 +771,16 @@ export default {
 							preserveNullAndEmptyArrays: true // 空的数组也拆分
 						}
 					},
-					{$match:_.merge({flowStateId:{'$in':[1]}}, match)},
+          {$match:_.merge({"flowStateId":1}, match)},
+          //{$match:_.merge({"flowStateId":1,"store":{"$size":1},"store.storeTypeId":{"$gt":0}}, match)},
 					/* {
 						$addFields: {storeInCount:"$store.incount"}
 					}, */
 					{$sort:{deliveryDate:1}}
 				]
 			}
-			let data = await this.$axios.$post('mock/db', {data:params});
-			//debugger
+      let data = await this.$axios.$post('mock/db', {data:params});
+      //debugger
 			this.sourceCrmOrderList = this.mergeOrder(data.list);
 			if(this.sourceCrmOrderList.length){
 				this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList));
@@ -803,38 +790,34 @@ export default {
 		// 合并订单数量,根据类型，产品名称，物料号，价格
 		mergeOrder(lists){
 			let listData = [];
-			this.crmOrderIds = [];
-			this.crmSerials = [];
+			//this.crmOrderIds = [];
+			//this.crmSerials = [];
 			lists.forEach(item=>{
-				this.crmOrderIds.push(item.id);
-				if(!this.crmSerials.includes(item.sourceserial)){
+				//this.crmOrderIds.push(item.id);
+				/* if(!this.crmSerials.includes(item.sourceserial)){
 					this.crmSerials.push(item.sourceserial);
-				}
+				} */
 				item.children = [];
-				item.storeInCount = 0;
-				if(item.store){
-					if(item.store.storeTypeId){
-						item.storeInCount = item.store.incount;
-					}
-				}
-				let dataIndex = _.findIndex(listData,{'productName':item.productName,'materialNo':item.materialNo,'price':item.price});
-				if(dataIndex>-1){
+				item.storeInCount = item.store?item.store.count:0;  // 默认库存 0
+
+				let dataIndex = _.findIndex(listData,{
+					'productId':item.productId,
+					'materialNo':item.materialNo,
+					'price':item.price,
+					//'deliveryDate':item.deliveryDate
+				});
+				if(!!~dataIndex){
 					listData[dataIndex]['children'].push(item);
 					listData[dataIndex]['sourceserial'] += ','+item.sourceserial;
 					listData[dataIndex]['projectNo'] += ','+item.projectNo;
 					listData[dataIndex]['count'] += item.count;
-					if(item.flowStateId == 1){
-						let releaseCount = listData[dataIndex]['count'] - item.storeInCount;
-						listData[dataIndex]['releaseCount'] = releaseCount<0?0:releaseCount;
-					}
+					let releaseCount = listData[dataIndex]['count'] - item.storeInCount;
+					listData[dataIndex]['releaseCount'] = releaseCount<0?0:releaseCount;
 				}else{
 					item.children.push(_.cloneDeep(item));
 					item.serial = item.serial.includes('-')?item.serial.split('-')[1]:item.serial;
 					let releaseCount = item.count - item.storeInCount;
 					item.releaseCount = releaseCount<0?0:releaseCount;
-					if(item.flowStateId !== this.dialogForm.flowStateId){
-						this.dialogForm.flowStateId = item.flowStateId;
-					}
 					listData.push(item);
 				}
 			});
@@ -859,14 +842,25 @@ export default {
 			})
 			console.log('this.crmOrderList',list);
 			//debugger
-			this.crmOrderList = list;
-		},
+      this.crmOrderList = list;
+
+      this.$nextTick(()=>{
+        this.checkedOrder();//每次更新了数据，触发这个函数即可。
+      })
+    },
+    checkedOrder(){
+      this.crmOrderList.forEach((item,i)=>{
+        if(item.id){
+          this.$refs.exportTable.toggleRowSelection(this.crmOrderList[i], true);
+        }
+      });
+    },
 		initProduct(){
 			this.ptypeList = _.filter(this.setting.ptype,{typeId:1});
 			//this.crmList = _.filter(this.setting.crm,{typeId:1});
 			this.productList = _.filter(this.setting.product, {typeId:1});
 			this.proList = {...this.productList};
-			
+
 			// 获取订单客户（未下单）
 			let condition = {
 				type:'distinctData',
@@ -913,15 +907,21 @@ export default {
 			this.ruleForm.crmId = id;
 			this.ruleForm.crmName = crm.name;
 			this.ruleForm.crmNo = crm.crmNo;
-		},
-		handleSerial(){
-			let now =  moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
-			now = now.split(' ');
-			let dd = now[0].split('-');
-			let tt = now[1].split(':');
-			let serial = 'JH' + dd[0] +''+ dd[1] +''+ dd[2]+''+tt[0]+''+tt[1]+''+tt[2];
-			this.ruleForm.serial = serial;
-		},
+    },
+    handleSerial(flag) {
+      let now = moment(new Date()).format("YYYY-MM-DD HH:mm");
+      now = now.split(" ");
+      let dd = now[0].split("-");
+      let tt = now[1].split(":");
+      //let no = this.editRow?this.editRow.id:this.lastId;
+      let serial =
+        "JH" + dd[0] + "" + dd[1] + "" + dd[2] + "" + tt[0] + "" + tt[1];
+      if (flag == true) {
+        return serial;
+      } else {
+        this.ruleForm.serial = serial;
+      }
+    },
 		handleAdd(){
 			this._getLastId();
 			this.isEdit = !this.isEdit;
@@ -930,11 +930,11 @@ export default {
 				typeId:1,
 				flowStateId:1,
 				ptypeId:'',
-				serial:'',
+				serial:this.handleSerial(true),
 				productId:'',
 				productName:'',
-				orderDate:'',
-				deliveryDate:'',
+				orderDate:new Date().getTime(),
+				deliveryDate:new Date().getTime()+(10*24*3600*1000),
 				model:'',
 				modelNo:'',
 				boxNo:'',
@@ -1002,60 +1002,43 @@ export default {
 						if(item.sourceserial == this.detailItem.sourceserial){
 							item.deliveryDate = this.updateForm.deliveryDate;
 						}
-					})
-					this.openSourceVisible = false;
-					this.detailItem = null;
+          })
+          this.detailItem.deliveryDate = this.updateForm.deliveryDate;
+					//this.openSourceVisible = false;
+					//this.detailItem = null;
 				});
 			}).catch();
 		},
 		// 删除蒂森订单
-		handleDeleteBySerial(item){
-			this.$confirm('此操作将删除订单号为:'+item.sourceserial+'所有数据(包括生产订单), 是否继续?', '提示', {
+
+    handleDelete(row, flag){ // flag为以ID为条件，否则为蒂森订单号
+      //let msg = '删除'+(this.needSource?'蒂森':'珏合')+'订单号为'+(this.needSource?row.sourceserial:row.serial)+'的所有订单';
+      let msg = '将删除该订单';
+      let condition = {
+        type:'removeData',
+        collectionName: 'order',
+        data:{id:row.id}
+      };
+      if(this.needSource){
+        if(!flag){
+          msg = '删除蒂森订单号为'+(!flag?row.sourceserial:row.serial)+'的所有订单(包括同订单号的生产订单)';
+          condition.data = {'sourceserial':row.sourceserial};
+        }
+      }
+			this.$confirm(msg + ', 是否继续?', '提示', {
 				confirmButtonText: '确定',
 				cancelButtonText: '取消',
 				type: 'warning'
 			}).then(() => {
-				let condition = {
-					type:'removeData',
-					collectionName: 'order',
-					data:{sourceserial:item.sourceserial}
-				};
+
 				this.$axios.$post('mock/db', {data:condition}).then(result=>{
 					this.$message({
 						type: 'success',
 						message: '删除成功!'
-					});
-					let index = _.findIndex(this.gridList, {sourceserial:item.sourceserial});
-					if(index > -1){
-						this.gridList.splice(index, 1);
-					}
-					this.total--;
-					this.openSourceVisible = false;
+          });
+          this.openSourceVisible = false;
 					this.detailItem = null;
-				});
-			}).catch();
-		},
-		handleDelete(row, dataList){
-			this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', {
-				confirmButtonText: '确定',
-				cancelButtonText: '取消',
-				type: 'warning'
-			}).then(() => {
-				let condition = {
-					type:'removeData',
-					collectionName: 'order',
-					data:{id:row.id}
-				};
-				this.$axios.$post('mock/db', {data:condition}).then(result=>{
-					this.$message({
-						type: 'success',
-						message: '删除成功!'
-					});
-					if(this.needSource){
-                        let index = _.findIndex(dataList, {id:row.id});
-                        dataList.splice(index, 1);
-                    }
-                    this.getList({flowStateId:this.searchForm.flowStateId});
+          this.submitSearch(true);
 				});
 			}).catch();
 		},
@@ -1111,9 +1094,10 @@ export default {
 					condition.data.createByUser = this.$store.state.user.name;
 					this.$axios.$post('mock/db', {data:condition}).then(result=>{
 						loadingMask.close();
-						this.isEdit = false;
-						this.getList({flowStateId:{$in:[1]}});
-						this.dataId = undefined;
+            this.isEdit = false;
+            this.needSource = false;
+            this.dataId = undefined;
+						this.getList();
 						this._getLastId();
 					});
 				}
@@ -1156,9 +1140,10 @@ export default {
 			this.submitSearch(true);
 		},
 		setOrderParams(flag){
+      this.searchForm.flowStateId = '';
 			this.query.page = 1;
 			this.needSource = flag;
-			this.getList({flowStateId:this.searchForm.flowStateId});
+			this.getList();
 		},
 		async getList(match = {}){
 			this.listLoading = true;
@@ -1167,17 +1152,17 @@ export default {
 			if(!this.needSource){
                 bySerial = {'sourceserial':''};
 				groupId = {"serial":"$serial"};
-            } 
+            }
 			match = _.merge(bySerial, match);
-			
+
 			let condition = {
 				type:'groupList',
 				collectionName: 'order',
-				data:_.merge({typeId:1},match),
+				data:_.merge({typeId:1,flowStateId:1},match),
 				distinct:"sourceserial",
 				aggregate:[
-					{"$match":_.merge({typeId:1},match)},
-					{ 
+					{"$match":_.merge({typeId:1,flowStateId:1},match)},
+					{
 						"$group": {
 							"_id": groupId, // 按字段分组
 							"id":{"$first" :"$id"},
@@ -1212,7 +1197,7 @@ export default {
 					{"$limit":this.query.pagesize}
 				]
 			};
-			
+
 			let result = await this.$axios.$post('mock/db', {data:condition});
 			this.total = result.total;
 			this.gridList = _.orderBy(result.list,['crmId'], ['asc']);
@@ -1231,11 +1216,11 @@ export default {
 				console.log('lastId-orderId',result);
 				this.lastId = result;
 			}
-			// 仓库Id
+			// 仓库待入库Id
 			let cn = {
 				type:"getId",
 				data:{
-					model:'store'
+					model:'storeIn'
 				}
 			}
 			let res = await this.$axios.$post('mock/db', {data:cn});
@@ -1258,7 +1243,7 @@ export default {
 				this.crmList = this.setting.crm;
 				this.flowList = _.orderBy(this.setting.flowState,['id'],['asc']);
 				this.initProduct();
-				this.getList({flowStateId:{$in:[1]}});//{flowStateId:1}
+				this.getList();//{flowStateId:1}
 			}
 		}
 	},

@@ -77,6 +77,10 @@ exports.order = connect.model('order', orderScheme);
 var orderUploadScheme = new Schema(dbServer.collections.orderUpload,{collection:'orderUpload'});
 exports.orderUpload = connect.model('orderUpload', orderUploadScheme);
 
+/*---------仓库数据(待入库)-----------*/
+var storeInScheme = new Schema(dbServer.collections.storeIn,{collection:'storeIn'});
+exports.storeIn = connect.model('storeIn', storeInScheme);
+
 /*---------仓库数据-----------*/
 var storeScheme = new Schema(dbServer.collections.store,{collection:'store'});
 exports.store = connect.model('store', storeScheme);

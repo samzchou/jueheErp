@@ -1,13 +1,17 @@
 export default {
+  splitSerial(serial){
+    let s = serial.split('-');
+    return s.length?s[1]:serial;
+  },
 	toDecimal(x){
-		var f = parseFloat(x); 
-		if (isNaN(f)) { 
-			return; 
-		} 
-		f = Math.round(x*100)/100; 
-		return f; 
+		var f = parseFloat(x);
+		if (isNaN(f)) {
+			return;
+		}
+		f = Math.round(x*100)/100;
+		return f;
 	},
-	difference(o1, o2) { 
+	difference(o1, o2) {
         let props1 = Object.getOwnPropertyNames(o1);
         let props2 = Object.getOwnPropertyNames(o2);
         if (props1.length != props2.length) {
@@ -81,21 +85,21 @@ export default {
     },
 	siblings(elem){
 		let nodes = [];
-		let previ = elem.previousSibling; 
+		let previ = elem.previousSibling;
 		while(previ){
-			if(previ.nodeType === 1){ 
-				nodes.push(previ); 
-			} 
+			if(previ.nodeType === 1){
+				nodes.push(previ);
+			}
 			previ = previ.previousSibling;
-		} 
+		}
 		nodes.reverse();
 		let nexts = elem.nextSibling;
 		while(nexts){
-			if(nexts.nodeType === 1){ 
-				nodes.push(nexts); 
-			} 
-			nexts = nexts.nextSibling; 
-		} 
+			if(nexts.nodeType === 1){
+				nodes.push(nexts);
+			}
+			nexts = nexts.nextSibling;
+		}
 		return nodes;
 	},
 
@@ -160,17 +164,17 @@ export default {
 	removeEvent(el, type, fn, capture){
 		el.removeEventListener(type, fn, !!capture);
 	},
-	randomNum(minNum,maxNum){ 
-		switch(arguments.length){ 
-			case 1: 
-				return parseInt(Math.random()*minNum+1,10); 
-			break; 
-			case 2: 
-				return parseInt(Math.random()*(maxNum-minNum+1)+minNum,10); 
-			break; 
-			default: 
-				return 0; 
-			break; 
-		} 
+	randomNum(minNum,maxNum){
+		switch(arguments.length){
+			case 1:
+				return parseInt(Math.random()*minNum+1,10);
+			break;
+			case 2:
+				return parseInt(Math.random()*(maxNum-minNum+1)+minNum,10);
+			break;
+			default:
+				return 0;
+			break;
+		}
 	}
 }

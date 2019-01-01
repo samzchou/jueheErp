@@ -2,7 +2,7 @@
     <section class="header-container">
         <div class="left">
             <i class="my-icon-bars bars" @click="setCollapse"/>
-            <img class="logo" src="~/assets/image/logo.png"/>
+            <span style="margin-left: 15px; font-size: 16px;">珏合ERP</span>
         </div>
         <div class="right">
             <el-dropdown trigger="click" @command="handleCommand">

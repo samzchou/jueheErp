@@ -79,7 +79,7 @@ const dbFun = {
             }
         }
     },
-	
+
 	/*--------列出几天后的所有采购订单数据--------*/
     async listOrderByDate(params){
         let now = new Date();
@@ -148,16 +148,17 @@ const dbFun = {
             }
         }
     },
-	
+
     /*--------批量添加数据--------*/
     async addPatch(params){
         const tn = params.collectionName;
         const data = params.data;
-        let result = mongoDB[tn].insertMany(data);
+        let result = await mongoDB[tn].insertMany(data);
+        //console.log(params, result);
         let cc = await mongoDB.counters.findOneAndUpdate({'model':tn}, {$inc:{count:data.length}});
 		let response = {
 			success:true,
-            msgDesc:'数据导入成功'
+            msgDesc:'数据保存成功'
 		}
 		if(params.notNotice && response.success){
 			delete response.msgDesc;
@@ -182,8 +183,8 @@ const dbFun = {
     async removePatch(params){
         const tn = params.collectionName;
         const data = params.data;
-        let result = mongoDB[tn].deleteMany(data);
-		
+        let result = await mongoDB[tn].deleteMany(data);
+		//console.log('removePatch', result)
 		let response = {
 			success:true,
             msgDesc:'数据删除成功'
@@ -204,15 +205,38 @@ const dbFun = {
         let counters =  await mongoDB.counters.findOne({'model':tn});
         data.id = counters.count + 1;
         let result =  await mongoDB[tn].create(data);
+        //console.log('addData',result);
         if(result){
             await mongoDB.counters.findOneAndUpdate({'model':tn}, {$inc:{count:1}});
         }
-		
-        return {
+        let response = {
             success:true,
             msgDesc:'数据添加成功',
             response:result
         }
+        if(params.notNotice && response.success){
+            delete response.msgDesc;
+        }
+        return response;
+    },
+    /*--------批量加入或更新仓库数据--------*/
+    async addStore(params){
+        const tn = params.collectionName;
+        let data = params.data;
+        for(let i=0; i<data.length; i++){
+            let item = data[i];
+            if(item.storeId){ // 更新库存量
+                let res = await mongoDB[tn].findOneAndUpdate({'id':item.storeId}, {'$inc':{incount:item.incount},'updateByUser':item.updateByUser,'updateDate':new Date().getTime()});
+                //console.log('addStore', res)
+            }else{
+                await mongoDB[tn].create(item);
+                await mongoDB.counters.findOneAndUpdate({'model':tn}, {$inc:{count:1}});
+            }
+        }
+        return {
+            success:true,
+            msgDesc:'订单入库成功'
+        };
     },
     /*--------批量更新数据--------*/
     async updateArr(params){

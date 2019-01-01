@@ -34,47 +34,19 @@
 				border highlight-current-row fit stripe max-height="500" v-loading="uploading">
 				<el-table-column type="expand">
 					<template slot-scope="props">
-						<el-form label-position="left" size="mini" inline label-width="100px">
-							<el-form-item label="订单类型:">
-								<span>{{parseStr(props.row,'typeId')}}</span>
-							</el-form-item>
-							<el-form-item label="重复订单:">
-								<span :class="{'warning':props.row.isRepeat}">{{props.row.isRepeat}}</span>
-							</el-form-item>
-							<el-form-item label="物料号/版本号:">
-								<span>{{props.row.materialNo}}</span>
-							</el-form-item>
-							<el-form-item label="物料号/版本号:">
-								<span>{{props.row.materialNo}}</span>
-							</el-form-item>
-							<el-form-item label="图号/版本号:">
-								<span>{{props.row.caselNo}}</span>
-							</el-form-item>
-							<el-form-item label="物料名称:">
-								<span>{{props.row.productName}}</span>
-							</el-form-item>
-							<el-form-item label="项目号:">
-								<span :title="props.row.projectNo">{{props.row.projectNo}}</span>
-							</el-form-item>
-							<el-form-item label="项目名称:">
-								<span>{{props.row.projectName}}</span>
-							</el-form-item>
-							<el-form-item label="梯型:">
-								<span>{{props.row.model}}</span>
-							</el-form-item>
-							<el-form-item label="梯号:">
-								<span>{{props.row.modelNo}}</span>
-							</el-form-item>
-							<el-form-item label="数量:">
-								<span>{{props.row.count}} {{props.row.util}}</span>
-							</el-form-item>
-							<el-form-item label="单价:">
-								<span>{{props.row.price | currency}}</span>
-							</el-form-item>
-							<el-form-item label="元数据单价:">
-								<span>{{props.row.metaprice | currency}}</span>
-							</el-form-item>
-						</el-form>
+						<el-row :gutter="20">
+              <el-col :span="6">订单类型:{{parseStr(props.row,'typeId')}}</el-col>
+              <el-col :span="6">物料号/版本号:{{props.row.materialNo}}</el-col>
+              <el-col :span="6">物料名称:{{props.row.productName}}</el-col>
+              <el-col :span="6">图号/版本号:{{props.row.caselNo}}</el-col>
+              <el-col :span="6" :title="props.row.projectNo">项目号:{{props.row.projectNo}}</el-col>
+              <el-col :span="6">项目名称:{{props.row.projectName}}</el-col>
+              <el-col :span="6">梯型:{{props.row.model}}</el-col>
+              <el-col :span="6">梯号:{{props.row.modelNo}}</el-col>
+              <el-col :span="6">数量:{{props.row.count}} {{props.row.util}}</el-col>
+              <el-col :span="6">单价:{{props.row.price | currency}}</el-col>
+              <el-col :span="6">元数据单价:{{props.row.metaprice | currency}}</el-col>
+            </el-row>
 					</template>
 				</el-table-column>
 				<el-table-column label="No." fixed="left" align="center">
@@ -482,6 +454,7 @@ export default {
 			return list;
 		},
 		async saveData(){
+      this.uploading = true;
 			let loadingMask = this.$loading({background: 'rgba(0, 0, 0, 0.5)'});
 			// 梳理数据做合并订单处理
 			let dataList = [], index = 0;
@@ -494,7 +467,7 @@ export default {
 				dataList.push(item);
 			});
 			//let checkPeo = dataList.filter(item=>{return item.flowStateId==5});
-			
+
 			console.log('saveData',dataList, this.sourceData);
 			let condition = {
 				type:'addPatch',
@@ -504,7 +477,8 @@ export default {
 			};
 			// 订单保存
 			this.$axios.$post('mock/db', {data:condition}).then(result=>{
-				loadingMask.close();
+        loadingMask.close();
+        this.uploading = false;
 				window.location.reload();
 				/* // 备份原始订单
 				let uploadCondition = {
@@ -628,7 +602,28 @@ export default {
 			color:red;
 		}
 		/deep/ .el-table__expanded-cell{
-			padding: 20px;
+      padding: 20px;
+      .el-row {
+        border-bottom: 1px solid #DDD;
+        &:last-child {
+          border: 0;
+        }
+
+        .el-col {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          line-height: 25px;
+
+          >span {
+            &:first-child {
+              width: 80px;
+              display: inline-block;
+              font-weight: bold;
+            }
+          }
+        }
+      }
 			.el-form-item{
 				width:32%;
 				margin:0;

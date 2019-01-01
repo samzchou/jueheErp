@@ -30,7 +30,8 @@ export default {
 				{"label":"订单导入", "icon": "list-ul", "path": "/order/import-buy"},
                 {"label":"采购制单", "icon":"list-ul", "path":"/order/buy"},
                 {"label":"采购订单管理", "icon":"list-ul", "path":"/order/buy-list"},
-                {"label":"生产销售", "icon":"list-ul", "path":"/order/sale"},
+                {"label":"生产制单", "icon":"list-ul", "path":"/order/sale"},
+                {"label":"生产订单管理", "icon":"list-ul", "path":"/order/sale-list"},
             ]
         },
         {

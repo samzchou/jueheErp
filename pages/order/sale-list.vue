@@ -3,8 +3,8 @@
     <div class="head-title">
 			<div>
 				<div>
-					<span :class="{'inactive':!isAdded}" @click="setOrderParams(false)">待采购入库订单</span>
-					<span :class="{'inactive':isAdded}" @click="setOrderParams(true)">已采购入库订单</span>
+					<span :class="{'inactive':!isAdded}" @click="setOrderParams(false)">待生产入库订单</span>
+					<span :class="{'inactive':isAdded}" @click="setOrderParams(true)">已生产入库订单</span>
 				</div>
 			</div>
 		</div>
@@ -38,11 +38,6 @@
 			</div>
       <el-table class="table-container" ref="listTable" v-loading="listLoading" :data="gridList"
 			border fit highlight-current-row stripe size="mini" max-height="500">
-        <!-- <el-table-column label="订单结算" width="70" v-if="isAdded">
-					<template slot-scope="scope">
-						<span>{{scope.row.isPayed?'已付款':'未结算'}}</span>
-					</template>
-				</el-table-column> -->
 				<el-table-column prop="serial" label="系统订单号" width="150"/>
         <el-table-column label="蒂森订单号" width="250">
 					<template slot-scope="scope">
@@ -84,13 +79,13 @@
 				</el-table-column>
 			</el-table>
 			<div class="page-container">
-				<div>共有{{total}}个采购订单，请点击供应商名称查阅或操作订单</div>
+				<div>共有{{total}}个生产订单，请点击客户名称查阅或操作订单</div>
 				<el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total"/>
 			</div>
     </div>
-    <el-dialog title="供应商采购清单" append-to-body :visible.sync="openOrderVisible" width="85%">
+    <el-dialog title="客户生产清单" append-to-body :visible.sync="openOrderVisible" width="85%">
       <div class="order-title">
-          <span v-if="currItem">供应商：{{currItem.crmName}}，地址：{{currItem.address}}，联系人：{{currItem.contactName}}，电话：{{currItem.contactPhone}}</span>
+          <span v-if="currItem">客户：{{currItem.crmName}}，地址：{{currItem.address}}，联系人：{{currItem.contactName}}，电话：{{currItem.contactPhone}}</span>
       </div>
       <div class="order-title" style="padding:10px 0" v-if="crmOrderList.length">
           <span style="font-weight:bold">订单总价：{{parseAllOrderMoney(true)}}</span>
@@ -164,11 +159,11 @@
       </div>
       <div class="btns" v-if="crmOrderList.length">
         <div>
-          <span>合计：共{{queryInTotal}}个采购订单；</span><span v-if="currItem && currItem.isAdded">全部订单已入库</span>
+          <span>合计：共{{queryInTotal}}个生产订单；</span><span v-if="currItem && currItem.isAdded">全部订单已入库</span>
         </div>
         <div>
            <el-pagination size="mini" @size-change="handleSizeOrder" @current-change="handleCurrentOrder" :current-page.sync="queryIn.page" :page-sizes="[3,20, 50, 100, 200]" :page-size="queryIn.pagesize" layout="total,sizes,prev,pager,next" :total="queryInTotal"/>
-          <el-button type="success" @click="exportOrder" icon="el-icon-document" v-if="currItem && !currItem.isAdded">重新制单采购</el-button>
+          <el-button type="success" @click="exportOrder" icon="el-icon-document" v-if="currItem && !currItem.isAdded">重新制单生产</el-button>
           <el-button @click="openOrderVisible=false">取消退出</el-button>
         </div>
       </div>
@@ -285,7 +280,7 @@ export default {
           contactPhone:crm.contactPhone,
           address:crm.address
       });
-      console.log('this.currItem', this.currItem);
+      //console.log('this.currItem', this.currItem);
       let params = _.merge({},{
           crmId:row.crmId,
           typeId:row.typeId,
@@ -354,7 +349,6 @@ export default {
           collectionName: 'storeIn',
           data:{'id':{'$in':ids}}
         };
-
         this.$axios.$post('mock/db', {data:condition}).then(result=>{
           this.submitSearch(true);
         });
@@ -362,7 +356,7 @@ export default {
     },
     handleDeleteOrder(row){
       let index = _.findIndex(this.crmOrderList, {'id':row.id});
-      this.$confirm('确定移除该条订单，确定删除？', '从供应商订单汇总中移除订单', {
+      this.$confirm('确定移除该条订单，确定删除？', '从客户生产订单汇总中移除订单', {
 				confirmButtonText: '确定',
 				cancelButtonText: '取消',
 				type: 'warning'
@@ -445,10 +439,10 @@ export default {
       let condition = {
         type:'groupList',
         collectionName: 'storeIn',
-        data:_.merge({typeId:1, isAdded:this.isAdded}, match),
+        data:_.merge({typeId:2, isAdded:this.isAdded}, match),
         distinct:"crmId",
         aggregate:[
-          {"$match":_.merge({typeId:1, isAdded:this.isAdded},match)},
+          {"$match":_.merge({typeId:2, isAdded:this.isAdded},match)},
           {
             "$group": {
               "_id": {"crmId":"$crmId"}, // 按字段分组
