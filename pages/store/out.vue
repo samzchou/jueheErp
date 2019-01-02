@@ -93,9 +93,9 @@
 			<el-table ref="exportTable" :data="orderList" border fit highlight-current-row stripe size="mini" max-height="350" style="width:100%">
 				<el-table-column type="index" width="50" align="center"/>
 				<el-table-column label="订单号" prop="serial" width="120px"/>
-				<el-table-column prop="projectNo" label="项目号" width="150"/>
+				<el-table-column prop="projectNo" label="项目号" width="120"/>
 				<el-table-column prop="projectName" label="项目名称"/>
-				<el-table-column prop="modelNo" label="梯号" width="80"/>
+				<el-table-column prop="modelNo" label="梯号" width="70"/>
 				<el-table-column prop="materialNo" label="物料号" width="120"/>
 				<el-table-column prop="productName" label="物料名称"/>
 				<el-table-column prop="boxNo" label="箱号" width="60"/>
@@ -106,7 +106,12 @@
 				</el-table-column>
 				<el-table-column prop="store" label="已入库量" width="80">
 					<template slot-scope="scope">
-						<span>{{scope.row.store && scope.row.store.incount}}</span>
+						<span>{{scope.row.store && scope.row.store.atcount}}</span>
+					</template>
+				</el-table-column>
+				<el-table-column prop="store" label="当前库存" width="80">
+					<template slot-scope="scope">
+						<span>{{scope.row.store && scope.row.store.count}}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="price" label="单价" width="80"/>
@@ -157,8 +162,12 @@ export default {
         }
     },
     methods:{
+		setOrderParams(flag){
+			this.needSource = flag;
+			this.query.page = 1;
+			this.getList();
+		},
 		exportOrder(){
-			//orderList
 			this.exportOrderIds = [];
 			let exportData = [], allCount = 0, allMoney = 0;
 			import ('@/components/Export2Excel').then(excel=>{
@@ -180,7 +189,8 @@ export default {
 			let cn = {
                 type:'updatePatch',
                 collectionName: 'order',
-                param:{'id':{$in:this.updateIds}},
+				param:{'id':{$in:this.updateIds}},
+				notNotice:true,
                 set:{$set:{'flowStateId':10}}
 			}
 			let updateData = [];
@@ -191,23 +201,26 @@ export default {
 						id:item.store.id,
 						count:item.store.count + item.store.incount - item.count,
 						incount:0,
-						outcount:item.store.outcount + item.count
+						outcount:item.store.outcount + item.count,
+						updateByUser: this.$store.state.user.name
 					};
 					updateData.push(obj);
 				}
 			})
-			console.log('updateData', updateData)
-			return;
-
+			console.log('updateData', updateData);
+			//return;
             this.$axios.$post('mock/db', {data:cn}).then(result=>{
-				let cn = {
+				let condition = {
 					type:'updateArr',
 					collectionName: 'store',
+					updateDate:true,
 					data:updateData
 				}
-				this.orderList = [];
-				this.openDialogVisible = false;
-				this.submitSearch(true);
+				this.$axios.$post('mock/db', {data:condition}).then(res=>{
+					this.orderList = [];
+					this.openDialogVisible = false;
+					this.submitSearch(true);
+				});
             });
 		},
 		formatJson(filterVal, jsonData) {

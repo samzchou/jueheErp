@@ -34,21 +34,20 @@ export default {
                 {"label":"生产订单管理", "icon":"list-ul", "path":"/order/sale-list"},
             ]
         },
-        {
+        /* {
             "label":"生产",
             "icon":"retweet",
             "children":[
                 {"label":"订单生产", "icon":"list-ul", "path":"/produce/on"}
             ]
-        },
+        }, */
         {
             "label":"仓库",
             "icon":"recycle",
             "children":[
-                {"label":"入库", "icon":"list-ul", "path":"/store/in"},
-                {"label":"出库", "icon":"list-ul", "path":"/store/out"},
-                {"label":"库存盘点", "icon":"list-ul", "path":"/store/calc"},
-                {"label":"导出送货单", "icon":"list-ul", "path":"/order/deliver"},
+                {"label":"产品入库", "icon":"list-ul", "path":"/store/in"},
+                {"label":"出库-送货", "icon":"list-ul", "path":"/store/out"},
+                {"label":"库存盘点", "icon":"list-ul", "path":"/store/calc"}
             ]
         },
         {

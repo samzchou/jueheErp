@@ -671,36 +671,6 @@ module.exports = {
                 type: Number,
                 default:0
             },
-            /*
-            orderId:{
-                type: Number,
-                default:0
-            },
-			orderIds:{
-				type:Array,
-				default:[]
-			},
-            serial:{
-                type:String,
-                default:''
-            },
-			sourceserial:{
-                type:String,
-                default:''
-            },
-			crmId:{
-                type: Number,
-                default:0
-            },
-            crmName:{
-                type: String,
-                default:''
-            },
-            productName:{
-                type:String,
-                default:''
-            },
-            */
 			materialNo : {
                 type:String,
                 default:''
@@ -721,14 +691,20 @@ module.exports = {
                 type:String,
                 default:''
             },
+			incount:{
+                type: Number,
+                default:0,
+				label:'采购或生产量'
+            },
             count:{
                 type: Number,
                 default:0
             },
-            incount:{
-                type: Number,
-                default:0
-            },
+            atcount:{
+				type: Number,
+                default:0,
+				label:'总入库量'
+			},
             outcount:{
                 type: Number,
                 default:0
@@ -737,20 +713,6 @@ module.exports = {
                 type: Number,
                 default:0
             },
-            /*
-			deliveryDate:{
-				type: Number,
-                default:new Date().getTime()
-			},
-            content:{
-                type:String,
-                default:''
-            },
-            updateContent:{
-                type:String,
-                default:''
-            },
-            */
             createByUser:{
                 type: String,
                 default:''
