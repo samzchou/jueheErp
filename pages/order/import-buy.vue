@@ -189,7 +189,6 @@
 </template>
 <script>
 import editProduct from "@/components/editProduct";
-//import settings from '@/config/files/dataList.json';
 import UploadExcelComponent from "@/components/UploadExcel";
 export default {
   name: "role",

@@ -43,7 +43,11 @@
                     </template>
                 </el-table-column>
                 <el-table-column prop="serial" label="系统订单号" width="120"/>
-                <el-table-column prop="crmName" label="客户名称"/>
+                <el-table-column prop="crmName" label="客户名称">
+                    <template slot-scope="scope">
+                        <a href="javascript:void(0)" @click="showDetail(scope.row)">{{scope.row.crmName}}</a>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="projectName" label="项目名称"/>
                 <el-table-column prop="productName" label="物料名称">
                      <template slot-scope="scope">
@@ -70,6 +74,7 @@
                         <span>{{parseDate(scope.row.updateDate)}} </span>
                     </template>
                 </el-table-column>
+                <el-table-column prop="invoiceNumber" label="开票号/单据号" width="120" v-if="isPayed"/>
                 <el-table-column prop="updateByUser" label="操作人" width="80"/>
                 <el-table-column label="付款" fixed="right" align="center" width="70">
                     <template slot-scope="scope">
@@ -91,12 +96,13 @@
             </div>
             <div class="order-title" style="padding:10px 0" v-if="orderCrmList.length">
                 <span style="font-weight:bold">订单总价：{{currItem.totalPrice | currency}}</span>
+                <span style="font-weight:bold; margin-left:20px" v-if="isPayed">发票/单据号：{{currItem.invoiceNumber}}</span>
             </div>
             <div>
                 <el-table ref="exportTable" :data="orderCrmList" border fit highlight-current-row stripe size="mini" max-height="350" @selection-change="handleSelectionChange">
                     <el-table-column type="selection" width="40" align="center" v-if="currItem && !currItem.isPayed" :selectable="checkSelectable"/>
                     <el-table-column type="index" width="50" align="center"/>
-                    <el-table-column prop="serial" label="订单编号"/>
+                    <el-table-column prop="serial" label="订单编号" width="120"/>
                      <el-table-column prop="materialNo" label="物料号" width="120"/>
                     <el-table-column prop="productName" label="物料名称"/>
                     <el-table-column prop="model" label="规格型号" width="100"/>
@@ -126,9 +132,23 @@
                     <span v-else>已选择{{selectOrders.length}}个订单</span>
                 </div>
                 <div>
-                    <el-button  v-if="!currItem.isPayed" size="mini" type="success" @click="payOrder" :loading="payLoading" icon="my-icon-retweet">提交付款</el-button>
-                    <el-button type="warning" size="mini" icon="el-icon-document" @click="exportOrder">导出付款单</el-button>
-                    <el-button @click="openDialogVisible=false">取消退出</el-button>
+                    <el-form size="mini" :inline="true" :model="payForm" :rules="payRules" ref="payForm" class="pay-form">
+                        <el-form-item label="付款发票号：" prop="invoiceNumber" v-if="!currItem.isPayed">
+                            <el-input v-model="payForm.invoiceNumber" placeholder="请填写发票号或单据号" clearable />
+                        </el-form-item>
+                        <el-form-item label="备注：" prop="content" v-if="!currItem.isPayed">
+                            <el-input v-model="payForm.content" placeholder="请填写备注" clearable />
+                        </el-form-item>
+                        <el-form-item v-if="!currItem.isPayed">
+                            <el-button  v-if="!currItem.isPayed" size="mini" type="success" @click="payOrder" :loading="payLoading" icon="my-icon-retweet">提交付款</el-button>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-button type="warning" size="mini" icon="el-icon-document" @click="exportOrder">导出付款单</el-button>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-button @click="openDialogVisible=false">取消退出</el-button>
+                        </el-form-item>
+                    </el-form>
                 </div>
             </div>
         </el-dialog>
@@ -174,6 +194,13 @@ export default {
             orderCrmList:[],
             payLoading:false,
             selectOrders:[],
+            payForm:{
+                invoiceNumber:'',
+                content:''
+            },
+            payRules:{
+                invoiceNumber:[{required:true, message:'请填写发票号或单据号', trigger: 'blur'}]
+            }
         }
     },
     methods:{
@@ -219,41 +246,65 @@ export default {
                 this.$message.error('请选择需要付款的订单');
                 return;
             }
-            this.payLoading = true;
-            let orderIds = [];
-            this.selectOrders.forEach(item=>{
-                orderIds.push(item.id);
-            })
-
-            this.$confirm("此操作将订单更新为已经付款, 是否继续?", "提示", {
-                confirmButtonText: "确定",
-                cancelButtonText: "取消",
-                type: "warning"
-            }).then(() => {
-                let condition = {
-                    type: "updatePatch",
-                    collectionName: "storeIn",
-                    notNotice: true,
-                    param: { id: { $in: orderIds } },
-                    set: {
-                        $set: {
-                            isPayed: true,
-                            updateByUser: this.$store.state.user.name,
-                            updateDate: new Date().getTime()
-                        }
-                    }
-                };
-                console.log('condition', condition)
-                this.$axios.$post("mock/db", { data: condition }).then(result => {
-                    this.payLoading = false;
-                    this.selectOrders = [];
-                    this.orderCrmList= [];
-                    this.currItem = null;
-                    this.openDialogVisible = false;
-                    this.submitSearch(true);
-                });
-                
-            }).catch(() => {});
+            this.$refs['payForm'].validate((valid) => {
+                if (valid) {
+                    let orderIds = [];
+                    this.selectOrders.forEach(item=>{
+                        orderIds.push(item.id);
+                    });
+                    // 添加财务数据
+                    let data = {
+                        'payType':1,
+                        'orderIds':orderIds,
+                        'serial':this.currItem.serial,
+                        'sourceserial':this.currItem.sourceserial,
+                        'crmId':this.currItem.crmId,
+                        'crmName':this.currItem.crmName,
+                        'price':this.currItem.totalPrice,
+                        'invoiceNumber':this.payForm.invoiceNumber,
+                        'createByUser':this.$store.state.user.name,
+                        'content':this.payForm.content
+                    };
+                    this.$confirm("此操作将订单更新为已经付款, 是否继续?", "提示", {
+                        confirmButtonText: "确定",
+                        cancelButtonText: "取消",
+                        type: "warning"
+                    }).then(() => {
+                        this.payLoading = true;
+                        let cn = {
+                            type: "addData",
+                            collectionName: "finance",
+                            notNotice: true,
+                            data: data
+                        };
+                        this.$axios.$post("mock/db", { data: cn }).then(result => {
+                            let condition = {
+                                type: "updatePatch",
+                                collectionName: "storeIn",
+                                notNotice: true,
+                                param: { id: { $in: orderIds } },
+                                set: {
+                                    $set: {
+                                        'isPayed': true,
+                                        'invoiceNumber':this.payForm.invoiceNumber,
+                                        'updateByUser': this.$store.state.user.name,
+                                        'updateDate': new Date().getTime()
+                                    }
+                                }
+                            };
+                            console.log('condition', condition)
+                            this.$axios.$post("mock/db", { data: condition }).then(result => {
+                                this.payLoading = false;
+                                this.selectOrders = [];
+                                this.orderCrmList= [];
+                                this.currItem = null;
+                                this.openDialogVisible = false;
+                                this.submitSearch(true);
+                            });
+                        });
+                    }).catch(() => {});
+                }
+            });            
         },
         async showDetail(row){
             let crm = _.find(this.setting.crm, { id: row.crmId });
@@ -349,10 +400,11 @@ export default {
                     { $match: param },
                     {
                         $group: {
-                            _id:{crmId:"$crmId",serial:"$serial"},
+                            _id:{crmId:"$crmId",serial:"$serial",invoiceNumber:"$invoiceNumber"},
                             id: { $first: "$id" },
                             isAdded: { $first: "$isAdded" },
                             isPayed: { $first: "$isPayed" },
+                            invoiceNumber: { $first: "$invoiceNumber" },
                             typeId: { $first: "$typeId" },
                             serial: { $first: "$serial" },
                             sourceserial: { $first: "$sourceserial" },

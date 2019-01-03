@@ -77,7 +77,6 @@ const tableKeys = [
 	{label:'项目名称',value:'projectName'},
 	{label:'备注',value:'content'}
 ];
-//import settings from '@/config/files/dataList.json';
 import UploadExcelComponent from '@/components/UploadExcel'
 export default {
 	name:'role',

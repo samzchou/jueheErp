@@ -102,15 +102,15 @@
     </section>
 </template>
 <script>
-import settings from '@/config/files/dataList.json';
 export default {
     name:'role',
     data(){
         return {
             isEdit:false,
             listLoading:false,
-            roleList:settings.role,
-            posList:settings.pos,
+            setting:{},
+            roleList:[],
+            posList:[],
             query:{},
             gridList:[],
             dataId:undefined,
@@ -261,6 +261,20 @@ export default {
             //console.log('submitSearch',params);
             this.getList(params)
         },
+        async getSetting() {
+            let condition = {
+                type: "getData",
+                collectionName: "setting",
+                data: {}
+            };
+            let result = await this.$axios.$post("mock/db", { data: condition });
+            if (result) {
+                this.setting = result.content;
+                this.roleList = this.setting.role;
+                this.posList = this.setting.pos;
+                this.getList();
+            }
+        },
         async getList(match = {}){
             this.listLoading = true;
             let condition = {
@@ -301,8 +315,10 @@ export default {
         },
     },
     created(){
-        this.getList();
-    }
+        this.getSetting();
+        //this.getList();
+    },
+   
 }
 </script>
 

@@ -157,7 +157,6 @@
 </template>
 
 <script>
-//import settings from '@/config/files/dataList.json';
 export default {
     data(){
         return {

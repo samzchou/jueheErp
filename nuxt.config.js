@@ -1,6 +1,3 @@
-//const pkg = require('./package');
-//const server_url = `${pkg.hrssc_env.PORTAL_ORIGIN}/hrssc-platform-portal/`;
-//const serverConfig = require('./config');
 const server_url = 'http://127.0.0.1/';
 
 module.exports = {
@@ -82,9 +79,4 @@ module.exports = {
 			vueLoader.options.loaders.i18n = '@kazupon/vue-i18n-loader';
 		}
 	},
-	/* env: {
-		server_url: server_url,
-		HOST: pkg.hrssc_env.HOST,
-		PORT: pkg.hrssc_env.PORT,
-	} */
 }

@@ -195,3 +195,9 @@
   align-items: center;
   justify-content: space-between;
 }
+
+.pay-form{
+    /deep/ .el-form-item{
+        margin-bottom: 0;
+    }
+}

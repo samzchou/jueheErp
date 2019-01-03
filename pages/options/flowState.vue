@@ -53,14 +53,14 @@
     </section>
 </template>
 <script>
-import settings from '@/config/files/dataList.json';
 export default {
     name:'role',
     data(){
         return {
             isEdit:false,
             listLoading:false,
-            typeList:settings.type,
+            setting:{},
+            typeList:[],
             query:{},
             gridList:[],
             dataId:undefined,
@@ -169,6 +169,20 @@ export default {
             }
             await this.$axios.$post('mock/db', {data:condition});
         },
+        //typeList
+        async getSetting() {
+            let condition = {
+                type: "getData",
+                collectionName: "setting",
+                data: {}
+            };
+            let result = await this.$axios.$post("mock/db", { data: condition });
+            if (result) {
+                this.setting = result.content;
+                this.typeList = this.setting.type;
+                this.getList();
+            }
+        },
         async getList(){
             this.listLoading = true;
             let condition = _.merge(this.query,{
@@ -200,7 +214,7 @@ export default {
         },
     },
     created(){
-        this.getList();
+        this.getSetting();
     }
 }
 </script>

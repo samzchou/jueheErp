@@ -49,14 +49,14 @@
     </section>
 </template>
 <script>
-import settings from '@/config/files/dataList.json';
 export default {
     name:'role',
     data(){
         return {
             isEdit:false,
             listLoading:false,
-            orgList:settings.org,
+            setting:{},
+            orgList:[],
             query:{},
             gridList:[],
             dataId:undefined,
@@ -157,6 +157,20 @@ export default {
             }
             await this.$axios.$post('mock/db', {data:condition});
         },
+        //orgList
+        async getSetting() {
+            let condition = {
+                type: "getData",
+                collectionName: "setting",
+                data: {}
+            };
+            let result = await this.$axios.$post("mock/db", { data: condition });
+            if (result) {
+                this.setting = result.content;
+                this.orgList = this.setting.org;
+                this.getList();
+            }
+        },
         async getList(){
             this.listLoading = true;
             let condition = _.merge(this.query,{
@@ -191,7 +205,7 @@ export default {
         },
     },
     created(){
-        this.getList();
+        this.getSetting();
     }
 }
 </script>
