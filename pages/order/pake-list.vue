@@ -36,7 +36,7 @@
 				<el-table-column prop="projectName" label="项目名称"/>
 				<el-table-column prop="projectNo" label="项目号"  width="150"/>
 				<el-table-column prop="modelNo" label="梯号" width="80" />
-				<el-table-column prop="deliveryDate" label="交付日期" width="120">
+				<el-table-column prop="deliveryDate" label="交货日期" width="120">
 					<template slot-scope="scope">
 						<span>{{parseDate(scope.row.deliveryDate)}}</span>
 					</template>
@@ -116,7 +116,7 @@ export default {
 					},
 					{ "$sort": { 'deliveryDate': 1 } },
 					{ "$skip": 0 },
-					{ "$limit": 1000 }
+					{ "$limit": 2000 }
 				]
 			};
 			let result = await this.$axios.$post('mock/db', { data: condition });

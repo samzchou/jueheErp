@@ -36,7 +36,7 @@
 				<el-table-column prop="projectName" label="项目名称"/>
 				<el-table-column prop="projectNo" label="项目号"  width="150"/>
 				<el-table-column prop="modelNo" label="梯号" width="80" />
-				<el-table-column prop="deliveryDate" label="交付日期" width="120">
+				<el-table-column prop="deliveryDate" label="交货日期" width="120">
 					<template slot-scope="scope">
 						<span>{{parseDate(scope.row.deliveryDate)}}</span>
 					</template>
@@ -77,7 +77,50 @@ export default {
 		}
 	},
 	methods: {
-		exportOrder() {
+		async exportOrder() {
+            let params = {};
+			for (let k in this.searchForm) {
+				if (this.searchForm[k] && this.searchForm[k] != '') {
+					if (_.isArray(this.searchForm[k]) && (k === 'deliveryDate' || k === 'orderDate')) {
+						params[k] = {
+							$gte: this.searchForm[k][0],
+							$lte: this.searchForm[k][1]
+						}
+					} 
+				}
+            };
+            let condition = {
+				type: 'groupList',
+				collectionName: 'order',
+				data: _.merge({ typeId: 2, productName:{$regex:'防护栏'} }, params),
+				distinct: "projectNo",
+				aggregate: [
+					{ "$match": _.merge({ typeId: 2, productName:{$regex:'防护栏'} }, params) },
+					{
+						"$group": {
+							"_id": { "projectNo": "$projectNo" }, // 按字段分组
+							"materialNo": { "$first": "$materialNo" },
+							"caselNo": { "$first": "$caselNo" },
+							"projectNo": { "$first": "$projectNo" },
+							"projectName": { "$first": "$projectName" },
+							"model": { "$first": "$model" },
+							"modelNo": { "$first": "$modelNo" },
+							"orderDate": { "$first": "$orderDate" },
+							"deliveryDate": { "$first": "$deliveryDate" },
+							"total": { $sum: 1 }
+						}
+					},
+					{ "$sort": { 'deliveryDate': 1 } },
+					{ "$skip": 0 },
+					{ "$limit": 2000 }
+				]
+			};
+			let result = await this.$axios.$post('mock/db', { data: condition });
+			let listData = result.list.map((item,index)=>{
+				item.index = index + 1;
+				return item;
+            });
+            
 			let sd = 88888888888888888;
 			let ed = 0;
 			this.gridList.forEach(item=>{
@@ -90,7 +133,7 @@ export default {
 			});
 			sd = this.parseDate(sd, 'MM.DD');
 			ed = this.parseDate(ed, 'MM.DD');
-		import('@/components/Export2Excel').then(excel => {
+		    import('@/components/Export2Excel').then(excel => {
 				const tHeader = ['下单日期', '项目名称', '项目号', '梯号', '交货日期', '梯形', '防护栏', '序号','参考物号'];
 				const filterVal = ['orderDate', 'projectName', 'projectNo', 'modelNo', 'deliveryDate', 'model', 'materialNo', 'index','caselNo'];
 				const data = this.formatJson(filterVal, _.cloneDeep(this.gridList));
@@ -116,17 +159,11 @@ export default {
 			let params = {};
 			for (let k in this.searchForm) {
 				if (this.searchForm[k] && this.searchForm[k] != '') {
-					if (_.isNumber(this.searchForm[k])) {
-						params[k] = Number(this.searchForm[k]);
-					} else if (_.isArray(this.searchForm[k]) && (k === 'deliveryDate' || k === 'orderDate')) {
+					if (_.isArray(this.searchForm[k]) && (k === 'deliveryDate' || k === 'orderDate')) {
 						params[k] = {
 							$gte: this.searchForm[k][0],
 							$lte: this.searchForm[k][1]
 						}
-					} else if (_.isArray(this.searchForm[k])) {
-						params[k] = { $in: this.searchForm[k] }
-					} else {
-						params[k] = { $regex: this.searchForm[k] };
 					}
 				}
 			};
