@@ -23,7 +23,7 @@
 					<el-form-item label="项目名称：" prop="projectName">
 						<el-input v-model="searchForm.projectName" clearable  style="width:150px"/>
 					</el-form-item>
-					
+
 					<el-form-item label="制单日期：" prop="orderDate">
 						<el-date-picker v-model="searchForm.orderDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px"/>
 					</el-form-item>
@@ -66,18 +66,18 @@
 					</el-table-column>
 					<el-table-column label="操作" fixed="right" align="center" width="120">
 						<template slot-scope="scope">
-							<el-button v-if="scope.row.store" size="mini" type="text" icon="el-icon-download" @click="showDetail(scope.row)">制单送货</el-button>
-							<span v-else>未入库</span>
+							<el-button size="mini" type="text" :icon="scope.row.finished?'el-icon-download':'el-icon-view'" @click="showDetail(scope.row)">{{scope.row.finished?'制定送货单':'查看送货单'}}</el-button>
 						</template>
 					</el-table-column>
                 </el-table>
             </div>
             <div class="page-container" style="padding: 10px 0;">
+				<div>请点击可以出库送货的订单，制定出库送货单</div>
                 <el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200, 500]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total">
                 </el-pagination>
             </div>
         </div>
-		
+
         <el-dialog :title="'送货清单--'+(needSource?'蒂森订单':'珏合订单')" append-to-body :visible.sync="openDialogVisible" width="80%">
 			<div class="compare" v-if="currItem">
 				<el-row :gutter="20">
@@ -127,7 +127,7 @@
 					<span v-else>可以出单送货</span>
 				</div>
 				<div>
-					<el-button size="mini" type="primary" icon="el-icon-download" @click="exportOrder" :disabled="!currItem.isout">制定送货单</el-button>
+					<el-button size="mini" type="primary" icon="el-icon-download" @click="exportOrder" :disabled="!currItem.isout" :loading="exportLoading">制定送货单</el-button>
 				</div>
 			</div>
 		</el-dialog>
@@ -157,11 +157,13 @@ export default {
 			openDialogVisible:false,
 			currItem:null,
 			orderList:[],
+			exportLoading:false,
 			exportOrderIds:[],
 			updateIds:[],
         }
     },
     methods:{
+
 		setOrderParams(flag){
 			this.needSource = flag;
 			this.query.page = 1;
@@ -185,6 +187,7 @@ export default {
         	});
 		},
 		updateOrder(){
+			this.exportLoading = true;
 			// 这里需要处理，更新原始订单状态， 更新库存
 			let cn = {
                 type:'updatePatch',
@@ -194,7 +197,7 @@ export default {
                 set:{$set:{'flowStateId':10}}
 			}
 			let updateData = [];
-			
+
 			this.orderList.forEach(item=>{
 				if(item.id){
 					let obj = {
@@ -218,6 +221,7 @@ export default {
 				}
 				this.$axios.$post('mock/db', {data:condition}).then(res=>{
 					this.orderList = [];
+					this.exportLoading = false;
 					this.openDialogVisible = false;
 					this.submitSearch(true);
 				});
@@ -247,9 +251,14 @@ export default {
 			console.log('showDetail', row);
 			let params = {
 				projectNo:row.projectNo,
-				sourceserial:this.needSource?row.sourceserial:row.serial,
-				flowStateId:{$gte:2,$lte:6}
+				//sourceserial:this.needSource?row.sourceserial:row.serial,
+				//flowStateId:{$gte:2,$lte:6}
 			};
+			if(this.needSource){
+				params.sourceserial = row.sourceserial;
+			}else{
+				params.serial = row.serial;
+			}
 			let conditions = {
 				type:"aggregate",
 				collectionName:'order',
@@ -274,12 +283,11 @@ export default {
 				]
 			}
 			let result = await this.$axios.$post('mock/db', {data:conditions});
-			console.log(result.list);
+			//console.log(result.list);
 			this.updateIds = [];
 			this.currItem.isout = true;
 			let allPrice = 0, allCount = 0;
-			//let lists = this.mergeOrder(result.list);
-			//debugger
+			//_.cloneDeep(row.result)
 			this.orderList = result.list.map(item=>{
 				if(!item.store){
 					this.currItem.isout = false;
@@ -293,6 +301,8 @@ export default {
 				this.updateIds.push(item.id);
 				return item;
 			});
+			//console.log('this.updateIds', this.updateIds)
+
 			this.orderList.push({
 				'serial':'合计',
 				'count':allCount,
@@ -321,7 +331,7 @@ export default {
 			});
 			return listData;
 		},
-        
+
         submitSearch(flag){
             let params = {};
 			for(let k in this.searchForm){
@@ -361,21 +371,21 @@ export default {
 
         async getList(match={}){
 			this.listLoading = true;
-			let groupId = {"projectNo":"$projectNo"};//{"sourceserial":"$sourceserial"};
+			let groupId = {"sourceserial":"$sourceserial"};//{"sourceserial":"$sourceserial"};
             let bySerial = {'sourceserial':{$ne:''}};
 			if(!this.needSource){
                 bySerial = {'sourceserial':''};
 				groupId = {"serial":"$serial"};
 			}
 			//groupId = _.merge(groupId,{"projectNo","$projectNo","boxNo":"$boxNo","modelNo":"$modelNo"})
-			match = _.merge(bySerial, match);
+			match = _.merge({flowStateId:{$lt:10}}, bySerial, match);
             let condition = {
 				type:'groupList',
 				collectionName: 'order',
-				data:_.merge({flowStateId:{$gte:2,$lte:6}},match),
-				distinct:this.needSource?"projectNo":"serial",
+				data:match,//_.merge({flowStateId:{$gte:2,$lte:6}},match),
+				distinct:this.needSource?"sourceserial":"serial",
 				aggregate:[
-					{"$match":_.merge({flowStateId:{$gte:2, $lte:6}}, match)},
+					{"$match":match},
 					{
 						"$group": {
 							"_id": groupId, // 按字段分组
@@ -400,7 +410,8 @@ export default {
 							"deliveryDate":{"$first" :"$deliveryDate"},
 							"content":{"$first" :"$content"},
 							"flowStateId":{"$first":"$flowStateId"},
-							"total": { $sum: 1 }
+							"total": { $sum: 1 },
+							"result": {"$push": "$$ROOT"}
 						}
 					},
 					{
@@ -424,9 +435,24 @@ export default {
             };
 			let result = await this.$axios.$post('mock/db', {data:condition});
             this.total = result.total;
-            this.gridList = result.list;
+            this.gridList = result.list.map(item=>{
+				item.finishCount = this.checkFinished(item);
+				item.finished = item.finishCount==item.total;
+				return item;
+			});
             this.listLoading = false;
-        },
+		},
+		checkFinished(row){
+			//console.log('checkFinished',row);
+			let countFinish = 0;
+			row.result.forEach(item=>{
+				if([3,8].includes(item.flowStateId)){
+					//console.log('checkFinished',item)
+					countFinish++;
+				}
+			});
+			return countFinish; //countFinish==row.total;
+		},
         async getSetting(){
             let condition = {
 				type:"getData",

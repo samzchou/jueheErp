@@ -230,13 +230,13 @@
 							</el-row>
 						</template>
 					</el-table-column>
-					<el-table-column prop="serial" label="订单编号" width="120px" />
-					<el-table-column prop="materialNo" label="物料号" width="120px" />
+					<el-table-column prop="serial" label="订单编号" width="120" />
+					<el-table-column prop="materialNo" label="物料号" width="120" />
 					<el-table-column prop="productName" label="物料名称" />
-					<el-table-column prop="model" label="规格型号" width="100px" />
-					<el-table-column prop="count" label="采购数量" width="80px" />
-					<el-table-column prop="storeInCount" label="当前库存" width="70px" />
-					<el-table-column prop="releaseCount" label="实际采购量" width="100px">
+					<el-table-column prop="model" label="规格型号" width="100" />
+					<el-table-column prop="count" label="采购数量" width="80" />
+					<el-table-column prop="storeCount" label="库存" width="70" />
+					<el-table-column prop="releaseCount" label="实际采购量" width="100">
 						<template slot-scope="scope">
 							<div v-if="scope.$index<crmOrderList.length-1">
 								<el-input-number size="mini" controls-position="right" :min="0" v-model="scope.row.releaseCount" @change="checkReleaseCount(scope.row,crmOrderList)" style="width:80px" />
@@ -244,20 +244,20 @@
 							<div v-else>{{parseAllOrderCount()}}</div>
 						</template>
 					</el-table-column>
-					<el-table-column prop="price" label="采购单价" width="100px">
+					<el-table-column prop="price" label="采购单价" width="100">
 						<template slot-scope="scope">
 							<div v-if="scope.$index<crmOrderList.length-1">
 								<el-input-number size="mini" controls-position="right" :min="0" :step="0.1" v-model="scope.row.price" style="width:80px" />
 							</div>
 						</template>
 					</el-table-column>
-					<el-table-column prop="allPrice" label="采购金额" width="100px">
+					<el-table-column prop="allPrice" label="采购金额" width="100">
 						<template slot-scope="scope">
 							<span v-if="scope.$index<crmOrderList.length-1">{{parseReleaseMoney(scope.row)}}</span>
 							<span v-else>{{parseAllOrderMoney()}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="deliveryDate" label="交货日期" width="140px">
+					<el-table-column prop="deliveryDate" label="交货日期" width="140">
 						<template slot-scope="scope">
 							<div v-if="scope.$index<crmOrderList.length-1">
 								<el-date-picker size="mini" v-model="scope.row.deliveryDate" type="date" value-format="timestamp" placeholder="选择日期" :clearable="false" style="width:120px" />
@@ -637,14 +637,10 @@ export default {
 		},
 		exportOrder() {
 			this.exportOrderIds = [];
-			let exportData = [],
-				allCount = 0,
-				allMoney = 0;
+			let exportData = [], allCount = 0, allMoney = 0;
 			this.exportOrders.forEach(item => {
 				if (item && item.id && item.releaseCount) {
-					this.exportOrderIds = this.exportOrderIds.concat(
-						this.getChildrenByid(item.children)
-					);
+					this.exportOrderIds = this.exportOrderIds.concat(this.getChildrenByid(item.children));
 					allCount += item.releaseCount;
 					allMoney += item.allPrice;
 					exportData.push(item);
@@ -661,26 +657,8 @@ export default {
 				allPrice: allMoney
 			});
 			import("@/components/Export2Excel").then(excel => {
-				const tHeader = [
-					"订单编号",
-					"物料号",
-					"物料名称",
-					"规格型号",
-					"数量",
-					"单价",
-					"金额",
-					"交货日期"
-				];
-				const filterVal = [
-					"serial",
-					"materialNo",
-					"productName",
-					"model",
-					"releaseCount",
-					"price",
-					"allPrice",
-					"deliveryDate"
-				];
+				const tHeader = ["订单编号", "物料号", "物料名称", "规格型号", "数量", "单价", "金额", "交货日期"];
+				const filterVal = ["serial", "materialNo", "productName", "model", "releaseCount", "price", "allPrice", "deliveryDate"];
 				const data = this.formatJson(filterVal, excelData);
 				const now = moment(new Date()).format("YYYYMMDD");
 				excel.export_json_to_excel({
@@ -756,7 +734,7 @@ export default {
 					this.exportLoading = false;
 					this.crmOrderIds = [];
 					this.crmOrderList = [];
-					this.openDialogVisible = false;
+					//this.openDialogVisible = false;
 					this.submitSearch(true);
 				});
 			});
@@ -863,21 +841,13 @@ export default {
 		// 合并订单数量,根据类型，产品名称，物料号，价格
 		mergeOrder(lists) {
 			let listData = [];
-			//this.crmOrderIds = [];
-			//this.crmSerials = [];
 			lists.forEach(item => {
-				//this.crmOrderIds.push(item.id);
-				/* if(!this.crmSerials.includes(item.sourceserial)){
-							this.crmSerials.push(item.sourceserial);
-						} */
 				item.children = [];
-				item.storeInCount = item.store ? item.store.count : 0; // 默认库存 0
-
+				item.storeCount = item.store ? item.store.count : 0; // 默认库存 0
 				let dataIndex = _.findIndex(listData, {
 					productId: item.productId,
 					materialNo: item.materialNo,
 					price: item.price
-					//'deliveryDate':item.deliveryDate
 				});
 				if (!!~dataIndex) {
 					listData[dataIndex]["children"].push(item);
@@ -885,16 +855,10 @@ export default {
 					listData[dataIndex]["projectNo"] += "," + item.projectNo;
 					listData[dataIndex]["count"] += item.count;
 					listData[dataIndex]["releaseCount"] += item.count;
-					/* let releaseCount = listData[dataIndex]["count"] - item.storeInCount;
-					listData[dataIndex]["releaseCount"] =
-					  releaseCount < 0 ? 0 : releaseCount; */
 				} else {
 					item.children.push(_.cloneDeep(item));
 					item.serial = item.serial.includes("-") ? item.serial.split("-")[1] : item.serial;
 					item.releaseCount = item.count;
-
-					/* let releaseCount = item.count - item.storeInCount;
-					item.releaseCount = releaseCount < 0 ? 0 : releaseCount; */
 					listData.push(item);
 				}
 			});

@@ -51,7 +51,7 @@
                 <el-table-column prop="projectName" label="项目名称"/>
                 <el-table-column prop="productName" label="物料名称">
                      <template slot-scope="scope">
-                        <span>{{scope.row.productName}}</span><span>等...</span>
+                        <span>{{scope.row.order.productName}}</span><span>等...</span>
                     </template>
                 </el-table-column>
                 <el-table-column prop="total" label="订单总数" width="70">

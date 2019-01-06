@@ -24,7 +24,7 @@ export default {
             ]
         },
         {
-            "label":"订单",
+            "label":"计划/订单",
             "icon":"ils",
             "children":[
 				{"label":"订单导入", "icon": "list-ul", "path": "/order/import-buy"},
@@ -32,20 +32,16 @@ export default {
                 {"label":"采购订单管理", "icon":"list-ul", "path":"/order/buy-list"},
                 {"label":"生产制单", "icon":"list-ul", "path":"/order/sale"},
                 {"label":"生产订单管理", "icon":"list-ul", "path":"/order/sale-list"},
+                {"label":"计划单", "icon":"list-ul", "path":"/order/plane-list"},
+                {"label":"包装清单", "icon":"list-ul", "path":"/order/pake-list"},
             ]
         },
-        /* {
-            "label":"生产",
-            "icon":"retweet",
-            "children":[
-                {"label":"订单生产", "icon":"list-ul", "path":"/produce/on"}
-            ]
-        }, */
         {
             "label":"仓库",
             "icon":"recycle",
             "children":[
-                {"label":"产品入库", "icon":"list-ul", "path":"/store/in"},
+                {"label":"采购订单入库", "icon":"list-ul", "path":"/store/in-buy"},
+                {"label":"生产订单入库", "icon":"list-ul", "path":"/store/in-sale"},
                 {"label":"出库-送货", "icon":"list-ul", "path":"/store/out"},
                 {"label":"库存盘点", "icon":"list-ul", "path":"/store/calc"}
             ]

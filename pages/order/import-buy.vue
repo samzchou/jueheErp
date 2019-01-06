@@ -217,11 +217,7 @@ export default {
 					this.checkOut++;
 				}
 			});
-			console.log(
-				"this.uploadRepeatCount",
-				this.uploadRepeatCount,
-				this.checkOut
-			);
+			//console.log("this.uploadRepeatCount", this.uploadRepeatCount, this.checkOut);
 		},
 		// 新增产品后处理
 		finishedEdit(row) {
@@ -367,7 +363,7 @@ export default {
 						obj[head.value] = this._setValue(head.value, value);
 						//生产订单与采购订单区分
 						if (head.value == "productName") {
-							if (!value.includes("包装箱") && (value.includes("轿顶防护栏") || value.includes("线槽") || value.includes("挂钩") || value.includes("救援装置柜") )) {
+							if (!value.includes("包装箱") && (value.includes("轿顶防护栏") || value.includes("线槽") || value.includes("挂钩") || value.includes("救援装置柜"))) {
 								obj.typeId = 2;
 								obj.flowStateId = 5;
 							} else {
@@ -382,9 +378,7 @@ export default {
 						// 汇总订单号
 						if (head.value == "sourceserial") {
 							obj.dserial = value;
-							if (
-								_.findIndex(this.sourceserialList, { sourceserial: value }) < 0
-							) {
+							if (_.findIndex(this.sourceserialList, { sourceserial: value }) < 0) {
 								this.sourceserialList.push({ sourceserial: value });
 							}
 						}
@@ -402,6 +396,7 @@ export default {
 					materialNo: obj.materialNo,
 					typeId: obj.typeId
 				});
+				//debugger
 				if (product) {
 					let crm = _.find(this.setting.crm, { id: product.crmId });
 					if (_.findIndex(this.crmList, { id: product.crmId }) < 0) {
@@ -425,24 +420,14 @@ export default {
 				}
 				listData.push(obj);
 			});
-			console.log("this.sourceserialList", this.sourceserialList);
-			this.sourceData = _.orderBy(
-				listData,
-				["typeId", "deliveryDate"],
-				["asc", "asc"]
-			);
+			//console.log("this.sourceserialList", this.sourceserialList);
+			this.sourceData = _.orderBy(listData, ["typeId", "deliveryDate"], ["asc", "asc"]);
 			this.tableData = _.cloneDeep(this.sourceData);
 			this.uploadTotal = this.sourceData.length;
 			this.uploading = false;
 		},
 		checkModelNo(row) {
-			if (
-				_.find(this.modelNoList, {
-					sourceserial: row.sourceserial,
-					deliveryDate: row.deliveryDate,
-					materialNo: row.materialNo
-				})
-			) {
+			if (_.find(this.modelNoList, {sourceserial: row.sourceserial, deliveryDate: row.deliveryDate, materialNo: row.materialNo})) {
 				return true;
 			}
 			return false;
@@ -455,32 +440,22 @@ export default {
 		},
 		saveTable() {
 			if (this.uploadRepeatCount > 0) {
-				this.$alert(
-					"有" +
-					this.uploadRepeatCount +
-					"个重复的梯号和项目号的订单，请清理后再提交保存！"
-				);
+				this.$alert("有" + this.uploadRepeatCount + "个重复的梯号和项目号的订单，请清理后再提交保存！");
 				return;
 			}
 			// 检查订单的完善
 			let checkNotIn = _.filter(this.sourceData, { notin: true });
 			if (checkNotIn.length) {
-				this.$alert(
-					"提交订单中有" +
-					checkNotIn.length +
-					"个无法匹配元数据的产品，请处理后再提交保存！"
-				);
+				this.$alert("提交订单中有" + checkNotIn.length + "个无法匹配元数据的产品，请处理后再提交保存！");
 				return;
 			}
 			this.$confirm("确定导入订单?", "提示", {
 				confirmButtonText: "确定",
 				cancelButtonText: "取消",
 				type: "warning"
-			})
-				.then(() => {
-					this.saveData();
-				})
-				.catch(() => { });
+			}).then(() => {
+				this.saveData();
+			}).catch(() => { });
 		},
 		_setValue(key, value) {
 			switch (key) {
@@ -517,7 +492,7 @@ export default {
 				delete item.index, delete item.metaprice;
 				dataList.push(item);
 			});
-			console.log("saveData", dataList, this.sourceData);
+			//console.log("saveData", dataList, this.sourceData);
 			let condition = {
 				type: "addPatch",
 				collectionName: "order",
@@ -552,7 +527,7 @@ export default {
 				}
 			};
 			let result = await this.$axios.$post("mock/db", { data: params });
-			console.log("getModelNoList", result);
+			//console.log("getModelNoList", result);
 			this.modelNoList = result;
 		},
 		async _getLastId() {
@@ -564,7 +539,7 @@ export default {
 			};
 			let result = await this.$axios.$post("mock/db", { data: condition });
 			if (result) {
-				console.log("lastId", result);
+				//console.log("lastId", result);
 				this.lastId = result;
 			}
 			let uploadCondition = {
@@ -577,7 +552,7 @@ export default {
 				data: uploadCondition
 			});
 			if (uploadResult) {
-				console.log("lastUploadId", uploadResult);
+				//console.log("lastUploadId", uploadResult);
 				this.lastUploadId = uploadResult;
 			}
 		},
@@ -607,77 +582,77 @@ export default {
 
 <style lang="scss" scoped>
 .upload-container {
-	display: flex;
-	align-item: center;
+  display: flex;
+  align-item: center;
 }
 .page-container {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .row-list {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	&.warning {
-		color: red;
-	}
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  &.warning {
+    color: red;
+  }
 }
 /deep/ .el-table {
-	.cell {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		> i {
-			font-size: 14px;
-			color: #eee;
-			margin-right: 5px;
-			&.payed {
-				color: green;
-			}
-		}
-		.el-button {
-			overflow: hidden;
-			text-overflow: ellipsis;
-			white-space: nowrap;
-			max-width: 100%;
-		}
-	}
-	.warning {
-		color: red;
-	}
-	/deep/ .el-table__expanded-cell {
-		padding: 20px;
-		.el-row {
-			border-bottom: 1px solid #ddd;
-			&:last-child {
-				border: 0;
-			}
+  .cell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    > i {
+      font-size: 14px;
+      color: #eee;
+      margin-right: 5px;
+      &.payed {
+        color: green;
+      }
+    }
+    .el-button {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+  }
+  .warning {
+    color: red;
+  }
+  /deep/ .el-table__expanded-cell {
+    padding: 20px;
+    .el-row {
+      border-bottom: 1px solid #ddd;
+      &:last-child {
+        border: 0;
+      }
 
-			.el-col {
-				overflow: hidden;
-				text-overflow: ellipsis;
-				white-space: nowrap;
-				line-height: 25px;
+      .el-col {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 25px;
 
-				> span {
-					&:first-child {
-						width: 80px;
-						display: inline-block;
-						font-weight: bold;
-					}
-				}
-			}
-		}
-		.el-form-item {
-			width: 32%;
-			margin: 0;
-			.el-form-item__label {
-				font-weight: bold;
-			}
-		}
-	}
+        > span {
+          &:first-child {
+            width: 80px;
+            display: inline-block;
+            font-weight: bold;
+          }
+        }
+      }
+    }
+    .el-form-item {
+      width: 32%;
+      margin: 0;
+      .el-form-item__label {
+        font-weight: bold;
+      }
+    }
+  }
 }
 </style>
 

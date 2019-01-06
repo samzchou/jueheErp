@@ -250,14 +250,14 @@
 							<div v-else>{{scope.row.releaseCount}}</div>
 						</template>
 					</el-table-column>
-					<el-table-column prop="price" label="单价" width="80px" />
-					<el-table-column prop="allPrice" label="合计" width="100px">
+					<el-table-column prop="price" label="单价" width="80" />
+					<el-table-column prop="allPrice" label="合计" width="100">
 						<template slot-scope="scope">
 							<span v-if="scope.$index<crmOrderList.length-1">{{parseReleaseMoney(scope.row)}}</span>
 							<span v-else>{{scope.row.allPrice | currency}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="deliveryDate" label="交付日期" width="100px">
+					<el-table-column prop="deliveryDate" label="交付日期" width="100">
 						<template slot-scope="scope">
 							<span>{{parseDate(scope.row.deliveryDate)}}</span>
 						</template>
@@ -703,22 +703,8 @@ export default {
 			});
 			this.exportLoading = true;
 			import("@/components/Export2Excel").then(excel => {
-				const tHeader = [
-					"型号/物料号",
-					"产品名称",
-					"交付日期",
-					"数量",
-					"单价",
-					"合计"
-				];
-				const filterVal = [
-					"materialNo",
-					"productName",
-					"deliveryDate",
-					"releaseCount",
-					"price",
-					"allPrice"
-				];
+				const tHeader = ["型号/物料号", "产品名称", "交付日期", "数量", "单价", "合计"];
+				const filterVal = ["materialNo", "productName", "deliveryDate", "releaseCount", "price", "allPrice"];
 				tHeader.unshift("系统订单号");
 				filterVal.unshift("serial");
 
@@ -731,7 +717,6 @@ export default {
 					autoWidth: true,
 					bookType: "xlsx"
 				});
-				//this.exportOrders = this.exportOrders.filter(item=>{return item.releaseCount>0});
 				this.updateOrderByCrm(exportData);
 			});
 		},
@@ -799,7 +784,7 @@ export default {
 					});
 				}
 			});
-			console.log("storeData", storeData);
+			//console.log("storeData", storeData);
 			this.$axios.$post("mock/db", { data: cn }).then(result => {
 				// 注意此处需保存数据到仓库中
 				let condition = {
@@ -907,7 +892,6 @@ export default {
 					productId: item.productId,
 					materialNo: item.materialNo,
 					price: item.price
-					//deliveryDate:item.deliveryDate
 				});
 				if (!!~dataIndex) {
 					listData[dataIndex]["children"].push(item);
@@ -915,18 +899,10 @@ export default {
 					listData[dataIndex]["projectNo"] += "," + item.projectNo;
 					listData[dataIndex]["count"] += item.count;
 					listData[dataIndex]["releaseCount"] += item.count;
-					/* let releaseCount = listData[dataIndex]["count"] - item.storeInCount;
-					listData[dataIndex]["releaseCount"] =
-						releaseCount < 0 ? 0 : releaseCount; */
 				} else {
 					item.children.push(_.cloneDeep(item));
-					item.serial = item.serial.includes("-")
-						? item.serial.split("-")[1]
-						: item.serial;
-					/* let releaseCount = item.count - item.storeInCount;
-					item.releaseCount = releaseCount < 0 ? 0 : releaseCount; */
+					item.serial = item.serial.includes("-") ? item.serial.split("-")[1] : item.serial;
 					item.releaseCount = item.count;
-
 					listData.push(item);
 				}
 			});
