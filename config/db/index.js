@@ -537,7 +537,12 @@ module.exports = {
                 type: Number,
                 default:new Date().getTime(),
 				label:'更新日期'
-            }
+            },
+			updateByUser:{
+                type: String,
+                default:'',
+				label:'操作人'
+            },
         },
         /*----------订单上传原始数据，暂废弃-----------*/
         orderUpload : {

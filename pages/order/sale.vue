@@ -250,14 +250,14 @@
 							<div v-else>{{scope.row.releaseCount}}</div>
 						</template>
 					</el-table-column>
-					<el-table-column prop="price" label="单价" width="80px" />
-					<el-table-column prop="allPrice" label="合计" width="100px">
+					<el-table-column prop="price" label="单价" width="80" />
+					<el-table-column prop="allPrice" label="合计" width="100">
 						<template slot-scope="scope">
 							<span v-if="scope.$index<crmOrderList.length-1">{{parseReleaseMoney(scope.row)}}</span>
 							<span v-else>{{scope.row.allPrice | currency}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="deliveryDate" label="交付日期" width="100px">
+					<el-table-column prop="deliveryDate" label="交付日期" width="100">
 						<template slot-scope="scope">
 							<span>{{parseDate(scope.row.deliveryDate)}}</span>
 						</template>
@@ -493,7 +493,7 @@ export default {
 			return s.length ? s[1] : serial;
 		},
 		makeOrder(row) {
-			console.log("row", row);
+			//console.log("row", row);
 			if (this.needSource) {
 				this.showSourceOrder(row);
 				return;
@@ -549,74 +549,58 @@ export default {
 		},
 		// 修改蒂森订单的交货日期
 		updateDeliveryDate(dataList) {
-			this.$confirm(
-				"此操作将修改订单号为:" +
-				this.detailItem.sourceserial +
-				"所有数据的交货日期(包括采购订单), 是否继续?",
-				"提示",
-				{
-					confirmButtonText: "确定",
-					cancelButtonText: "取消",
-					type: "warning"
-				}
-			)
-				.then(() => {
-					let condition = {
-						type: "updateData",
-						collectionName: "order",
-						multi: true,
-						updateDate: true,
-						condition: { sourceserial: this.detailItem.sourceserial },
-						data: { deliveryDate: this.updateForm.deliveryDate }
-					};
-					this.$axios.$post("mock/db", { data: condition }).then(result => {
-						this.gridList.forEach(item => {
-							if (item.sourceserial == this.detailItem.sourceserial) {
-								item.deliveryDate = this.updateForm.deliveryDate;
-							}
-						});
-						dataList.forEach(item => {
-							if (item.deliveryDate) {
-								item.deliveryDate = this.updateForm.deliveryDate;
-							}
-						});
+			this.$confirm("此操作将修改订单号为:" + this.detailItem.sourceserial + "所有数据的交货日期(包括采购订单), 是否继续?", "提示", {
+				confirmButtonText: "确定",
+				cancelButtonText: "取消",
+				type: "warning"
+			}).then(() => {
+				let condition = {
+					type: "updateData",
+					collectionName: "order",
+					multi: true,
+					updateDate: true,
+					condition: { sourceserial: this.detailItem.sourceserial },
+					data: { deliveryDate: this.updateForm.deliveryDate }
+				};
+				this.$axios.$post("mock/db", { data: condition }).then(result => {
+					this.gridList.forEach(item => {
+						if (item.sourceserial == this.detailItem.sourceserial) {
+							item.deliveryDate = this.updateForm.deliveryDate;
+						}
 					});
-				})
-				.catch();
+					dataList.forEach(item => {
+						if (item.deliveryDate) {
+							item.deliveryDate = this.updateForm.deliveryDate;
+						}
+					});
+				});
+			}).catch();
 		},
 		// 删除蒂森订单
 		handleDeleteBySerial(item) {
-			this.$confirm(
-				"此操作将删除订单号为:" +
-				(this.needSource ? item.sourceserial : item.serial) +
-				"所有数据(包括采购订单), 是否继续?",
-				"特别提示：请谨慎操作删除",
-				{
-					confirmButtonText: "确定",
-					cancelButtonText: "取消",
-					type: "warning"
+			this.$confirm("此操作将删除订单号为:" + (this.needSource ? item.sourceserial : item.serial) + "所有数据(包括采购订单), 是否继续?", "特别提示：请谨慎操作删除", {
+				confirmButtonText: "确定",
+				cancelButtonText: "取消",
+				type: "warning"
+			}).then(() => {
+				let condition = {
+					type: "removeData",
+					collectionName: "order",
+					data: { serial: item.serial }
+				};
+				if (this.needSource) {
+					condition.data = { sourceserial: item.sourceserial };
 				}
-			)
-				.then(() => {
-					let condition = {
-						type: "removeData",
-						collectionName: "order",
-						data: { serial: item.serial }
-					};
-					if (this.needSource) {
-						condition.data = { sourceserial: item.sourceserial };
-					}
-					this.$axios.$post("mock/db", { data: condition }).then(result => {
-						this.$message({
-							type: "success",
-							message: "删除成功!"
-						});
-						this.submitSearch(true);
-						this.openSourceVisible = false;
-						this.detailItem = null;
+				this.$axios.$post("mock/db", { data: condition }).then(result => {
+					this.$message({
+						type: "success",
+						message: "删除成功!"
 					});
-				})
-				.catch();
+					this.submitSearch(true);
+					this.openSourceVisible = false;
+					this.detailItem = null;
+				});
+			}).catch();
 		},
 		// 显示原始订单列表
 		showSourceOrder(row) {
@@ -626,9 +610,7 @@ export default {
 			this.sourceData = [];
 			let serial = row.serial.split("-");
 			this.currSerial = this.needSource ? row.sourceserial : serial[1];
-			let match = this.needSource
-				? { sourceserial: row.sourceserial }
-				: { seriral: row.serial };
+            let match = this.needSource ? { sourceserial: row.sourceserial } : { seriral: row.serial };
 			let condition = {
 				type: "aggregate",
 				collectionName: "order",
@@ -654,8 +636,7 @@ export default {
 				]
 			};
 			this.$axios.$post("mock/db", { data: condition }).then(result => {
-				let list = [],
-					allcount = 0;
+				let list = [], allcount = 0;
 				list = this.mergeOrder(result.list);
 				console.log("listData", list);
 				list.forEach(item => {
@@ -703,22 +684,8 @@ export default {
 			});
 			this.exportLoading = true;
 			import("@/components/Export2Excel").then(excel => {
-				const tHeader = [
-					"型号/物料号",
-					"产品名称",
-					"交付日期",
-					"数量",
-					"单价",
-					"合计"
-				];
-				const filterVal = [
-					"materialNo",
-					"productName",
-					"deliveryDate",
-					"releaseCount",
-					"price",
-					"allPrice"
-				];
+				const tHeader = ["型号/物料号", "产品名称", "交付日期", "数量", "单价", "合计"];
+				const filterVal = ["materialNo", "productName", "deliveryDate", "releaseCount", "price", "allPrice"];
 				tHeader.unshift("系统订单号");
 				filterVal.unshift("serial");
 
@@ -731,7 +698,6 @@ export default {
 					autoWidth: true,
 					bookType: "xlsx"
 				});
-				//this.exportOrders = this.exportOrders.filter(item=>{return item.releaseCount>0});
 				this.updateOrderByCrm(exportData);
 			});
 		},
@@ -799,7 +765,8 @@ export default {
 					});
 				}
 			});
-			console.log("storeData", storeData);
+			//debugger
+            console.log("storeData", storeData);
 			this.$axios.$post("mock/db", { data: cn }).then(result => {
 				// 注意此处需保存数据到仓库中
 				let condition = {
@@ -807,6 +774,7 @@ export default {
 					collectionName: "storeIn",
 					data: storeData
 				};
+				//debugger
 				this.$axios.$post("mock/db", { data: condition }).then(result => {
 					this.openSourceVisible = false;
 					this.exportLoading = false;
@@ -831,7 +799,8 @@ export default {
 				let match = { crmId: row.crmId, flowStateId: row.flowStateId };
 				if (!this.needSource) {
 					match.id = row.id;
-				}
+                }
+                
 				this.listOrderByCrm(match);
 			} else {
 				this.dialogSearch();
@@ -907,7 +876,6 @@ export default {
 					productId: item.productId,
 					materialNo: item.materialNo,
 					price: item.price
-					//deliveryDate:item.deliveryDate
 				});
 				if (!!~dataIndex) {
 					listData[dataIndex]["children"].push(item);
@@ -915,18 +883,10 @@ export default {
 					listData[dataIndex]["projectNo"] += "," + item.projectNo;
 					listData[dataIndex]["count"] += item.count;
 					listData[dataIndex]["releaseCount"] += item.count;
-					/* let releaseCount = listData[dataIndex]["count"] - item.storeInCount;
-					listData[dataIndex]["releaseCount"] =
-						releaseCount < 0 ? 0 : releaseCount; */
 				} else {
 					item.children.push(_.cloneDeep(item));
-					item.serial = item.serial.includes("-")
-						? item.serial.split("-")[1]
-						: item.serial;
-					/* let releaseCount = item.count - item.storeInCount;
-					item.releaseCount = releaseCount < 0 ? 0 : releaseCount; */
+					item.serial = item.serial.includes("-") ? item.serial.split("-")[1] : item.serial;
 					item.releaseCount = item.count;
-
 					listData.push(item);
 				}
 			});
@@ -1089,31 +1049,29 @@ export default {
 				confirmButtonText: "确定",
 				cancelButtonText: "取消",
 				type: "warning"
-			})
-				.then(() => {
-					let condition = {
-						type: "removeData",
-						collectionName: "order",
-						data: { id: row.id }
-					};
-					this.$axios.$post("mock/db", { data: condition }).then(result => {
-						this.$message({
-							type: "success",
-							message: "删除成功!"
-						});
-						if (this.needSource) {
-							let index = _.findIndex(dataList, { id: row.id });
-							dataList.splice(index, 1);
-							if (dataList.length == 1) {
-								dataList = [];
-							} else {
-								this.checkReleaseCount(null, dataList);
-							}
-						}
-						this.submitSearch(true);
+			}).then(() => {
+				let condition = {
+					type: "removeData",
+					collectionName: "order",
+					data: { id: row.id }
+				};
+				this.$axios.$post("mock/db", { data: condition }).then(result => {
+					this.$message({
+						type: "success",
+						message: "删除成功!"
 					});
-				})
-				.catch();
+					if (this.needSource) {
+						let index = _.findIndex(dataList, { id: row.id });
+						dataList.splice(index, 1);
+						if (dataList.length == 1) {
+							dataList = [];
+						} else {
+							this.checkReleaseCount(null, dataList);
+						}
+					}
+					this.submitSearch(true);
+				});
+			}).catch();
 		},
 		parseFlow(id) {
 			if (!id) return "";
@@ -1238,7 +1196,7 @@ export default {
 					{ $match: _.merge({ typeId: 2, flowStateId: 5 }, match) },
 					{
 						$group: {
-							_id: groupId, // 按字段分组
+							_id: groupId, // 按订单号字段分组
 							id: { $first: "$id" },
 							typeId: { $first: "$typeId" },
 							ptypeId: { $first: "$ptypeId" },

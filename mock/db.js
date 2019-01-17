@@ -54,7 +54,6 @@ const dbFun = {
     async aggregate(params){
         const tn = params.collectionName;
         let condition = params.data || {};
-        //console.log('aggregate condition', params.aggregate);
         let total = await mongoDB[tn].find(condition).countDocuments();
         let list = await mongoDB[tn].aggregate(params.aggregate);
         return {
@@ -67,14 +66,24 @@ const dbFun = {
     },
 	async groupList(params){
         const tn = params.collectionName;
+		let total = 0;
         let condition = params.data || {};
+		let countTotal = await mongoDB[tn].distinct(params.distinct, condition);
+		
         //console.log('aggregate condition', params.aggregate);
-        let total = await mongoDB[tn].distinct(params.distinct, condition);
-        let list = await mongoDB[tn].aggregate(params.aggregate);
+        
+		if(params.groupCount && countTotal.length){
+			let gtotal = await mongoDB[tn].aggregate(params.groupCount);
+			total = gtotal[0]['total'];
+			console.log('total', gtotal[0]['total'])
+		}else{
+			total = countTotal.length;
+		}
+		let list = await mongoDB[tn].aggregate(params.aggregate);
         return {
             success:true,
             response:{
-                total:total.length,
+                total:total,
                 list : list
             }
         }
@@ -226,8 +235,7 @@ const dbFun = {
         for(let i=0; i<data.length; i++){
             let item = data[i];
             if(item.storeId){ // 更新库存量
-                let res = await mongoDB[tn].findOneAndUpdate({'id':item.storeId}, {'$inc':{incount:item.incount},'updateByUser':item.updateByUser,'updateDate':new Date().getTime()});
-                //console.log('addStore', res)
+                let res = await mongoDB[tn].findOneAndUpdate({'id':item.storeId}, {'$inc':{count:item.incount,incount:item.incount},'updateByUser':item.updateByUser,'updateDate':new Date().getTime()});
             }else{
                 await mongoDB[tn].create(item);
                 await mongoDB.counters.findOneAndUpdate({'model':tn}, {$inc:{count:1}});
@@ -285,6 +293,62 @@ const dbFun = {
             msgDesc:result?'数据更新成功':'数据更新失败'
         }
     },
+	/*--------批量出库--------*/
+    async outStore(params){
+        const tn = params.collectionName;
+		return new Promise((resolve, reject)=>{
+			//mongoDB[tn].updateMany(params.data, params.set).then(res=>{
+			mongoDB[tn].updateMany(params.data, params.set).then(res=>{
+				let aggregates = [
+					{"$match": params.data},
+					{
+						$lookup:{
+							from: "store",
+							localField: "materialNo", //materialNo
+							foreignField: "materialNo", //materialNo
+							as: "store"
+						}
+					},
+					{
+						$unwind: { // 拆分子数组
+							path: "$store",
+							preserveNullAndEmptyArrays: true // 空的数组也拆分
+						}
+					},
+					{
+						$group:{
+							_id:{ "id":"$id"},
+							"id":{"$first" :"$id"},
+						   "materialNo":{"$first" :"$materialNo"},
+						   "count":{"$first" :"$count"},
+						   "storeId":{"$first" :"$store.id"},
+						   "storecount":{"$first" :"$store.count"},
+						   "atcount":{"$first" :"$store.atcount"},
+						   "incount":{"$first" :"$store.incount"},
+						   "outcount":{"$first" :"$store.outcount"}
+						}
+					},
+				];
+				mongoDB[tn].aggregate(aggregates).then(result=>{
+					//console.log('outStore',result);
+					for(let i=0; i<result.length; i++){
+						let item = result[i];
+						mongoDB.store.updateOne({id:item.storeId},{$inc:{count:-item.count,outcount:item.count},$set:{updateByUser:params.user,updateDate:new Date().getTime()}},{ upsert: true }).then(rs=>{
+							//console.log('updateOne', rs);
+						})
+					}
+					resolve( {
+						success:true,
+						response:result
+					})
+				});
+				
+			})
+			
+		});
+		
+    },
+	
     /*--------列出所有订单的指定字段列-------*/
     async getColumns(params){
         const tn = params.collectionName;

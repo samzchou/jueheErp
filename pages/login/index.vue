@@ -28,7 +28,7 @@
 <script>
 export default {
     async asyncData({ app, route }) {
-        let prev_path = route.query.prev_path || '/home';
+        let prev_path = route.query.prev_path || '/';
         return {
             prev_path
         };

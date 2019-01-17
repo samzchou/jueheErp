@@ -17,14 +17,9 @@
 					<el-form-item label="系统订单号：" prop="serial">
 						<el-input v-model="searchForm.serial" clearable style="width:150px" />
 					</el-form-item>
-					<el-form-item label="业务类型：" prop="typeId">
-						<el-select v-model="searchForm.typeId" placeholder="请选择" style="width:100px" v-if="setting" @change="submitSearch">
-							<el-option v-for="typeItem in setting.type" :key="typeItem.id" :label="typeItem.name" :value="typeItem.id" />
-						</el-select>
-					</el-form-item>
-					<el-form-item :label="searchForm.typeId==1?'供应商：':'客户：'" prop="crmId" v-if="setting">
+					<el-form-item label="客户：" prop="crmId" v-if="setting">
 						<el-select v-model="searchForm.crmId" placeholder="请选择" clearable filterable>
-							<el-option v-for="crm in setting.crm.filter(o=>o.typeId==searchForm.typeId)" :key="crm.id" :label="crm.name" :value="crm.id" />
+							<el-option v-for="crm in setting.crm.filter(o=>o.typeId==2)" :key="crm.id" :label="crm.name" :value="crm.id" />
 						</el-select>
 					</el-form-item>
 					<el-form-item label="产品名称：" prop="productName">
@@ -53,7 +48,7 @@
 						<span :title="scope.row.sourceserial">{{scope.row.sourceserial}}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="crmName" :label="searchForm.typeId==1?'供应商':'客户'" width="250px">
+				<el-table-column prop="crmName" label="客户" width="250px">
 					<template slot-scope="scope">
 						<el-button title="生产订单汇总" type="text" @click.stop="showDetail(scope.row)">{{scope.row.crmName}}</el-button>
 					</template>
@@ -87,7 +82,7 @@
 				<el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total" />
 			</div>
 		</div>
-		<el-dialog title="仓库入库清单" append-to-body :visible.sync="openOrderVisible" width="85%">
+		<el-dialog title="生产订单仓库入库清单" append-to-body :visible.sync="openOrderVisible" width="85%">
 			<div class="order-title">
 				<span v-if="currItem">客户：{{currItem.crmName}}，地址：{{currItem.address}}，联系人：{{currItem.contactName}}，电话：{{currItem.contactPhone}}</span>
 			</div>
@@ -142,13 +137,13 @@
 			</div>
 			<div class="btns" v-if="crmOrderList.length">
 				<div>
-					<span>合计：共{{queryInTotal}}个采购订单；</span>
+					<span>合计：共{{queryInTotal}}个生产订单；</span>
 					<span v-if="!currItem.isAdded">请勾选需要入库的订单；已选个{{selectOrders.length}}订单</span>
 					<span v-else>订单已全部入库</span>
 				</div>
 				<div>
 					<el-pagination size="mini" @size-change="handleSizeOrder" @current-change="handleCurrentOrder" :current-page.sync="queryIn.page" :page-sizes="[3,20, 50, 100, 200]" :page-size="queryIn.pagesize" layout="total,sizes,prev,pager,next" :total="queryInTotal" />
-					<el-button v-if="!currItem.isAdded" type="success" @click="inOrder" icon="el-icon-document" :loading="inLoading">{{searchForm.typeId==1?'采购':'生产'}}订单入库</el-button>
+					<el-button v-if="!currItem.isAdded" type="success" @click="inOrder" icon="el-icon-document" :loading="inLoading">生产订单入库</el-button>
 					<el-button @click="openOrderVisible=false">取消退出</el-button>
 				</div>
 			</div>
@@ -179,7 +174,7 @@ export default {
 				productName: "",
 				crmId: "",
 				materialNo: "",
-				typeId: 1,
+				typeId: 2,
 				deliveryDate: ""
 			},
 			searchLoading: false,
@@ -207,12 +202,11 @@ export default {
 		},
 		// 提交入库
 		inOrder() {
-			//console.log(this.selectOrders);
-			let storeIds = [],
-				storeData = [];
+			let storeIds = [], storeData = [], orderIds = [];
 			this.selectOrders.forEach((item, index) => {
 				if (item.id) {
 					storeIds.push(item.id);
+					orderIds = orderIds.concat(item.orderIds);
 					let obj = {
 						typeId: item.typeId,
 						storeTypeId: 1,
@@ -221,7 +215,8 @@ export default {
 						productName: item.productName,
 						price: item.price,
 						util: item.util,
-						incount: item.incount,
+                        count: item.incount,
+                        incount: item.incount,
 						atcount: item.incount,
 						createByUser: this.$store.state.user.name,
 						updateByUser: this.$store.state.user.name
@@ -276,8 +271,23 @@ export default {
 						this.inLoading = false;
 						this.submitSearch(true);
 					});
+					// 更新原始订单流程状态
+					let orderCn = {
+						type: "updatePatch",
+						collectionName: "order",
+						notNotice: true,
+						param: { id: { $in: orderIds } },
+						set: {
+							$set: {
+								flowStateId: 8
+							}
+						}
+					}
+					this.$axios.$post("mock/db", { data: orderCn });
 				});
-			}).catch(() => { });
+			}).catch(() => {
+                this.inLoading = false;
+             });
 		},
 		handleSizeOrder(val) {
 			this.queryIn.pagesize = val;
@@ -300,7 +310,8 @@ export default {
 			let params = {
 				crmId: row.crmId,
 				isAdded: row.isAdded,
-				typeId: row.typeId
+                typeId: row.typeId,
+                updateDate: row.updateDate
 			}
 			// 查询供应商的具体订单
 			let condition = {
@@ -411,17 +422,24 @@ export default {
 			this.submitSearch(true);
 		},
 		async getList(match = {}) {
-			this.listLoading = true;
+            this.listLoading = true;
+            match = _.merge({ typeId: 2, isAdded: this.isAdded }, match);
+            let groupId = { crmId: "$crmId", updateDate: "$updateDate" }
 			let condition = {
 				type: "groupList",
 				collectionName: "storeIn",
-				data: _.merge({ typeId: 1, isAdded: this.isAdded }, match),
-				distinct: "crmId",
+				data: _.merge({ typeId: 2, isAdded: this.isAdded }, match),
+                distinct: "crmId",
+                groupCount: [
+					{ $match: match },
+					{ $group: { _id: groupId } },
+					{ $group: { _id: null, total: { $sum: 1 } } }
+				],
 				aggregate: [
-					{ $match: _.merge({ typeId: 1, isAdded: this.isAdded }, match) },
+					{ $match: match },
 					{
 						$group: {
-							_id: { crmId: "$crmId", serial: "$serial" }, // 按字段分组
+							_id: groupId, // 按字段分组 { crmId: "$crmId", serial: "$serial" }, 
 							id: { $first: "$id" },
 							isAdded: { $first: "$isAdded" },
 							orderIds: { $first: "$orderIds" },
@@ -430,7 +448,8 @@ export default {
 							crmId: { $first: "$crmId" },
 							crmName: { $first: "$crmName" },
 							productName: { $first: "$productName" },
-							deliveryDate: { $first: "$deliveryDate" },
+                            deliveryDate: { $first: "$deliveryDate" },
+                            updateDate: { $first: "$updateDate" },
 							total: { $sum: 1 }
 						}
 					},
