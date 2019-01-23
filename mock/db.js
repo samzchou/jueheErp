@@ -69,13 +69,11 @@ const dbFun = {
 		let total = 0;
         let condition = params.data || {};
 		let countTotal = await mongoDB[tn].distinct(params.distinct, condition);
-		
-        //console.log('aggregate condition', params.aggregate);
         
 		if(params.groupCount && countTotal.length){
 			let gtotal = await mongoDB[tn].aggregate(params.groupCount);
 			total = gtotal[0]['total'];
-			console.log('total', gtotal[0]['total'])
+			//console.log('total', gtotal[0]['total'])
 		}else{
 			total = countTotal.length;
 		}
@@ -96,7 +94,7 @@ const dbFun = {
 		let ed = new Date(now.setDate(now.getDate() + 6));
         let condition = {'typeId':1,'flowStateId':1,'deliveryDate':{'$gte':sd.getTime(),'$lte':ed.getTime()}};
 
-		console.log('listOrderByDate',condition);
+		//console.log('listOrderByDate',condition);
 
         let total = await mongoDB['order'].find(condition).countDocuments();
         let list = await mongoDB['order'].find(condition);
@@ -181,7 +179,8 @@ const dbFun = {
         //console.log('updatePatch', params, result);
 		let response = {
 			success:result.n?true:false,
-            msgDesc:result.n?'数据更新成功':'数据更新失败'
+            msgDesc:result.n?'数据更新成功':'数据更新失败',
+			response:result
 		}
 		if(params.notNotice && response.success){
 			delete response.msgDesc;
@@ -297,7 +296,6 @@ const dbFun = {
     async outStore(params){
         const tn = params.collectionName;
 		return new Promise((resolve, reject)=>{
-			//mongoDB[tn].updateMany(params.data, params.set).then(res=>{
 			mongoDB[tn].updateMany(params.data, params.set).then(res=>{
 				let aggregates = [
 					{"$match": params.data},
@@ -330,7 +328,6 @@ const dbFun = {
 					},
 				];
 				mongoDB[tn].aggregate(aggregates).then(result=>{
-					//console.log('outStore',result);
 					for(let i=0; i<result.length; i++){
 						let item = result[i];
 						mongoDB.store.updateOne({id:item.storeId},{$inc:{count:-item.count,outcount:item.count},$set:{updateByUser:params.user,updateDate:new Date().getTime()}},{ upsert: true }).then(rs=>{

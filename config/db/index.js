@@ -683,6 +683,11 @@ module.exports = {
                 default:[],
 				label:'所有子订单ID'
             },
+			orderSerial:{
+                type:String,
+                default:'',
+				label:'制单订单号'
+            },
             serial:{
                 type:String,
                 default:'',
@@ -751,7 +756,12 @@ module.exports = {
             deliveryDate:{
                 type: Number,
                 default:new Date().getTime(),
-				label:'交付日期'
+				label:'原始订单交付日期'
+            },
+			finishedDate:{
+                type: Number,
+                default:new Date().getTime(),
+				label:'订单实际交付日期'
             },
             createByUser:{
                 type: String,

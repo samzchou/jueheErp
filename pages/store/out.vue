@@ -97,6 +97,23 @@
 				</el-row>
 			</div>
 			<el-table ref="exportTable" :data="orderList" border fit highlight-current-row stripe size="mini" max-height="350" style="width:100%">
+                <el-table-column type="expand">
+                    <template slot-scope="scope">
+                        <el-row :gutter="20" v-for="(item,idx) in scope.row.result" :key="item.id" v-if="scope.row.result && scope.row.result.length">
+                            <el-col :span="6" :title="item.sourceserial">
+                                <span style="width:30px">{{idx+1}}、</span>
+                                <span>蒂森订单号：{{item.sourceserial}}</span>
+                                <span>ID：{{item.id}}</span>
+                            </el-col>
+                            <el-col :span="4" :title="item.projectNo">项目号：{{item.projectNo}}</el-col>
+                            <el-col :span="4">物料号：{{item.materialNo}}</el-col>
+                            <el-col :span="4">物料描述：{{item.productName}}</el-col>
+                            <el-col :span="3">订单量：{{item.count}}</el-col>
+                            <el-col :span="3">状态：{{parseFlow(item.flowStateId)}}</el-col>
+                        </el-row>
+                        <!-- <div>{{scope.row.result}}</div> -->
+                    </template>
+                </el-table-column>
 				<el-table-column type="index" width="50" align="center"/>
 				<el-table-column prop="projectName" label="项目名称"/>
                 <el-table-column prop="projectNo" label="项目号" width="120"/>
@@ -157,6 +174,11 @@ export default {
         }
     },
     methods:{
+        parseFlow(id) {
+			if (!id) return "";
+			let flow = _.find(this.setting.flowState, { id: id });
+			return flow ? flow.name : "";
+		},
 		setOrderParams(flag){
 			this.needSource = flag;
 			this.query.page = 1;
@@ -247,7 +269,7 @@ export default {
 		async showDetail(row){
 			this.currItem = row;
 			this.openDialogVisible = true;
-            //console.log('showDetail', row);
+            console.log('showDetail', row);
             this.orderList = [row];
             this.updateIds = this.setUpdateIds(this.orderList);
             this.isCanExport = row.finished;
