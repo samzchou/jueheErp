@@ -415,7 +415,7 @@ export default {
             this.listLoading = false;
 		},
 		checkFinished(row){
-			let countFinish = 0;
+            let countFinish = 0;
 			row.result.forEach(item=>{
 				if([3,8].includes(item.flowStateId)){
 					countFinish++;

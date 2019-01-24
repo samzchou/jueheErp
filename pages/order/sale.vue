@@ -705,7 +705,7 @@ export default {
             let exportData = [], allCount = 0, allMoney = 0;
             this.orderSerial = this.setOrderSerial();
 			this.exportOrders.forEach(item => {
-				if (item && item.id && item.releaseCount) {
+				if (item && item.id && item.releaseCount>=0) {
 					this.exportOrderIds = this.exportOrderIds.concat(
 						this.getChildrenByid(item.children)
 					);
