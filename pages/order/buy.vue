@@ -658,7 +658,8 @@ export default {
 		exportOrder() {
             this.exportOrderIds = [];
             this.orderSerial = this.setOrderSerial();
-			let exportData = [], allCount = 0, allMoney = 0;
+            let exportData = [], allCount = 0, allMoney = 0;
+            
 			this.exportOrders.forEach(item => {
 				if (item && item.id && item.releaseCount) {
                     item.orderSerial = this.orderSerial;
@@ -906,7 +907,7 @@ export default {
 					listData.push(item);
 				}
             });
-            console.log('listData', listData)
+            //console.log('listData', listData)
 			return listData;
         },
         uionStore(storeInArr){

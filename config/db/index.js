@@ -887,7 +887,12 @@ module.exports = {
                 default:[],
 				label:'storeIn订单ID'
             },
-            serial:{
+            orderSerial:{
+                type:String,
+                default:'',
+				label:'制单号'
+            },
+			serial:{
                 type:String,
                 default:'',
 				label:'系统订单号'
