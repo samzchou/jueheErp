@@ -42,8 +42,10 @@ export default {
             "children":[
                 {"label":"采购订单入库", "icon":"list-ul", "path":"/store/in-buy"},
                 {"label":"生产订单入库", "icon":"list-ul", "path":"/store/in-sale"},
-                {"label":"出库-送货", "icon":"list-ul", "path":"/store/out"},
-                {"label":"库存盘点", "icon":"list-ul", "path":"/store/calc"}
+                {"label":"出库-送货单", "icon":"list-ul", "path":"/store/out"},
+                {"label":"已出库送货", "icon":"list-ul", "path":"/store/outsend"},
+				{"label":"出入库清单", "icon":"list-ul", "path":"/store/calc-list"},
+				{"label":"库存盘点", "icon":"list-ul", "path":"/store/calc"}
             ]
         },
         {

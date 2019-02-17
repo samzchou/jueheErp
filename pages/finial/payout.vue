@@ -11,6 +11,9 @@
         <div class="grid-container" v-if="!isEdit">
             <div class="search-content">
                 <el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
+                    <el-form-item label="制单号：" prop="orderSerial">
+                        <el-input v-model="searchForm.orderSerial" clearable  style="width:180px"/>
+                    </el-form-item>
                     <el-form-item label="系统订单号：" prop="serial">
                         <el-input v-model="searchForm.serial" clearable  style="width:120px"/>
                     </el-form-item>
@@ -28,8 +31,8 @@
                             <el-option v-for="item in setting.crm.filter(o=>{return o.typeId==1})" :key="item.id" :label="item.name" :value="item.id"/>
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="交付日期：" prop="deliveryDate">
-                        <el-date-picker v-model="searchForm.deliveryDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:220px"/>
+                    <el-form-item label="制单交付日期：" prop="finishedDate">
+                        <el-date-picker v-model="searchForm.finishedDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:220px"/>
                     </el-form-item>
                 <el-form-item>
                     <el-button type="primary" @click="submitSearch" icon="el-icon-search">搜索</el-button>
@@ -42,7 +45,7 @@
                         <span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="serial" label="系统订单号" width="120"/>
+                <el-table-column prop="orderSerial" label="制单单号" width="150"/>
                 <el-table-column prop="crmName" label="客户名称">
                     <template slot-scope="scope">
                         <a href="javascript:void(0)" @click="showDetail(scope.row)">{{scope.row.crmName}}</a>
@@ -64,9 +67,9 @@
                         <span>{{scope.row.totalPrice | currency}} </span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="deliveryDate" label="交付日期" width="100">
+                <el-table-column prop="finishedDate" label="制单交付日期" width="100">
                     <template slot-scope="scope">
-                        <span>{{parseDate(scope.row.deliveryDate)}} </span>
+                        <span>{{parseDate(scope.row.finishedDate)}} </span>
                     </template>
                 </el-table-column>
                 <el-table-column prop="updateDate" label="最后更新" width="100">
@@ -102,8 +105,8 @@
                 <el-table ref="exportTable" :data="orderCrmList" border fit highlight-current-row stripe size="mini" max-height="350" @selection-change="handleSelectionChange">
                     <el-table-column type="selection" width="40" align="center" v-if="currItem && !currItem.isPayed" :selectable="checkSelectable"/>
                     <el-table-column type="index" width="50" align="center"/>
-                    <el-table-column prop="serial" label="订单编号" width="120"/>
-                     <el-table-column prop="materialNo" label="物料号" width="120"/>
+                    <el-table-column prop="orderSerial" label="制单号" width="150"/>
+                    <el-table-column prop="materialNo" label="物料号" width="120"/>
                     <el-table-column prop="productName" label="物料名称"/>
                     <el-table-column prop="model" label="规格型号" width="100"/>
                     <el-table-column prop="count" label="数量" width="90">
@@ -118,9 +121,9 @@
                             <span v-else>{{scope.row.totalPrice | currency}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="deliveryDate" label="交货日期" width="100">
+                    <el-table-column prop="finishedDate" label="制单交货日期" width="110">
                         <template slot-scope="scope">
-                            <span v-if="scope.$index<orderCrmList.length-1">{{parseDate(scope.row.deliveryDate)}}</span>
+                            <span v-if="scope.$index<orderCrmList.length-1">{{parseDate(scope.row.finishedDate)}}</span>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -183,13 +186,14 @@ export default {
             lastId:0,
             totalMoney:0,
             searchForm:{
+                orderSerial:'',
                 serial:'',
                 crmName:'',
                 projectName:'',
                 productName:'',
                 crmId:'',
                 materialNo:'',
-                deliveryDate:'',
+                finishedDate:'',
             },
             orderCrmList:[],
             payLoading:false,
@@ -220,8 +224,8 @@ export default {
         exportOrder(){
             console.log(this.orderCrmList);
             import("@/components/Export2Excel").then(excel => {
-                const tHeader = ["订单编号","物料号","物料名称","规格型号","数量","单价","订单金额","交货日期"];
-                const filterVal = ["serial","materialNo","productName","model","incount","price","totalPrice","deliveryDate"];
+                const tHeader = ["制单号","物料号","物料名称","规格型号","数量","单价","订单金额","制单交货日期"];
+                const filterVal = ["orderSerial","materialNo","productName","model","incount","price","totalPrice","finishedDate"];
                 const data = this.formatJson(filterVal, _.cloneDeep(this.orderCrmList));
                 const now = moment(new Date()).format("YYYYMMDD");
                 excel.export_json_to_excel({
@@ -234,7 +238,7 @@ export default {
         formatJson(filterVal, jsonData) {
             return jsonData.map(v =>
                 filterVal.map(j => {
-                    if (j == "deliveryDate" && v[j]) {
+                    if (j == "finishedDate" && v[j]) {
                         v[j] = this.parseDate(v[j]);
                     }
                     return v[j];
@@ -256,6 +260,7 @@ export default {
                     let data = {
                         'payType':1,
                         'orderIds':orderIds,
+                        'orderSerial':this.currItem.orderSerial,
                         'serial':this.currItem.serial,
                         'sourceserial':this.currItem.sourceserial,
                         'crmId':this.currItem.crmId,
@@ -313,7 +318,7 @@ export default {
                 contactPhone: crm.contactPhone,
                 address: crm.address
             });
-            let params = _.merge({},{crmId: row.crmId, isAdded: row.isAdded, isPayed: row.isPayed, serial: row.serial});
+            let params = _.merge({},{crmId: row.crmId, isAdded: row.isAdded, isPayed: row.isPayed, orderSerial: row.orderSerial});
             // 查询供应商的具体订单
             let condition = {
                 type: "listData",
@@ -368,7 +373,7 @@ export default {
                 if(this.searchForm[k] != '' && this.searchForm[k]){
                     if(_.isNumber(this.searchForm[k])){
                         params[k] = Number(this.searchForm[k]);
-                    }else if(_.isArray(this.searchForm[k]) && k==='createDate'){
+                    }else if(_.isArray(this.searchForm[k]) && k==='finishedDate'){
                         params[k] = {
                             $gte:this.searchForm[k][0],
                             $lte:this.searchForm[k][1]
@@ -395,18 +400,19 @@ export default {
                 type: "groupList",
                 collectionName: "storeIn",
                 data: param,
-                distinct: "serial",
+                distinct: "orderSerial",
                 aggregate: [
                     { $match: param },
                     {
                         $group: {
-                            _id:{crmId:"$crmId",serial:"$serial",invoiceNumber:"$invoiceNumber"},
+                            _id:{crmId:"$crmId",orderSerial:"$orderSerial",invoiceNumber:"$invoiceNumber"},
                             id: { $first: "$id" },
                             isAdded: { $first: "$isAdded" },
                             isPayed: { $first: "$isPayed" },
                             invoiceNumber: { $first: "$invoiceNumber" },
                             typeId: { $first: "$typeId" },
                             serial: { $first: "$serial" },
+                            orderSerial: { $first: "$orderSerial" },
                             sourceserial: { $first: "$sourceserial" },
                             crmId: { $first: "$crmId" },
                             crmName: { $first: "$crmName" },
@@ -416,6 +422,7 @@ export default {
                             updateDate: { $first: "$updateDate" },
                             totalPrice: { $sum: { $multiply: [ "$price", "$incount" ] } },
                             deliveryDate: { $first: "$deliveryDate" },
+                            finishedDate: { $first: "$finishedDate" },
                             total: { $sum: 1 }
                         }
                     },

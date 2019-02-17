@@ -18,7 +18,7 @@
 					</el-form-item>
 					<el-form-item>
 						<el-button type="warning" @click="filterByForm" v-if="tableData.length" icon="el-icon-search">查找</el-button>
-						<el-button type="primary" @click="saveTable" v-if="tableData.length" :loading="uploading" icon="my-icon-save">导入全部订单({{sourceData.length}})</el-button>
+						<el-button type="primary" @click="saveTable" v-if="tableData.length" :loading="uploading" icon="my-icon-save">导入订单({{tableData.length}})</el-button>
 						<el-button type @click="sourceData=[]" icon="el-icon-refresh">重新上传</el-button>
 						<el-button type @click="removeRepeat" v-if="repeatCount">删除重复梯号、项目号的订单(共：{{repeatCount}})</el-button>
 						<el-button type @click="openDialogNotin=true" v-if="notInList.length" :disabled="openDialogNotin">显示无法匹配元数据的订单(共：{{notInList.length}})</el-button>
@@ -47,7 +47,7 @@
 							</el-row>
 						</template>
 					</el-table-column>
-					<el-table-column label="No." fixed="left" align="center">
+					<el-table-column label="No." fixed="left" align="center" width="50">
 						<template slot-scope="scope">
 							<span>{{scope.$index+(queryUpload.page - 1) * queryUpload.pagesize + 1}}</span>
 						</template>
@@ -57,6 +57,9 @@
 						<template slot-scope="scope">
 							<div class="row-list" :title="scope.row[item.value]">
 								<span>{{parseStr(scope.row,item.value)}}</span>
+								<span v-if="item.value==='metaprice'&&!scope.row.notin" style="margin-left:5px;">
+									<el-button type="text" icon="el-icon-edit" @click="editPrice(scope.row)"/>
+								</span>
 							</div>
 						</template>
 					</el-table-column>
@@ -76,7 +79,6 @@
 				</div>
 			</div>
 		</div>
-
 		<el-dialog title="无法匹配元数据的订单列表" :visible.sync="openDialogNotin" append-to-body width="60%">
 			<el-table size="mini" :data="notInList" border highlight-current-row fit max-height="500">
 				<el-table-column label="订单类型" prop="typeId" width="70">
@@ -104,6 +106,15 @@
 		<el-dialog title="新增产品" :visible.sync="openDialogVisible" append-to-body>
 			<editProduct :editRow="editRow" :setting="setting" @back="finishedEdit" />
 		</el-dialog>
+		<el-dialog title="编辑订单单价" :visible.sync="editDialogVisible" append-to-body width="200px">
+			<div>
+				<el-input-number size="mini" v-if="editRow" v-model="editRow.metaprice" controls-position="right" :min="0" style="width:100%"/>
+			</div>
+			<span slot="footer" class="dialog-footer">
+				<el-button size="mini" @click="editDialogVisible = false">取 消</el-button>
+				<el-button size="mini" type="primary" @click="updatePrice">确 定</el-button>
+			</span>
+		</el-dialog>
 	</section>
 </template>
 <script>
@@ -126,8 +137,8 @@ export default {
 				{ label: "梯号", value: "modelNo", width: 60 },
 				{ label: "数量", value: "count", width: 50 },
 				{ label: "单位", value: "util", width: 50 },
-				{ label: "单价", value: "price", width: 80 },
-				{ label: "元单价", value: "metaprice", width: 80 },
+				{ label: "单价", value: "price", width: 80, show: true },
+				{ label: "元单价", value: "metaprice", width: 80, show: true },
 				{ label: "箱号", value: "boxNo", width: 70 },
 				{ label: "制单日期", value: "orderDate", width: 100, show: true },
 				{ label: "交货日期", value: "deliveryDate", width: 100, show: true },
@@ -156,6 +167,7 @@ export default {
 				typeId: ""
 			},
 			openDialogVisible: false,
+			editDialogVisible: false,
 			editRow: null,
 			repeatCount: 0,
 			checkOut: 0,
@@ -169,6 +181,48 @@ export default {
 		};
 	},
 	methods: {
+		editPrice(row){
+			this.editRow = row;
+			this.editDialogVisible = true;
+		},
+		updatePrice(){
+			this.editDialogVisible = false;
+			// 更新元数据单价
+			let condition = {
+				type: 'updateData',
+				collectionName: 'product',
+				updateDate: true,
+				data: {
+					id: this.editRow.productId,
+					price: this.editRow.metaprice
+				}
+			};
+			this.$axios.$post('mock/db', { data: condition }).then(res=>{
+				console.log('handleChangePrice', this.editRow, res);
+				this.sourceData.forEach(item=>{
+					if(item.crmId == this.editRow.crmId && item.typeId == this.editRow.typeId && item.materialNo == this.editRow.materialNo){
+						item.metaprice = this.editRow.metaprice;
+					}
+				});
+				//console.log(this.sourceData);
+				this.tableData = _.cloneDeep(this.sourceData);
+				this.writeFile();
+			});
+		},
+		async writeFile() {
+			let params = {
+				type: 'listData',
+				collectionName: 'product',
+				data: {}
+			}
+			let data = await this.$axios.$post('mock/db', { data: params });
+			let condition = {
+				type: 'updateSetting',
+				collectionName: 'product',
+				data: data.list
+			}
+			await this.$axios.$post('mock/db', { data: condition });
+		},
 		listRowClick(row) {
 			row.extend = !row.extend ? true : false;
 			this.$refs["listTable"].toggleRowExpansion(row, row.extend);
@@ -231,7 +285,6 @@ export default {
 					price: row.price,
 					typeId: row.typeId
 				});
-				//debugger
 				lists.forEach(item => {
 					item.materialNo = row.materialNo;
 					item.productId = row.id;
@@ -242,7 +295,7 @@ export default {
 					item.ptypeId = row.ptypeId;
 					item.model = row.model;
 					item.modelNo = row.modelNo;
-					item.crmId = row.crm;
+					item.crmId = row.crmId;
 					item.crmName = crm.name;
 					let index = _.findIndex(this.sourceData, { index: item.index });
 					if (index > -1) {
@@ -349,76 +402,84 @@ export default {
 			this.uploadRepeatCount = 0;
 			let listData = [];
 			results.forEach((item, index) => {
-				this.lastUploadId++;
-				let obj = {
-					index: index + 1,
-					id: this.lastUploadId,
-					createByUser: this.$store.state.user.name
-				};
-				for (let k in item) {
-					let value = item[k];
-					k = k.replace(/(^\s+)|(\s+$)/g, ""); // 去除空格
-					let head = _.find(this.tableKeys, { label: k });
-					if (head) {
-						obj[head.value] = this._setValue(head.value, value);
-						//生产订单与采购订单区分
-						if (head.value == "productName") {
-							if (!value.includes("包装箱") && (value.includes("轿顶防护栏") || value.includes("线槽") || value.includes("挂钩") || value.includes("救援装置柜"))) {
-								obj.typeId = 2;
-								obj.flowStateId = 5;
-							} else {
-								obj.typeId = 1;
-								obj.flowStateId = 1;
+				if(item['订单编号']){
+					this.lastUploadId++;
+					let obj = {
+						index: index + 1,
+						id: this.lastUploadId,
+						createByUser: this.$store.state.user.name
+					};
+					for (let k in item) {
+						let value = item[k];
+						k = k.replace(/(^\s+)|(\s+$)/g, ""); // 去除空格
+						let head = _.find(this.tableKeys, { label: k });
+						if (head) {
+							obj[head.value] = this._setValue(head.value, value);
+							//生产订单与采购订单区分
+							if (head.value == "productName") {
+								if (!value.includes("包装箱") && (value.includes("轿顶防护栏") || value.includes("线槽") || value.includes("挂钩") || value.includes("救援装置柜"))) {
+									obj.typeId = 2;
+									obj.flowStateId = 5;
+								} else {
+									obj.typeId = 1;
+									obj.flowStateId = 1;
+								}
+								// 汇总产品
+								if (_.findIndex(this.pList, { productName: value }) < 0) {
+									this.pList.push({ productName: value });
+								}
 							}
-							// 汇总产品
-							if (_.findIndex(this.pList, { productName: value }) < 0) {
-								this.pList.push({ productName: value });
+							// 汇总订单号
+							if (head.value == "sourceserial") {
+								obj.dserial = value;
+								if (_.findIndex(this.sourceserialList, { sourceserial: value }) < 0) {
+									this.sourceserialList.push({ sourceserial: value });
+								}
 							}
-						}
-						// 汇总订单号
-						if (head.value == "sourceserial") {
-							obj.dserial = value;
-							if (_.findIndex(this.sourceserialList, { sourceserial: value }) < 0) {
-								this.sourceserialList.push({ sourceserial: value });
+							if (head.value == "projectNo") {
+								obj.dprojectNo = value;
 							}
-						}
-						if (head.value == "projectNo") {
-							obj.dprojectNo = value;
-						}
-						if (head.value == "modelNo") {
-							obj.dmodelNo = value;
+							if (head.value == "modelNo") {
+								obj.dmodelNo = value;
+							}
 						}
 					}
-				}
-				// 匹配产品分类和产品ID
-				let product = _.find(this.productList, {
-					name: obj.productName,
-					materialNo: obj.materialNo,
-					typeId: obj.typeId
-				});
-				//debugger
-				if (product) {
-					let crm = _.find(this.setting.crm, { id: product.crmId });
-					if (_.findIndex(this.crmList, { id: product.crmId }) < 0) {
-						this.crmList.push(crm);
-					}
-					obj = _.merge(obj, {
-						metaprice: product.price,
-						productId: product.id,
-						ptypeId: product.ptypeId,
-						crmId: product.crmId,
-						crmName: crm.name
+					// 匹配产品分类和产品ID
+					let product = _.find(this.productList, {
+						name: obj.productName,
+						materialNo: obj.materialNo,
+						typeId: obj.typeId
 					});
-				} else {
-					obj.notin = true;
-					this.notInList.push(obj);
+					//debugger
+					if (product) {
+						let crm = _.find(this.setting.crm, { id: product.crmId });
+						if(crm){
+							if (_.findIndex(this.crmList, { id: product.crmId }) < 0) {
+								this.crmList.push(crm);
+							}
+							obj = _.merge(obj, {
+								metaprice: product.price,
+								productId: product.id,
+								ptypeId: product.ptypeId,
+								crmId: product.crmId,
+								crmName: crm.name
+							});
+						}else{
+							obj.notin = true;
+							this.notInList.push(obj);
+						}
+
+					} else {
+						obj.notin = true;
+						this.notInList.push(obj);
+					}
+					// 检查重复订单 notInList
+					if (this.checkModelNo(obj)) {
+						obj.isRepeat = "是";
+						this.uploadRepeatCount += 1;
+					}
+					listData.push(obj);
 				}
-				// 检查重复订单 notInList
-				if (this.checkModelNo(obj)) {
-					obj.isRepeat = "是";
-					this.uploadRepeatCount += 1;
-				}
-				listData.push(obj);
 			});
 			//console.log("this.sourceserialList", this.sourceserialList);
 			this.sourceData = _.orderBy(listData, ["typeId", "deliveryDate"], ["asc", "asc"]);
@@ -482,23 +543,33 @@ export default {
 			//this.uploading = true;
 			let loadingMask = this.$loading({ background: "rgba(0, 0, 0, 0.5)" });
 			// 梳理数据做合并订单处理
-			let dataList = [],
-				index = 0;
+			let dataList = [], index = 0;
 			this.tableData.forEach(item => {
 				this.lastId++;
 				index++;
 				item.id = this.lastId;
 				item.serial = this.checkSerial(index);
-				delete item.index, delete item.metaprice;
+				delete item.index;//, delete item.metaprice;
 				dataList.push(item);
 			});
-			//console.log("saveData", dataList, this.sourceData);
+			/* console.log("saveData", dataList, this.sourceData);
+			loadingMask.close();
+			return; */
 			let condition = {
 				type: "addPatch",
 				collectionName: "order",
 				notNotice: true,
 				data: dataList
-			};
+            };
+            let epList = dataList.filter(o=>{
+                return o.id === '' || !o.id || !o.crmId;
+            })
+            //debugger
+            if(epList.length){
+                loadingMask.close();
+                this.$message.error('数据解析出问题了，请联系管理员');
+                return
+            }
 			// 订单保存
 			this.$axios.$post("mock/db", { data: condition }).then(result => {
 				loadingMask.close();

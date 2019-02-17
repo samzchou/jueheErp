@@ -23,7 +23,6 @@
 					<el-form-item label="项目名称：" prop="projectName">
 						<el-input v-model="searchForm.projectName" clearable  style="width:150px"/>
 					</el-form-item>
-
 					<el-form-item label="制单日期：" prop="orderDate">
 						<el-date-picker v-model="searchForm.orderDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px"/>
 					</el-form-item>
@@ -36,7 +35,9 @@
                 </el-form>
             </div>
             <div>
-                <el-table v-loading="listLoading" ref="detailStore" :data="gridList" border fit highlight-current-row stripe size="mini" max-height="500">
+                <el-table v-loading="listLoading" ref="detailStore" :data="gridList" border fit highlight-current-row stripe size="mini" max-height="500" @selection-change="handleSelectionChange">
+                    <el-table-column type="selection" width="50" align="center" :selectable="checkSelectable"/>
+                    <el-table-column type="index" width="50" align="center"/>
                     <el-table-column prop="serial" label="系统订单号" width="150">
                         <template slot-scope="scope">
 							<span>{{scope.row.serial}}</span>
@@ -49,17 +50,18 @@
                     </el-table-column>
 					<el-table-column prop="projectNo" label="项目号" width="150"/>
 					<el-table-column prop="projectName" label="项目名称"/>
-					<el-table-column prop="total" label="订单总数">
+					<el-table-column prop="total" label="订单总数" width="100">
 						<template slot-scope="scope">
                             <span>共 {{scope.row.total}} 件</span>
                         </template>
 					</el-table-column>
-					<el-table-column prop="orderDate" label="制单日期" width="120">
+                    <el-table-column prop="finishCount" label="实际完成量" width="100"/>
+					<el-table-column prop="orderDate" label="制单日期" width="100">
 						<template slot-scope="scope">
                             <span>{{parseDate(scope.row.orderDate)}}</span>
                         </template>
 					</el-table-column>
-					<el-table-column prop="deliveryDate" label="交付日期" width="120">
+					<el-table-column prop="deliveryDate" label="交付日期" width="100">
 						<template slot-scope="scope">
                             <span>{{parseDate(scope.row.deliveryDate)}}</span>
                         </template>
@@ -72,13 +74,16 @@
                 </el-table>
             </div>
             <div class="page-container" style="padding: 10px 0;">
-				<div>请点击可以出库送货的订单，制定出库送货单</div>
+				<div>
+                    <span style="margin-right:15px;">请选择可以出库送货的订单，制定出库送货单</span>
+                    <el-button size="mini" type="primary" v-if="orderList.length" @click="openDialogVisible=true">制订送货单({{orderList.length}})</el-button>
+                </div>
                 <el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200, 500]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total">
                 </el-pagination>
             </div>
         </div>
 
-        <el-dialog :title="'送货清单--'+(needSource?'蒂森订单':'珏合订单')" append-to-body :visible.sync="openDialogVisible" width="80%">
+        <el-dialog :title="'送货清单--'+(needSource?'蒂森订单':'珏合订单')" append-to-body :visible.sync="openDialogVisible" @close="closeDialog" width="65%">
 			<div class="compare" v-if="currItem">
 				<el-row :gutter="20">
 					<el-col :span="6">系统订单号：{{currItem.serial}}</el-col>
@@ -88,46 +93,51 @@
 					<el-col :span="6">制单日期：{{parseDate(currItem.orderDate)}}</el-col>
 					<el-col :span="6">交付日期：{{parseDate(currItem.deliveryDate)}}</el-col>
 					<el-col :span="6">订单总数：{{currItem.total}}</el-col>
+                    <el-col :span="6">实际完成订单数：{{currItem.finishCount}}</el-col>
 				</el-row>
 			</div>
 			<el-table ref="exportTable" :data="orderList" border fit highlight-current-row stripe size="mini" max-height="350" style="width:100%">
+                <el-table-column type="expand">
+                    <template slot-scope="scope">
+                        <el-row :gutter="20" v-for="(item,idx) in scope.row.result" :key="item.id" v-if="scope.row.result && scope.row.result.length">
+                            <el-col :span="6" :title="item.sourceserial">
+                                <span style="width:30px">{{idx+1}}、</span>
+                                <span>蒂森订单号：{{item.sourceserial}}</span>
+                                <span>ID：{{item.id}}</span>
+                            </el-col>
+                            <el-col :span="4" :title="item.projectNo">项目号：{{item.projectNo}}</el-col>
+                            <el-col :span="4">物料号：{{item.materialNo}}</el-col>
+                            <el-col :span="4">物料描述：{{item.productName}}</el-col>
+                            <el-col :span="3">订单量：{{item.count}}</el-col>
+                            <el-col :span="3">状态：{{parseFlow(item.flowStateId)}}</el-col>
+                        </el-row>
+                        <!-- <div>{{scope.row.result}}</div> -->
+                    </template>
+                </el-table-column>
 				<el-table-column type="index" width="50" align="center"/>
-				<el-table-column label="订单号" prop="serial" width="120px"/>
-				<el-table-column prop="projectNo" label="项目号" width="120"/>
 				<el-table-column prop="projectName" label="项目名称"/>
+                <el-table-column prop="projectNo" label="项目号" width="120"/>
 				<el-table-column prop="modelNo" label="梯号" width="70"/>
-				<el-table-column prop="materialNo" label="物料号" width="120"/>
-				<el-table-column prop="productName" label="物料名称"/>
-				<el-table-column prop="boxNo" label="箱号" width="60"/>
-				<el-table-column prop="count" label="订单数量" width="80">
+                <el-table-column label="订单号" width="150px">
+                    <template slot-scope="scope">
+                        <span v-if="needSource">{{scope.row.sourceserial}}</span>
+                        <span v-else>{{scope.row.serial}}</span>
+                    </template>
+                </el-table-column>
+				<el-table-column prop="partName" label="部件名称"/>
+				<el-table-column prop="boxCount" label="箱数" width="60"/>
+				<el-table-column prop="count" label="交货日期" width="120">
 					<template slot-scope="scope">
-						<span>{{scope.row.count}} {{scope.row.util}}</span>
-					</template>
-				</el-table-column>
-				<el-table-column prop="store" label="已入库量" width="80">
-					<template slot-scope="scope">
-						<span>{{scope.row.store && scope.row.store.atcount}}</span>
-					</template>
-				</el-table-column>
-				<el-table-column prop="store" label="当前库存" width="80">
-					<template slot-scope="scope">
-						<span>{{scope.row.store && scope.row.store.count}}</span>
-					</template>
-				</el-table-column>
-				<el-table-column prop="price" label="单价" width="80"/>
-				<el-table-column prop="allPrice" label="订单金额" width="120">
-					<template slot-scope="scope">
-						<span>{{scope.row.allPrice | currency}}</span>
+						<span v-if="scope.$index<orderList.length">{{parseDate(scope.row.deliveryDate)}}</span>
 					</template>
 				</el-table-column>
 			</el-table>
-			<div class="update-form" v-if="currItem">
+			<div class="update-form">
 				<div>
-					<span v-if="!currItem.isout">订单库存不足，无法出单</span>
-					<span v-else>可以出单送货</span>
+					<span v-if="!isCanExport && currItem">订单库存不足，尚缺{{currItem.total-currItem.finishCount}}项；无法出单</span>
 				</div>
 				<div>
-					<el-button size="mini" type="primary" icon="el-icon-download" @click="exportOrder" :disabled="!currItem.isout" :loading="exportLoading">制定送货单</el-button>
+					<el-button size="mini" type="primary" icon="el-icon-download" @click="exportOrder" :disabled="!isCanExport" :loading="exportLoading">制定送货单</el-button>
 				</div>
 			</div>
 		</el-dialog>
@@ -144,7 +154,7 @@ export default {
 			gridList:[],
             query:{
                 page:1,
-                pagesize:50
+                pagesize:100
             },
             searchForm:{
                 serial:'',
@@ -159,74 +169,103 @@ export default {
 			orderList:[],
 			exportLoading:false,
 			exportOrderIds:[],
-			updateIds:[],
+            updateIds:[],
+            isCanExport:false,
+            storeCalcLastId:0,
         }
     },
     methods:{
-
+        parseFlow(id) {
+			if (!id) return "";
+			let flow = _.find(this.setting.flowState, { id: id });
+			return flow ? flow.name : "";
+		},
 		setOrderParams(flag){
 			this.needSource = flag;
 			this.query.page = 1;
 			this.getList();
-		},
+        },
+        closeDialog(){
+            this.orderList = [];
+        },
+        checkSelectable(row) {
+            return row.finished;
+        },
+        handleSelectionChange(rows){
+            //console.log('handleSelectionChange',rows);
+            this.orderList = rows;
+            if(rows.length){
+                this.updateIds = this.setUpdateIds(this.orderList);
+                this.orderList.push({
+                    projectName:"合计",
+                    boxCount:rows.length
+                });
+                this.currItem = null;
+                this.isCanExport = true;
+            }
+        },
 		exportOrder(){
-			this.exportOrderIds = [];
-			let exportData = [], allCount = 0, allMoney = 0;
 			import ('@/components/Export2Excel').then(excel=>{
-				const tHeader = ['订单编号','项目号','项目名称','梯号','部件名称','数量','单价','箱号','订单金额','交货日期'];
-				const filterVal = ['serial','projectNo','projectName','modelNo','productName','count','price','boxNo','allPrice','deliveryDate'];
-				const data = this.formatJson(filterVal, _.cloneDeep(this.orderList));
+				const tHeader = ['项目名称','项目号','梯号','订单号','部件名称','箱数','交货日期','备注'];
+                const filterVal = ['projectName','projectNo','modelNo','sourceserial','partName','boxCount','deliveryDate','boxContent'];
+                //debugger
+				const data = this.formatJson(filterVal,  _.cloneDeep(this.orderList));
 				const now =  moment(new Date()).format('YYYYMMDD');
 				let title = this.needSource?'蒂森送货单':'珏合送货单';
 				excel.export_json_to_excel({
 					header: tHeader,
 					data,
 					filename: title + '-' + now
-        		});
+                });
 				this.updateOrder();
         	});
 		},
 		updateOrder(){
 			this.exportLoading = true;
-			// 这里需要处理，更新原始订单状态， 更新库存
+			// 这里需要处理，更新原始订单状态， 更新库存 4505531472 4505532071
 			let cn = {
-                type:'updatePatch',
+                type:'outStore',//'updatePatch',
                 collectionName: 'order',
-				param:{'id':{$in:this.updateIds}},
-				notNotice:true,
-                set:{$set:{'flowStateId':10}}
+                notNotice:true,
+                user:this.$store.state.user.name,
+                data:{'id':{$in:this.updateIds}},
+                set:{$set:{'flowStateId':10,'updateByUser':this.$store.state.user.name}}
 			}
 			let updateData = [];
-
-			this.orderList.forEach(item=>{
-				if(item.id){
-					let obj = {
-						id:item.store.id,
-						count:item.store.count + item.store.incount - item.count,
-						incount:0,
-						outcount:item.store.outcount + item.count,
-						updateByUser: this.$store.state.user.name
-					};
-					updateData.push(obj);
-				}
-			})
-			console.log('updateData', updateData);
-			//return;
+            // 更新原始订单状态为已出库
             this.$axios.$post('mock/db', {data:cn}).then(result=>{
-				let condition = {
-					type:'updateArr',
-					collectionName: 'store',
-					updateDate:true,
-					data:updateData
-				}
-				this.$axios.$post('mock/db', {data:condition}).then(res=>{
-					this.orderList = [];
-					this.exportLoading = false;
-					this.openDialogVisible = false;
-					this.submitSearch(true);
-				});
+                this.orderList = [];
+                this.exportLoading = false;
+                this.openDialogVisible = false;
+                this.addStoreCalc(result);
+                this.submitSearch(true);
             });
-		},
+        },
+        addStoreCalc(list){
+            let dataList = [];
+            list.forEach(item=>{
+                dataList.push({
+                    id:this.storeCalcLastId++,
+                    typeId:item.typeId,
+                    productName:item.productName,
+                    materialNo:item.materialNo,
+                    storeTypeId:2,
+                    price:item.price,
+                    metaprice:item.metaprice,
+                    util:item.util,
+                    outcount:item.count,
+                    createByUser:this.$store.state.user.name
+                })
+            });
+            
+            let condition = {
+				type:'addPatch',
+				collectionName: 'storeCalc',
+                data:dataList,
+                notNotice:true
+            };
+            this.$axios.$post('mock/db', {data:condition});
+        },
 		formatJson(filterVal, jsonData) {
             return jsonData.map(v => filterVal.map(j => {
                 if(j == 'deliveryDate' && v[j]){
@@ -240,74 +279,34 @@ export default {
 			return s.length?s[1]:serial;
 		},
         parseDate(date, format){
+            if(!date) return '';
             return moment(date).format(format||'YYYY-MM-DD');
         },
         parseMoney(row){
             return this.$options.filters['currency'](row.count*row.price);
-		},
+        },
+        setUpdateIds(arr){
+            let updateIds = [];
+            arr.forEach(item=>{
+                let ids = [];
+                item.result.forEach(c=>{
+                    ids.push(c.id);
+                });
+                updateIds = updateIds.concat(ids);
+            })
+            return updateIds;
+        },
 		async showDetail(row){
 			this.currItem = row;
 			this.openDialogVisible = true;
-			console.log('showDetail', row);
-			let params = {
-				projectNo:row.projectNo,
-				//sourceserial:this.needSource?row.sourceserial:row.serial,
-				//flowStateId:{$gte:2,$lte:6}
-			};
-			if(this.needSource){
-				params.sourceserial = row.sourceserial;
-			}else{
-				params.serial = row.serial;
-			}
-			let conditions = {
-				type:"aggregate",
-				collectionName:'order',
-				data:params,
-				aggregate:[
-					{
-						$lookup:{
-							from: "store",
-							localField: "materialNo", //materialNo
-							foreignField: "materialNo", //materialNo
-							as: "store"
-						}
-					},
-					{
-						$unwind: { // 拆分子数组
-							path: "$store",
-							preserveNullAndEmptyArrays: true // 空的数组也拆分
-						}
-					},
-					{$match:params},
-					{$sort:{deliveryDate:1,productId:1}}
-				]
-			}
-			let result = await this.$axios.$post('mock/db', {data:conditions});
-			//console.log(result.list);
-			this.updateIds = [];
-			this.currItem.isout = true;
-			let allPrice = 0, allCount = 0;
-			//_.cloneDeep(row.result)
-			this.orderList = result.list.map(item=>{
-				if(!item.store){
-					this.currItem.isout = false;
-				}
-				if(this.needSource){
-					item.serial = item.sourceserial;
-				}
-				item.allPrice = item.count * item.price;
-				allCount += item.count;
-				allPrice += item.count * item.price;
-				this.updateIds.push(item.id);
-				return item;
-			});
-			//console.log('this.updateIds', this.updateIds)
-
-			this.orderList.push({
-				'serial':'合计',
-				'count':allCount,
-				'allPrice':allPrice
-			})
+            console.log('showDetail', row);
+            this.orderList = [row];
+            this.updateIds = this.setUpdateIds(this.orderList);
+            this.isCanExport = row.finished;
+            this.orderList.push({
+                projectName:"合计",
+                boxCount:1
+            })
 		},
 		mergeOrder(lists){
 			let listData = [];
@@ -321,11 +320,8 @@ export default {
 				if(!!~dataIndex){
 					listData[dataIndex]['children'].push(item);
 					listData[dataIndex]['count'] += item.count;
-					//listData[dataIndex]['incount'] += item.store?item.store.incount:0;
 				}else{
 					item.children.push(_.cloneDeep(item));
-					/* item.incount = item.store?item.store.incount:0;
-					item.outcount = item.store?item.store.outcount:0; */
 					listData.push(item);
 				}
 			});
@@ -371,19 +367,23 @@ export default {
 
         async getList(match={}){
 			this.listLoading = true;
-			let groupId = {"sourceserial":"$sourceserial"};//{"sourceserial":"$sourceserial"};
+			let groupId = { "sourceserial":"$sourceserial","projectNo":"$projectNo"};
             let bySerial = {'sourceserial':{$ne:''}};
 			if(!this.needSource){
                 bySerial = {'sourceserial':''};
-				groupId = {"serial":"$serial"};
+				groupId = {"serial":"$serial","projectNo":"$projectNo"};
 			}
-			//groupId = _.merge(groupId,{"projectNo","$projectNo","boxNo":"$boxNo","modelNo":"$modelNo"})
 			match = _.merge({flowStateId:{$lt:10}}, bySerial, match);
             let condition = {
 				type:'groupList',
 				collectionName: 'order',
-				data:match,//_.merge({flowStateId:{$gte:2,$lte:6}},match),
-				distinct:this.needSource?"sourceserial":"serial",
+				data:match,
+                distinct:this.needSource?"sourceserial":"serial",
+                groupCount: [
+					{ $match: match },
+					{ $group: { _id: groupId } },
+					{ $group: { _id: null, total: { $sum: 1 } } }
+				],
 				aggregate:[
 					{"$match":match},
 					{
@@ -437,21 +437,21 @@ export default {
             this.total = result.total;
             this.gridList = result.list.map(item=>{
 				item.finishCount = this.checkFinished(item);
-				item.finished = item.finishCount==item.total;
+                item.finished = item.finishCount==item.total;
+                item.partName = "机房线槽总成";
+                item.boxCount = 1;
 				return item;
 			});
             this.listLoading = false;
 		},
 		checkFinished(row){
-			//console.log('checkFinished',row);
-			let countFinish = 0;
+            let countFinish = 0;
 			row.result.forEach(item=>{
 				if([3,8].includes(item.flowStateId)){
-					//console.log('checkFinished',item)
 					countFinish++;
 				}
 			});
-			return countFinish; //countFinish==row.total;
+			return countFinish; 
 		},
         async getSetting(){
             let condition = {
@@ -464,10 +464,25 @@ export default {
 				this.setting = result.content;
 				this.getList();
             }
-        }
+        },
+        async _getLastId() {
+			// 仓库待入库Id
+			let cn = {
+				type: "getId",
+				data: {
+					model: "storeCalc"
+				}
+			};
+			let res = await this.$axios.$post("mock/db", { data: cn });
+			if (res) {
+				//console.log("lastId-storeId", res);
+				this.storeCalcLastId = res;
+			}
+		}
     },
     created(){
         this.getSetting();
+        this._getLastId();
     }
 }
 </script>

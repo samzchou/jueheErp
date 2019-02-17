@@ -181,8 +181,11 @@
 				<el-form-item label="单位" prop="util">
 					<el-input v-model="ruleForm.util" placeholder="请输入" style="width:100px" />
 				</el-form-item>
-				<el-form-item label="单价" prop="price">
-					<el-input v-model="ruleForm.price" placeholder="请输入" style="width:100px" />
+				<el-form-item label="订单单价" prop="price">
+					<el-input-number v-model="ruleForm.price" controls-position="right" :min="0" :step="0.1"  placeholder="请输入" style="width:120px" />
+				</el-form-item>
+				<el-form-item label="生产单价" prop="metaprice">
+					<el-input-number v-model="ruleForm.metaprice" controls-position="right" :min="0" :step="0.1"  placeholder="请输入" style="width:120px" />
 				</el-form-item>
 				<el-form-item label="备注说明" prop="content">
 					<el-input v-model="ruleForm.content" type="textarea" :autosize="{ minRows: 3, maxRows: 10}" placeholder="请输入内容"></el-input>
@@ -222,26 +225,35 @@
 					<el-table-column type="expand">
 						<template slot-scope="props">
 							<el-row :gutter="20" v-for="(item,idx) in props.row.children" :key="item.id">
-								<el-col :span="3">{{idx+1}}.订单号：{{item.sourceserial}}</el-col>
-								<el-col :span="5">项目名称：{{item.projectName}}</el-col>
-								<el-col :span="4">规格/梯型：{{item.model}}</el-col>
-								<el-col :span="2">梯号：{{item.modelNo}}</el-col>
-								<el-col :span="2">数量：{{item.count}} {{item.util}}</el-col>
-								<el-col :span="4">制单日期：{{parseDate(item.orderDate)}}</el-col>
-								<el-col :span="4">交付日期：{{parseDate(item.deliveryDate)}}</el-col>
+								<el-col :span="3">{{idx+1}}.订单号：{{needSource?item.sourceserial:item.serial}}</el-col>
+								<el-col :span="3">项目名称:{{item.projectName}}</el-col>
+								<el-col :span="2">规格/梯型:{{item.model}}</el-col>
+								<el-col :span="2">梯号:{{item.modelNo}}</el-col>
+								<el-col :span="2">数量:{{item.count}} {{item.util}}</el-col>
+								<el-col :span="3">订单单价:{{item.price}}</el-col>
+								<el-col :span="3">生产单价:{{item.metaprice}}</el-col>
+								<el-col :span="3">制单日期:{{parseDate(item.orderDate)}}</el-col>
+								<el-col :span="3">交付日期:{{parseDate(item.deliveryDate)}}</el-col>
 							</el-row>
 						</template>
 					</el-table-column>
-					<el-table-column prop="serial" label="系统订单号" width="120" />
-					<el-table-column prop="sourceserial" label="蒂森订单号" />
-					<el-table-column prop="materialNo" label="型号/物料号" />
+					<el-table-column :prop="needSource?'sourceserial':'serial'" :label="needSource?'蒂森生产订单':'珏合生产订单'" />
+					<el-table-column prop="materialNo" label="型号/物料号" width="120"/>
 					<el-table-column prop="productName" label="产品名称" />
-					<el-table-column prop="count" label="订单数量" width="80">
+					<el-table-column prop="count" label="订单量" width="70">
 						<template slot-scope="scope">
 							<span>{{scope.row.count}} {{scope.row.util}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="storeInCount" label="库存量" width="80" />
+					<el-table-column prop="storeCount" label="库存量" width="60" />
+                    <el-table-column label="已制单未入库参考">
+                        <template slot-scope="scope">
+                            <div v-if="scope.$index<crmOrderList.length-1">
+                                <span>订单量：{{scope.row.storeIn && scope.row.storeIn.count}}；</span>
+                                <span>实际量：{{scope.row.storeIn && scope.row.storeIn.incount}}</span>
+                            </div>
+                        </template>
+                    </el-table-column>
 					<el-table-column prop="releaseCount" label="实际生产量" width="120">
 						<template slot-scope="scope">
 							<div v-if="scope.$index<crmOrderList.length-1">
@@ -250,8 +262,15 @@
 							<div v-else>{{scope.row.releaseCount}}</div>
 						</template>
 					</el-table-column>
-					<el-table-column prop="price" label="单价" width="80" />
-					<el-table-column prop="allPrice" label="合计" width="100">
+					<el-table-column prop="price" label="订单单价" width="80" />
+					<el-table-column label="生产单价" prop="metaprice" width="100">
+						<template slot-scope="scope">
+							<div v-if="scope.$index<crmOrderList.length-1">
+								<el-input-number size="mini" controls-position="right" :min="0" :step="0.1" v-model="scope.row.metaprice" @change="setRowMetaPrice(scope.row)" style="width:80px" />
+							</div>
+						</template>
+					</el-table-column>
+					<el-table-column prop="allPrice" label="订单金额" width="100">
 						<template slot-scope="scope">
 							<span v-if="scope.$index<crmOrderList.length-1">{{parseReleaseMoney(scope.row)}}</span>
 							<span v-else>{{scope.row.allPrice | currency}}</span>
@@ -267,12 +286,14 @@
 			<div class="btns" v-if="crmOrderList.length">
 				<div>共有{{crmOrderList.length-1}}个生产订单</div>
 				<div>
-					<el-button type="success" @click="exportOrder(crmOrderList)" icon="el-icon-document" :loading="exportLoading">制单生产</el-button>
+					<span>制单交货日期：</span>
+                    <el-date-picker size="small" v-model="finishedDate" value-format="timestamp" :clearable="false" type="date" placeholder="选择日期" style="width:150px;margin-right:10px"/>
+                    <el-button type="success" @click="exportOrder(crmOrderList)" icon="el-icon-document" :loading="exportLoading">制单生产</el-button>
 				</div>
 			</div>
 		</el-dialog>
 		<!--根据蒂森订单号-->
-		<el-dialog :title="'蒂森订单：'+currSerial" append-to-body :visible.sync="openSourceVisible" width="75%">
+		<el-dialog :title="'蒂森订单：'+currSerial" append-to-body :visible.sync="openSourceVisible" width="80%">
 			<div class="detail-container">
 				<el-row :gutter="20" v-if="detailItem">
 					<el-col :span="12">
@@ -331,17 +352,32 @@
 						<span>{{scope.row.count}} {{scope.row.util}}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="当前库存" prop="storeInCount" width="80px" />
-				<el-table-column prop="releaseCount" label="实际生产量" width="120px">
+				<el-table-column label="库存" prop="storeCount" width="60" />
+                <el-table-column label="已制单未入库参考">
+                        <template slot-scope="scope">
+                            <div v-if="scope.$index<sourceData.length-1">
+                                <span>订单量：{{scope.row.storeIn && scope.row.storeIn.count}}；</span>
+                                <span>实际量：{{scope.row.storeIn && scope.row.storeIn.incount}}</span>
+                            </div>
+                        </template>
+                    </el-table-column>
+				<el-table-column prop="releaseCount" label="实际生产量" width="100">
 					<template slot-scope="scope">
 						<div v-if="scope.$index<sourceData.length-1">
-							<el-input-number v-if="scope.row.flowStateId==5" size="mini" controls-position="right" :min="0" @change="checkReleaseCount(scope.row, sourceData)" v-model="scope.row.releaseCount" style="width:100px" />
+							<el-input-number v-if="scope.row.flowStateId==5" size="mini" controls-position="right" :min="0" @change="checkReleaseCount(scope.row, sourceData)" v-model="scope.row.releaseCount" style="width:80px" />
 							<span v-else>{{scope.row.store.incount}}</span>
 						</div>
 						<div v-else>{{scope.row.releaseCount}}</div>
 					</template>
 				</el-table-column>
-				<el-table-column label="单价" prop="price" width="80" />
+				<el-table-column label="订单单价" prop="price" width="80" />
+                <el-table-column label="生产单价" prop="metaprice" width="100">
+					<template slot-scope="scope">
+						<div v-if="scope.$index<sourceData.length-1">
+							<el-input-number size="mini" controls-position="right" :min="0" :step="0.1" v-model="scope.row.metaprice" @change="setMetaPrice(scope.row, sourceData)" style="width:80px" />
+						</div>
+					</template>
+				</el-table-column>
 				<el-table-column label="订单金额" prop="allPrice" width="100">
 					<template slot-scope="scope">
 						<span v-if="scope.$index<sourceData.length-1">{{parseReleaseMoney(scope.row)}}</span>
@@ -365,7 +401,7 @@
 				<div>
 					<el-form size="mini" :inline="true" :model="updateForm" :rules="updateRules">
 						<el-form-item label="交付日期：" prop="deliveryDate">
-							<el-date-picker v-model="updateForm.deliveryDate" value-format="timestamp" type="date" placeholder="选择日期" style="width:130px" />
+							<el-date-picker v-model="updateForm.deliveryDate" value-format="timestamp" type="date" placeholder="选择日期" style="width:130px" @change="setFinishedDate"/>
 						</el-form-item>
 						<el-form-item>
 							<el-button type="warning" @click="updateDeliveryDate(sourceData)" :disabled="!updateForm.deliveryDate">修改交付日期</el-button>
@@ -444,6 +480,7 @@ export default {
 				count: "",
 				util: "",
 				price: "",
+				metaprice:"",
 				content: ""
 			},
 			rules: {
@@ -460,7 +497,8 @@ export default {
 					{ required: true, message: "请输入交付日期", trigger: "change" }
 				],
 				count: [{ required: true, message: "请输入订单数量", trigger: "blur" }],
-				price: [{ required: true, message: "请输入单价", trigger: "blur" }]
+				price: [{ required: true, message: "请输入订单单价", trigger: "blur" }],
+				metaprice: [{ required: true, message: "请输入生产单价", trigger: "blur" }]
 			},
 			updateForm: {
 				deliveryDate: ""
@@ -478,12 +516,17 @@ export default {
 			sourceData: [],
 			searchLoading: false,
 			exportLoading: false,
-			exportOrders: []
+            exportOrders: [],
+            orderSerial:'',
+            finishedDate:new Date().getTime(),
 		};
 	},
 	methods: {
 		checkSelectable(row) {
-			return row.id && row.releaseCount > 0;
+			if(row.id){
+                let rc = row.storeIn.incount - row.storeIn.count + row.releaseCount + row.storeCount;
+                return rc >= row.count;
+            }
 		},
 		handleSelectionOrders(orders) {
 			this.exportOrders = orders;
@@ -491,9 +534,12 @@ export default {
 		splitSerial(serial) {
 			let s = serial.split("-");
 			return s.length ? s[1] : serial;
-		},
+        },
+        setFinishedDate(val){
+            this.finishedDate = val;
+        },
 		makeOrder(row) {
-			console.log("row", row);
+			//console.log("row", row);
 			if (this.needSource) {
 				this.showSourceOrder(row);
 				return;
@@ -504,9 +550,9 @@ export default {
 		},
 		parseReleaseMoney(row) {
 			if (row.flowStateId == 5) {
-				row.allPrice = parseInt(row.releaseCount) * row.price;
+				row.allPrice = parseInt(row.releaseCount) * row.metaprice;
 			} else {
-				row.allPrice = parseInt(row.store.incount) * row.store.price;
+				row.allPrice = parseInt(row.store.incount) * row.store.metaprice;
 			}
 			return this.$options.filters["currency"](row.allPrice);
 		},
@@ -514,22 +560,37 @@ export default {
 			let money = 0;
 			dataList.forEach((item, index) => {
 				if (index < dataList.length - 1) {
-					money += parseInt(item.releaseCount) * item.price;
+					money += parseInt(item.releaseCount) * item.metaprice;
 				}
 			});
 			dataList[dataList.length - 1]["allPrice"] = money;
 			return this.$options.filters["currency"](money);
 		},
+		setRowMetaPrice(row){
+			//console.log(row);
+			if(row.children && row.children.length){
+				row.children.forEach(item=>{
+					item.metaprice = row.metaprice;
+				})
+			}
+		},
+		setMetaPrice(row, dataList){
+			let money = 0;
+			dataList.forEach((item, index) => {
+				if (index < dataList.length - 1) {
+					money += parseInt(item.releaseCount) * item.metaprice;
+				}
+			});
+			dataList[dataList.length - 1]["allPrice"] = money;
+		},
 		checkReleaseCount(row, dataList) {
 			if (row) {
 				row.releaseCount = !row.releaseCount ? 0 : row.releaseCount;
 			}
-			let releaseCount = 0,
-				count = 0,
-				money = 0;
+			let releaseCount = 0, count = 0, money = 0;
 			dataList.forEach((item, index) => {
 				if (index < dataList.length - 1) {
-					money += parseInt(item.releaseCount) * item.price;
+					money += parseInt(item.releaseCount) * item.metaprice;
 					releaseCount += parseInt(item.releaseCount);
 					count += parseInt(item.count);
 				}
@@ -549,86 +610,69 @@ export default {
 		},
 		// 修改蒂森订单的交货日期
 		updateDeliveryDate(dataList) {
-			this.$confirm(
-				"此操作将修改订单号为:" +
-				this.detailItem.sourceserial +
-				"所有数据的交货日期(包括采购订单), 是否继续?",
-				"提示",
-				{
-					confirmButtonText: "确定",
-					cancelButtonText: "取消",
-					type: "warning"
-				}
-			)
-				.then(() => {
-					let condition = {
-						type: "updateData",
-						collectionName: "order",
-						multi: true,
-						updateDate: true,
-						condition: { sourceserial: this.detailItem.sourceserial },
-						data: { deliveryDate: this.updateForm.deliveryDate }
-					};
-					this.$axios.$post("mock/db", { data: condition }).then(result => {
-						this.gridList.forEach(item => {
-							if (item.sourceserial == this.detailItem.sourceserial) {
-								item.deliveryDate = this.updateForm.deliveryDate;
-							}
-						});
-						dataList.forEach(item => {
-							if (item.deliveryDate) {
-								item.deliveryDate = this.updateForm.deliveryDate;
-							}
-						});
+			this.$confirm("此操作将修改订单号为:" + this.detailItem.sourceserial + "所有数据的交货日期(包括采购订单), 是否继续?", "提示", {
+				confirmButtonText: "确定",
+				cancelButtonText: "取消",
+				type: "warning"
+			}).then(() => {
+				let condition = {
+					type: "updateData",
+					collectionName: "order",
+					multi: true,
+					updateDate: true,
+					condition: { sourceserial: this.detailItem.sourceserial },
+					data: { deliveryDate: this.updateForm.deliveryDate }
+				};
+				this.$axios.$post("mock/db", { data: condition }).then(result => {
+					this.gridList.forEach(item => {
+						if (item.sourceserial == this.detailItem.sourceserial) {
+							item.deliveryDate = this.updateForm.deliveryDate;
+						}
 					});
-				})
-				.catch();
+					dataList.forEach(item => {
+						if (item.deliveryDate) {
+							item.deliveryDate = this.updateForm.deliveryDate;
+						}
+					});
+				});
+			}).catch();
 		},
 		// 删除蒂森订单
 		handleDeleteBySerial(item) {
-			this.$confirm(
-				"此操作将删除订单号为:" +
-				(this.needSource ? item.sourceserial : item.serial) +
-				"所有数据(包括采购订单), 是否继续?",
-				"特别提示：请谨慎操作删除",
-				{
-					confirmButtonText: "确定",
-					cancelButtonText: "取消",
-					type: "warning"
+			this.$confirm("此操作将删除订单号为:" + (this.needSource ? item.sourceserial : item.serial) + "所有数据(包括采购订单), 是否继续?", "特别提示：请谨慎操作删除", {
+				confirmButtonText: "确定",
+				cancelButtonText: "取消",
+				type: "warning"
+			}).then(() => {
+				let condition = {
+					type: "removeData",
+					collectionName: "order",
+					data: { serial: item.serial }
+				};
+				if (this.needSource) {
+					condition.data = { sourceserial: item.sourceserial };
 				}
-			)
-				.then(() => {
-					let condition = {
-						type: "removeData",
-						collectionName: "order",
-						data: { serial: item.serial }
-					};
-					if (this.needSource) {
-						condition.data = { sourceserial: item.sourceserial };
-					}
-					this.$axios.$post("mock/db", { data: condition }).then(result => {
-						this.$message({
-							type: "success",
-							message: "删除成功!"
-						});
-						this.submitSearch(true);
-						this.openSourceVisible = false;
-						this.detailItem = null;
+				this.$axios.$post("mock/db", { data: condition }).then(result => {
+					this.$message({
+						type: "success",
+						message: "删除成功!"
 					});
-				})
-				.catch();
+					this.submitSearch(true);
+					this.openSourceVisible = false;
+					this.detailItem = null;
+				});
+			}).catch();
 		},
 		// 显示原始订单列表
 		showSourceOrder(row) {
 			this.detailItem = { ...row };
 			this.detailItem.crmOrderMoney = 0;
-			this.updateForm.deliveryDate = row.deliveryDate;
+            this.updateForm.deliveryDate = row.deliveryDate;
+            this.finishedDate = row.deliveryDate;
 			this.sourceData = [];
 			let serial = row.serial.split("-");
 			this.currSerial = this.needSource ? row.sourceserial : serial[1];
-			let match = this.needSource
-				? { sourceserial: row.sourceserial }
-				: { seriral: row.serial };
+			let match = this.needSource ? { sourceserial: row.sourceserial } : { seriral: row.serial };
 			let condition = {
 				type: "aggregate",
 				collectionName: "order",
@@ -641,7 +685,15 @@ export default {
 							foreignField: "materialNo",
 							as: "store"
 						}
-					},
+                    },
+                    {
+                        "$lookup":{
+                            "from":"storeIn",
+                            "localField":"materialNo",
+                            "foreignField":"materialNo",
+                            "as":"storeIn"
+                        }
+                    },
 					{
 						$unwind: {
 							// 拆分子数组
@@ -654,12 +706,11 @@ export default {
 				]
 			};
 			this.$axios.$post("mock/db", { data: condition }).then(result => {
-				let list = [],
-					allcount = 0;
+				let list = [], allcount = 0;
 				list = this.mergeOrder(result.list);
-				console.log("listData", list);
+				//console.log("listData", list);
 				list.forEach(item => {
-					item.allPrice = item.count * item.price;
+					item.allPrice = item.count * item.metaprice;
 					allcount += item.count;
 					this.detailItem.crmOrderMoney += item.allPrice;
 				});
@@ -675,19 +726,29 @@ export default {
 				});
 			});
 			this.openSourceVisible = true;
-		},
+        },
+        setOrderSerial(){
+            let now = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+			now = now.split(" ");
+			let dd = now[0].split("-");
+			let tt = now[1].split(":");
+			let serial = "JH" + dd[0] + "" + dd[1] + "" + dd[2] + "" + tt[0] + "" + tt[1] + "" + tt[2];
+			return serial;
+        },
+
 		exportOrder(dataList) {
 			this.exportOrderIds = [];
-			let exportData = [],
-				allCount = 0,
-				allMoney = 0;
+            let exportData = [], allCount = 0, allMoney = 0;
+            this.orderSerial = this.setOrderSerial();
 			this.exportOrders.forEach(item => {
-				if (item && item.id && item.releaseCount) {
+				if (item && item.id && item.releaseCount>=0) {
 					this.exportOrderIds = this.exportOrderIds.concat(
 						this.getChildrenByid(item.children)
 					);
 					allCount += item.releaseCount;
-					allMoney += item.allPrice;
+                    allMoney += item.allPrice;
+                    item.orderSerial = this.orderSerial;
+                    item.finishedDate = this.finishedDate;
 					exportData.push(item);
 				}
 			});
@@ -697,17 +758,16 @@ export default {
 			}
 			let excelData = _.cloneDeep(exportData);
 			excelData.push({
-				serial: "合计",
+				orderSerial: "合计",
 				releaseCount: allCount,
 				allPrice: allMoney
 			});
 			this.exportLoading = true;
 			import("@/components/Export2Excel").then(excel => {
-				const tHeader = ["型号/物料号", "产品名称", "交付日期", "数量", "单价", "合计"];
-				const filterVal = ["materialNo", "productName", "deliveryDate", "releaseCount", "price", "allPrice"];
-				tHeader.unshift("系统订单号");
-				filterVal.unshift("serial");
-
+				const tHeader = ["制单号","型号/物料号", "产品名称", "交付日期", "数量", "单价", "合计"];
+				const filterVal = ["orderSerial","materialNo", "productName", "finishedDate", "releaseCount", "metaprice", "allPrice"];
+				//tHeader.unshift("系统订单号");
+				//filterVal.unshift("serial");
 				const data = this.formatJson(filterVal, excelData);
 				const now = moment(new Date()).format("YYYYMMDD");
 				excel.export_json_to_excel({
@@ -723,7 +783,7 @@ export default {
 		formatJson(filterVal, jsonData) {
 			return jsonData.map(v =>
 				filterVal.map(j => {
-					if (j == "deliveryDate") {
+					if (j == "finishedDate") {
 						v[j] = this.parseDate(v[j]);
 					}
 					return v[j];
@@ -765,7 +825,8 @@ export default {
 						isAdded: false,
 						typeId: item.typeId,
 						orderId: item.id,
-						orderIds: this.getChildrenByid(item.children, item.id),
+                        orderIds: this.getChildrenByid(item.children, item.id),
+                        orderSerial:this.orderSerial,
 						serial: item.serial,
 						sourceserial: item.sourceserial,
 						crmId: item.crmId,
@@ -776,15 +837,18 @@ export default {
 						model: item.model,
 						projectName: item.projectName,
 						price: item.price,
+						metaprice: item.metaprice,
 						util: item.util,
 						count: item.count,
 						incount: item.releaseCount,
-						deliveryDate: item.deliveryDate,
+                        deliveryDate: item.deliveryDate,
+                        finishedDate: this.finishedDate,
 						createByUser: this.$store.state.user.name
 					});
 				}
 			});
-			//console.log("storeData", storeData);
+			//debugger
+			console.log("storeData", storeData);
 			this.$axios.$post("mock/db", { data: cn }).then(result => {
 				// 注意此处需保存数据到仓库中
 				let condition = {
@@ -792,6 +856,7 @@ export default {
 					collectionName: "storeIn",
 					data: storeData
 				};
+				//debugger
 				this.$axios.$post("mock/db", { data: condition }).then(result => {
 					this.openSourceVisible = false;
 					this.exportLoading = false;
@@ -851,31 +916,40 @@ export default {
 					bySerial = _.merge(bySerial, { serial: this.currItem.serial });
 				}
 			}
-			match = _.merge(bySerial, match);
+			match = _.merge({ flowStateId: 5 }, bySerial, match);
 			let params = {
 				type: "aggregate",
 				collectionName: "order",
-				data: _.merge({ flowStateId: 5 }, match),
+				data: match,
 				aggregate: [
 					{
 						$lookup: {
-							from: "store",
-							localField: "materialNo",
-							foreignField: "materialNo",
-							as: "store"
+							"from": "store",
+							"localField": "materialNo",
+							"foreignField": "materialNo",
+							"as": "store"
 						}
-					},
+                    },
+                    {
+                        "$lookup":{
+                            "from":"storeIn",
+                            "localField":"materialNo",
+                            "foreignField":"materialNo",
+                            "as":"storeIn"
+                        }
+                    },
 					{
 						$unwind: {
 							path: "$store",
 							preserveNullAndEmptyArrays: true // 空的数组也拆分
 						}
 					},
-					{ $match: _.merge({ flowStateId: 5 }, match) },
+					{ $match: match },
 					{ $sort: { deliveryDate: 1 } }
 				]
 			};
-			let data = await this.$axios.$post("mock/db", { data: params });
+            let data = await this.$axios.$post("mock/db", { data: params });
+            //debugger
 			this.sourceCrmOrderList = this.mergeOrder(data.list);
 			if (data.list.length) {
 				this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList));
@@ -887,7 +961,7 @@ export default {
 			let listData = [];
 			lists.forEach(item => {
 				item.children = [];
-				item.storeInCount = item.store ? item.store.count : 0; // 默认库存 0
+				item.storeCount = item.store ? item.store.count : 0; // 默认库存 0
 				let dataIndex = _.findIndex(listData, {
 					productId: item.productId,
 					materialNo: item.materialNo,
@@ -900,6 +974,8 @@ export default {
 					listData[dataIndex]["count"] += item.count;
 					listData[dataIndex]["releaseCount"] += item.count;
 				} else {
+                    let storeIn = this.uionStore(item.storeIn);
+                    item.storeIn = storeIn;
 					item.children.push(_.cloneDeep(item));
 					item.serial = item.serial.includes("-") ? item.serial.split("-")[1] : item.serial;
 					item.releaseCount = item.count;
@@ -907,12 +983,23 @@ export default {
 				}
 			});
 			return listData;
-		},
+        },
+        uionStore(storeInArr){
+            let obj = {count : 0, incount : 0};
+            if(storeInArr.length){
+                storeInArr.forEach(item=>{
+                    if(!item.isAdded){
+                        obj.count += item.count;
+                        obj.incount += item.incount;
+                    }
+                });
+            }
+            return obj;
+        },
 		filterCrmOrderList(arr) {
-			let list = [],
-				allcount = 0;
+			let list = [], allcount = 0;
 			arr.forEach(item => {
-				item.allPrice = item.count * item.price;
+				item.allPrice = item.count * item.metaprice;
 				allcount += item.count;
 				list.push(item);
 			});
@@ -964,7 +1051,8 @@ export default {
 				modelNo: product.modelNo,
 				materialNo: product.materialNo,
 				util: product.util,
-				price: product.price
+				price: product.price,
+				metaprice:product.price
 			};
 			this.getCrmName(product.crmId);
 			this.ruleForm = _.merge({}, this.ruleForm, obj);
@@ -1052,6 +1140,7 @@ export default {
 				count: row.count,
 				util: row.util,
 				price: row.price,
+				metaprice: row.metaprice,
 				content: row.content
 			};
 			this.isEdit = true;
@@ -1065,31 +1154,29 @@ export default {
 				confirmButtonText: "确定",
 				cancelButtonText: "取消",
 				type: "warning"
-			})
-				.then(() => {
-					let condition = {
-						type: "removeData",
-						collectionName: "order",
-						data: { id: row.id }
-					};
-					this.$axios.$post("mock/db", { data: condition }).then(result => {
-						this.$message({
-							type: "success",
-							message: "删除成功!"
-						});
-						if (this.needSource) {
-							let index = _.findIndex(dataList, { id: row.id });
-							dataList.splice(index, 1);
-							if (dataList.length == 1) {
-								dataList = [];
-							} else {
-								this.checkReleaseCount(null, dataList);
-							}
-						}
-						this.submitSearch(true);
+			}).then(() => {
+				let condition = {
+					type: "removeData",
+					collectionName: "order",
+					data: { id: row.id }
+				};
+				this.$axios.$post("mock/db", { data: condition }).then(result => {
+					this.$message({
+						type: "success",
+						message: "删除成功!"
 					});
-				})
-				.catch();
+					if (this.needSource) {
+						let index = _.findIndex(dataList, { id: row.id });
+						dataList.splice(index, 1);
+						if (dataList.length == 1) {
+							dataList = [];
+						} else {
+							this.checkReleaseCount(null, dataList);
+						}
+					}
+					this.submitSearch(true);
+				});
+			}).catch();
 		},
 		parseFlow(id) {
 			if (!id) return "";
@@ -1204,17 +1291,22 @@ export default {
 				bySerial = { sourceserial: "" };
 				groupId = { serial: "$serial" };
 			}
-			match = _.merge(bySerial, match);
+			match = _.merge({ typeId: 2, flowStateId: 5 }, bySerial, match);
 			let condition = {
 				type: "groupList",
 				collectionName: "order",
-				data: _.merge({ typeId: 2, flowStateId: 5 }, match),
+				data: match,
 				distinct: "sourceserial",
+				groupCount: [
+					{ $match: match },
+					{ $group: { _id: groupId } },
+					{ $group: { _id: null, total: { $sum: 1 } } }
+				],
 				aggregate: [
-					{ $match: _.merge({ typeId: 2, flowStateId: 5 }, match) },
+					{ $match: match },
 					{
 						$group: {
-							_id: groupId, // 按字段分组
+							_id: groupId, // 按订单号字段分组
 							id: { $first: "$id" },
 							typeId: { $first: "$typeId" },
 							ptypeId: { $first: "$ptypeId" },
@@ -1234,6 +1326,7 @@ export default {
 							caselNo: { $first: "$caselNo" },
 							util: { $first: "$util" },
 							price: { $first: "$price" },
+							metaprice: { $first: "$metaprice" },
 							count: { $first: "$count" },
 							orderDate: { $first: "$orderDate" },
 							deliveryDate: { $first: "$deliveryDate" },

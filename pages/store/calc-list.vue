@@ -2,7 +2,7 @@
 	<section>
 		<div class="page-title">
 			<div>
-				<span>库存列表</span>
+				<span>出入库清单</span>
 			</div>
 		</div>
 		<div class="grid-container">
@@ -13,17 +13,19 @@
 							<el-option v-for="typeItem in setting.type" :key="typeItem.id" :label="typeItem.name" :value="typeItem.id" />
 						</el-select>
 					</el-form-item>
+					<el-form-item label="出入库类型：" prop="storeTypeId">
+						<el-select v-model="searchForm.storeTypeId" placeholder="请选择" style="width:80px"  @change="submitSearch">
+							<el-option label="入库" v-for="item in storeType" :key="item.id" :label="item.name" :value="item.id" />
+						</el-select>
+					</el-form-item>
 					<el-form-item label="货品名称：" prop="productName">
 						<el-input v-model="searchForm.productName" clearable/>
 					</el-form-item>
 					<el-form-item label="物料号：" prop="materialNo">
 						<el-input v-model="searchForm.materialNo" clearable/>
 					</el-form-item>
-					<el-form-item label="库存小于：" prop="count">
-						<el-input v-model="searchForm.count" clearable style="width:70px" />
-					</el-form-item>
-					<el-form-item label="最后更新：" prop="updateDate">
-						<el-date-picker v-model="searchForm.updateDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px" />
+					<el-form-item :label="searchForm.storeTypeId==1?'入库日期：':'出库日期'" prop="updateDate">
+						<el-date-picker v-model="searchForm.createDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px" />
 					</el-form-item>
 					<el-form-item>
 						<el-button type="primary" @click="submitSearch" icon="el-icon-search">搜索</el-button>
@@ -32,47 +34,37 @@
 			</div>
 			<div id="printTable">
 				<el-table v-loading="listLoading" ref="detailStore" :data="gridList" border fit highlight-current-row stripe size="mini" max-height="500">
+					<el-table-column label="No." fixed="left" align="center" width="50">
+						<template slot-scope="scope">
+							<span>{{scope.$index+(query.page - 1) * query.pagesize + 1}}</span>
+						</template>
+					</el-table-column>
 					<el-table-column label="物料来源" prop="typeId" width="80">
 						<template slot-scope="scope">{{parseType(scope.row.typeId)}}</template>
 					</el-table-column>
-					<el-table-column label="物料名称" prop="productName">
-						<template slot-scope="scope">{{scope.row.product && scope.row.product.name}}</template>
-					</el-table-column>
+					<el-table-column label="物料名称" prop="productName"/>
 					<el-table-column label="物料号/版本号" prop="materialNo" width="150" />
 					<el-table-column prop="util" label="单位" width="70">
 						<template slot-scope="scope">
 							<span>{{scope.row.util}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="atcount" label="总入库量" width="70">
+					<el-table-column v-if="searchForm.storeTypeId==1" prop="atcount" label="入库量" width="70">
 						<template slot-scope="scope">
 							<span>{{scope.row.incount}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="outcount" label="总出库量" width="70">
+					<el-table-column v-else prop="outcount" label="出库量" width="70">
 						<template slot-scope="scope">
 							<span>{{scope.row.outcount}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="count" label="当前库存" width="100">
+					<el-table-column prop="createDate" :label="searchForm.storeTypeId==1?'入库日期':'出库日期'" width="120">
 						<template slot-scope="scope">
-							<span>{{scope.row.count}}</span>
+							<span>{{parseDate(scope.row.createDate)}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="incount" label="未来10天内采购量">
-						<template slot-scope="scope">
-							<span :class="{'warning':scope.row.incount==0}">
-								<span style="margin-right:10px;">{{parseMaterialNo(scope.row)}}</span>
-								<span v-if="scope.row.orderCount && scope.row.orderCount>scope.row.count" style="color:red">库存缺少 {{scope.row.orderCount - scope.row.count}}</span>
-							</span>
-						</template>
-					</el-table-column>
-					<el-table-column prop="updateDate" label="最后更新" width="120">
-						<template slot-scope="scope">
-							<span>{{parseDate(scope.row.updateDate)}}</span>
-						</template>
-					</el-table-column>
-					<el-table-column prop="updateByUser" label="操作人" width="90" />
+					<el-table-column prop="createByUser" :label="searchForm.storeTypeId==1?'入库人':'出库人'" width="90" />
 				</el-table>
 			</div>
 			<div class="page-container">
@@ -200,8 +192,12 @@ export default {
 			typeList: [], //settings.type,
 			storeNoList: [], //settings.storeNo,
 			gridList: [],
+			storeType:[
+				{id:1,name:'入库'},{id:2,name:'出库'}
+			],
 			searchForm: {
 				typeId: "",
+				storeTypeId:1,
 				materialNo: "",
 				productName: "",
 				count: ""
@@ -261,19 +257,15 @@ export default {
 				if (this.searchForm[k] != "" && this.searchForm[k]) {
 					if (_.isNumber(this.searchForm[k])) {
 						params[k] = Number(this.searchForm[k]);
-					} else if (_.isArray(this.searchForm[k]) && k === "updateDate") {
+					} else if (_.isArray(this.searchForm[k]) && k === "createDate") {
 						params[k] = {
 							$gte: this.searchForm[k][0],
 							$lte: this.searchForm[k][1]
 						};
 					} else if (_.isArray(this.searchForm[k])) {
 						params[k] = { $in: this.searchForm[k] };
-					} else {
-						if (k === "count") {
-							params[k] = { $lt: Number(this.searchForm[k]) };
-						} else {
-							params[k] = { $regex: this.searchForm[k] };
-						}
+					}else{
+						params[k] = {$regex:this.searchForm[k]}
 					}
 				}
 			}
@@ -284,32 +276,40 @@ export default {
 					pagesize: 20
 				};
 			}
+			
 			this.getList(params);
 		},
 		async getList(match = {}) {
 			this.listLoading = true;
+			let groupId = { materialNo: "$materialNo" };
 			let condition = {
-				type: "aggregate",
-				collectionName: "store",
+				type: "groupList",
+				collectionName: "storeCalc",
 				data: _.merge(match),
+				distinct: "materialNo",
+				groupCount: [
+					{ $match: match },
+					{ $group: { _id: groupId } },
+					{ $group: { _id: null, total: { $sum: 1 } } }
+				],
 				aggregate: [
-					{ $match: _.merge(match) },
+					{ $match: match },
 					{
-						$lookup: {
-							from: "product",
-							localField: "materialNo",
-							foreignField: "materialNo",
-							as: "product"
+						$group: {
+							_id: groupId, // 按字段分组
+							id: { $first: "$id" },
+							typeId: { $first: "$typeId" },
+							productName: { $first: "$productName" },
+                            materialNo: { $first: "$materialNo" },
+							util: { $first: "$util" },
+							incount: { $sum: "$incount" },
+							outcount: { $sum: "$outcount" },
+							createDate: { $first: "$createDate" },
+							createByUser: { $first: "$createByUser" },
+							total: { $sum: 1 }
 						}
 					},
-					{
-						$unwind: {
-							path: "$product",
-							preserveNullAndEmptyArrays: true // 空的数组也拆分
-						}
-					},
-
-					{ $sort: { materialNo: -1 } },
+					{ $sort: { cerateDate: -1 } },
 					{ $skip: (this.query.page - 1) * this.query.pagesize },
 					{ $limit: this.query.pagesize }
 				]
@@ -334,7 +334,7 @@ export default {
 				this.flowList = this.setting.flowState;
 				this.storeNoList = this.setting.storeNo;
 				this.crmList = this.setting.crm;
-				this.getList();
+				this.getList({storeTypeId:1});
 			}
 		},
 		async getBuys() {

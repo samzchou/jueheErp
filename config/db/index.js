@@ -497,6 +497,11 @@ module.exports = {
                 type: Number,
                 default:0,
 				label:'单价'
+			},
+			metaprice:{
+                type: Number,
+                default:0,
+				label:'元单价'
             },
             count:{
                 type: Number,
@@ -537,7 +542,12 @@ module.exports = {
                 type: Number,
                 default:new Date().getTime(),
 				label:'更新日期'
-            }
+            },
+			updateByUser:{
+                type: String,
+                default:'',
+				label:'操作人'
+            },
         },
         /*----------订单上传原始数据，暂废弃-----------*/
         orderUpload : {
@@ -678,6 +688,11 @@ module.exports = {
                 default:[],
 				label:'所有子订单ID'
             },
+			orderSerial:{
+                type:String,
+                default:'',
+				label:'制单订单号'
+            },
             serial:{
                 type:String,
                 default:'',
@@ -727,6 +742,11 @@ module.exports = {
                 type: Number,
                 default:0,
 				label:'单价'
+			},
+			metaprice:{
+                type: Number,
+                default:0,
+				label:'元单价'
             },
             util:{
                 type:String,
@@ -746,7 +766,12 @@ module.exports = {
             deliveryDate:{
                 type: Number,
                 default:new Date().getTime(),
-				label:'交付日期'
+				label:'原始订单交付日期'
+            },
+			finishedDate:{
+                type: Number,
+                default:new Date().getTime(),
+				label:'订单实际交付日期'
             },
             createByUser:{
                 type: String,
@@ -784,7 +809,12 @@ module.exports = {
                 type: Number,
                 default:0,
 				label:'业务类型ID'
-            },
+			},
+			productName:{
+				type:String,
+                default:'',
+				label:'货品名称'
+			},
 			materialNo : {
                 type:String,
                 default:'',
@@ -801,6 +831,11 @@ module.exports = {
 				label:'库位ID'
             },
 			price:{
+				type: Number,
+                default:0,
+				label:'单价'
+			},
+			metaprice:{
 				type: Number,
                 default:0,
 				label:'单价'
@@ -855,6 +890,68 @@ module.exports = {
                 default:new Date().getTime(),
 				label:'更新日期'
             }
+		},
+		/**仓库盘点表 */
+		storeCalc : {
+            id:{
+                type: Number,
+                default:0
+            },
+            typeId:{
+                type: Number,
+                default:0,
+				label:'业务类型ID'
+			},
+			productName:{
+				type:String,
+                default:'',
+				label:'货品名称'
+			},
+			materialNo : {
+                type:String,
+                default:'',
+				label:'物料号'
+            },
+            storeTypeId:{
+                type: Number,
+                default:0,
+				label:'出入库类型ID'
+            },
+			price:{
+				type: Number,
+                default:0,
+				label:'单价'
+			},
+			metaprice:{
+				type: Number,
+                default:0,
+				label:'单价'
+			},
+			util:{
+                type:String,
+                default:'',
+				label:'单位'
+            },
+			incount:{
+                type: Number,
+                default:0,
+				label:'当前入库量'
+            },
+            outcount:{
+                type: Number,
+                default:0,
+				label:'当前库量'
+            },
+            createByUser:{
+                type: String,
+                default:'',
+				label:'创建人'
+            },
+            createDate:{
+                type: Number,
+                default:new Date().getTime(),
+				label:'创建日期'
+            }
         },
         /*----------财务-----------*/
         finance : {
@@ -872,7 +969,12 @@ module.exports = {
                 default:[],
 				label:'storeIn订单ID'
             },
-            serial:{
+            orderSerial:{
+                type:String,
+                default:'',
+				label:'制单号'
+            },
+			serial:{
                 type:String,
                 default:'',
 				label:'系统订单号'

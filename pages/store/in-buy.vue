@@ -11,7 +11,10 @@
 		<div class="grid-container">
 			<div class="search-content">
 				<el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
-					<el-form-item label="蒂森订单号：" prop="sourceserial">
+					<el-form-item label="制单单号：" prop="orderSerial">
+						<el-input v-model="searchForm.orderSerial" clearable style="width:160px" />
+					</el-form-item>
+                    <el-form-item label="蒂森订单号：" prop="sourceserial">
 						<el-input v-model="searchForm.sourceserial" clearable style="width:150px" />
 					</el-form-item>
 					<el-form-item label="系统订单号：" prop="serial">
@@ -28,8 +31,8 @@
 					<el-form-item label="物料号/版本号：" prop="materialNo">
 						<el-input v-model="searchForm.materialNo" clearable style="width:150px" />
 					</el-form-item>
-					<el-form-item label="交付日期：" prop="deliveryDate">
-						<el-date-picker v-model="searchForm.deliveryDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px" />
+					<el-form-item label="交货日期：" prop="finishedDate">
+						<el-date-picker v-model="searchForm.finishedDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px" />
 					</el-form-item>
 					<el-form-item>
 						<el-button type="primary" @click="submitSearch" icon="el-icon-search">搜索</el-button>
@@ -37,23 +40,25 @@
 				</el-form>
 			</div>
 			<el-table class="table-container" ref="listTable" v-loading="listLoading" :data="gridList" border fit highlight-current-row stripe size="mini" max-height="500">
+				<el-table-column type="index" width="50" align="center" />
 				<el-table-column label="订单状态" width="80">
 					<template slot-scope="scope">
 						<div>{{scope.row.isAdded?'已入库':'未入库'}}</div>
 					</template>
 				</el-table-column>
-				<el-table-column prop="serial" label="系统订单号" width="150" />
+                <el-table-column prop="orderSerial" label="制单号" width="150" />
+				<el-table-column prop="serial" label="系统订单号" width="120" />
 				<el-table-column label="蒂森订单号" width="250">
 					<template slot-scope="scope">
 						<span :title="scope.row.sourceserial">{{scope.row.sourceserial}}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="crmName" label="供应商" width="250">
+				<el-table-column prop="crmName" label="供应商">
 					<template slot-scope="scope">
 						<el-button title="采购订单汇总" type="text" @click.stop="showDetail(scope.row)">{{scope.row.crmName}}</el-button>
 					</template>
 				</el-table-column>
-				<el-table-column prop="productName" label="订单产品名称">
+				<el-table-column prop="productName" label="订单产品名称" min-width="150">
 					<template slot-scope="scope">
 						<span>{{scope.row.productName}}</span>
 						<span style="margin-left:5px; color:#CCC">等...</span>
@@ -64,7 +69,7 @@
 						<span>{{scope.row.total}} 件</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="deliveryDate" label="交付日期" width="100">
+				<el-table-column prop="deliveryDate" label="制单交货日期" width="100">
 					<template slot-scope="scope">
 						<span>{{parseDate(scope.row.deliveryDate)}}</span>
 					</template>
@@ -93,12 +98,12 @@
 				<el-table ref="exportTable" :data="crmOrderList" border fit highlight-current-row stripe size="mini" max-height="350" v-loading="searchLoading" @selection-change="handleSelectionChange">
 					<el-table-column type="selection" width="40" align="center" v-if="currItem && !currItem.isAdded" :selectable="checkSelectable" />
 					<el-table-column type="index" width="50" align="center" />
-					<el-table-column prop="serial" label="系统订单号" width="120" />
-					<el-table-column prop="sourceserial" label="蒂森订单编号" />
+					<el-table-column prop="orderSerial" label="制单号" width="150" />
 					<el-table-column prop="materialNo" label="物料号" width="120" />
 					<el-table-column prop="productName" label="物料名称" />
 					<el-table-column prop="model" label="规格型号" width="100" />
-					<el-table-column prop="price" label="单价" width="70" />
+					<el-table-column prop="price" label="订单单价" width="80" />
+					<el-table-column prop="metaprice" label="采购单价" width="80" />
 					<el-table-column prop="count" label="订单数量" width="90">
 						<template slot-scope="scope">
 							<span>{{scope.row.count}} {{scope.row.util}}</span>
@@ -110,15 +115,15 @@
 						</template>
 					</el-table-column>
 					<el-table-column prop="incount" label="入库数量" width="70" />
-					<el-table-column label="订单金额" width="100px">
+					<el-table-column label="订单金额" width="100">
 						<template slot-scope="scope">
 							<span v-if="scope.$index<crmOrderList.length-1">{{parseReleaseMoney(scope.row)}}</span>
 							<span v-else>{{parseAllOrderMoney(true)}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="deliveryDate" label="交付日期" width="100">
+					<el-table-column prop="finishedDate" label="制单交货日期" width="100">
 						<template slot-scope="scope">
-							<span>{{parseDate(scope.row.deliveryDate)}}</span>
+							<span>{{parseDate(scope.row.finishedDate)}}</span>
 						</template>
 					</el-table-column>
 					<el-table-column prop="updateDate" label="最后更新" width="100">
@@ -169,12 +174,13 @@ export default {
 			},
 			total: 0,
 			searchForm: {
-				serial: "",
+                orderSerial: "",
+                serial: "",
 				sourceserial: "",
 				productName: "",
 				crmId: "",
 				materialNo: "",
-				deliveryDate: ""
+				finishedDate: ""
 			},
 			searchLoading: false,
 			currItem: null,
@@ -202,10 +208,10 @@ export default {
 		// 提交入库
 		inOrder() {
 			//console.log(this.selectOrders);
-			let storeIds = [], storeData = [], orderIds = [];
+            let storeIds = [], storeData = [], orderIds = [];
 			this.selectOrders.forEach((item, index) => {
 				if (item.id) {
-					storeIds.push(item.id);
+                    storeIds.push(item.id);
 					orderIds = orderIds.concat(item.orderIds);
 					let obj = {
 						typeId: item.typeId,
@@ -214,7 +220,9 @@ export default {
 						productId: item.productId,
 						productName: item.productName,
 						price: item.price,
+						metaprice: item.metaprice,
 						util: item.util,
+						count: item.incount,
 						incount: item.incount,
 						atcount: item.incount,
 						createByUser: this.$store.state.user.name,
@@ -228,7 +236,7 @@ export default {
 					}
 					storeData.push(obj);
 				}
-			});
+            });
 			if (!storeIds.length) {
 				this.$message.error("请选择需要入库的订单！");
 				return;
@@ -257,34 +265,39 @@ export default {
 			}).then(() => {
 				// 先更新订单的状态
 				this.$axios.$post("mock/db", { data: condition }).then(result => {
-					let cn = {
+                    // 加入仓库
+                    let cn = {
 						type: "addStore",
 						collectionName: "store",
 						data: storeData
 					};
-					this.$axios.$post("mock/db", { data: cn }).then(result => {
-						this.inLoading = false;
-						this.selectOrders = [];
-						this.crmOrderList = [];
-						this.openOrderVisible = false;
-						this.inLoading = false;
-						this.submitSearch(true);
+					this.$axios.$post("mock/db", { data: cn }).then(res1 => {
+                        // 更新原始订单流程状态
+                        let orderCn = {
+                            type: "updatePatch",
+                            collectionName: "order",
+                            notNotice: true,
+                            param: { id: { $in: orderIds } },
+                            set: {
+                                $set: {
+                                    flowStateId: 3
+                                }
+                            }
+                        }
+                        this.$axios.$post("mock/db", { data: orderCn }).then(res2=>{
+							this.inLoading = false;
+                            this.selectOrders = [];
+                            this.crmOrderList = [];
+                            this.openOrderVisible = false;
+                            this.inLoading = false;
+                            this.submitSearch(true);
+                        });
 					});
 				});
-				// 更新原始订单流程状态
-				let orderCn = {
-					type: "updatePatch",
-					collectionName: "order",
-					notNotice: true,
-					param: { id: { $in: orderIds } },
-					set: {
-						$set: {
-							flowStateId: 3
-						}
-					}
-				}
-				this.$axios.$post("mock/db", { data: orderCn });
-			}).catch(() => { });
+
+			}).catch(() => {
+				this.inLoading = false;
+			});
 		},
 		handleSizeOrder(val) {
 			this.queryIn.pagesize = val;
@@ -302,12 +315,12 @@ export default {
 				contactPhone: crm.contactPhone,
 				address: crm.address
 			});
-			//debugger
-			//console.log("this.currItem", this.currItem);
 			let params = {
 				crmId: row.crmId,
 				isAdded: row.isAdded,
-				typeId: row.typeId
+                typeId: row.typeId,
+                orderSerial:row.orderSerial
+                //finishedDate: row.finishedDate
 			}
 			// 查询供应商的具体订单
 			let condition = {
@@ -330,7 +343,7 @@ export default {
 						}
 					},
 					{ $match: params },
-					{ $sort: { deliveryDate: 1 } },
+					{ $sort: { finishedDate: 1 } },
 					{ $skip: (this.queryIn.page - 1) * this.queryIn.pagesize },
 					{ $limit: this.queryIn.pagesize }
 				]
@@ -364,7 +377,7 @@ export default {
 			this.crmOrderList.forEach((item, index) => {
 				if (index < this.crmOrderList.length - 1) {
 					count += item.incount;
-					money += item.incount * item.price;
+					money += item.incount * item.metaprice;
 				}
 			});
 			//debugger
@@ -373,7 +386,7 @@ export default {
 			return this.$options.filters["currency"](money);
 		},
 		parseReleaseMoney(row) {
-			let money = row.incount * row.price;
+			let money = row.incount * row.metaprice;
 			row.allPrice = money;
 			return this.$options.filters["currency"](money);
 		},
@@ -419,25 +432,35 @@ export default {
 		},
 		async getList(match = {}) {
 			this.listLoading = true;
+			match = _.merge({ typeId: 1, isAdded: this.isAdded }, match);
+			let groupId = { crmId: "$crmId", orderSerial: "$orderSerial" };
 			let condition = {
 				type: "groupList",
 				collectionName: "storeIn",
-				data: _.merge({ typeId: 1, isAdded: this.isAdded }, match),
+				data: match,
 				distinct: "crmId",
+				groupCount: [
+					{ $match: match },
+					{ $group: { _id: groupId } },
+					{ $group: { _id: null, total: { $sum: 1 } } }
+				],
 				aggregate: [
-					{ $match: _.merge({ typeId: 1, isAdded: this.isAdded }, match) },
+					{ $match: match },
 					{
 						$group: {
-							_id: { crmId: "$crmId", serial: "$serial" }, // 按字段分组
+							_id: groupId, // 按字段分组
 							id: { $first: "$id" },
 							isAdded: { $first: "$isAdded" },
 							orderIds: { $first: "$orderIds" },
-							serial: { $first: "$serial" },
+                            orderSerial: { $first: "$orderSerial" },
+                            serial: { $first: "$serial" },
 							sourceserial: { $first: "$sourceserial" },
 							crmId: { $first: "$crmId" },
 							crmName: { $first: "$crmName" },
 							productName: { $first: "$productName" },
-							deliveryDate: { $first: "$deliveryDate" },
+                            finishedDate: { $first: "$finishedDate" },
+                            deliveryDate: { $first: "$deliveryDate" },
+                            updateDate: { $first: "$updateDate" },
 							total: { $sum: 1 }
 						}
 					},
@@ -447,9 +470,9 @@ export default {
 				]
 			};
 			let result = await this.$axios.$post("mock/db", { data: condition });
+			console.log(result)
 			this.total = result.total;
 			this.gridList = result.list;
-			///this.gridList = _.orderBy(result.list,['crmId'], ['asc']);
 			this.listLoading = false;
 			console.log("this.gridList", this.gridList);
 		},

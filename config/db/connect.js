@@ -7,7 +7,7 @@ if(dbServer.dbConect.username && dbServer.dbConect.password){
 }
 const optionsMongoose = {
     useNewUrlParser: true
-}; 
+};
 
 mongoose.Promise = Promise;
 mongoose.connect(myUri, optionsMongoose);
@@ -84,6 +84,10 @@ exports.storeIn = connect.model('storeIn', storeInScheme);
 /*---------仓库数据-----------*/
 var storeScheme = new Schema(dbServer.collections.store,{collection:'store'});
 exports.store = connect.model('store', storeScheme);
+
+/*---------仓库盘点清单数据-----------*/
+var storeCalcScheme = new Schema(dbServer.collections.storeCalc,{collection:'storeCalc'});
+exports.storeCalc = connect.model('storeCalc', storeCalcScheme);
 
 /*---------财务数据-----------*/
 var financeScheme = new Schema(dbServer.collections.finance,{collection:'finance'});

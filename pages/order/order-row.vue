@@ -35,7 +35,7 @@ export default {
 				}
 			}
             let result = await this.$axios.$post('mock/db', {data:condition});
-            debugger
+            //debugger
             this.orderList = result.list;
         },
     },
