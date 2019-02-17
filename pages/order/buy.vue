@@ -227,11 +227,18 @@
 									<span style="width:30px">{{idx+1}}、</span>
 									<span>蒂森单号：{{item.sourceserial}}</span>
 								</el-col>
+<<<<<<< HEAD
                                 <el-col :span="3">系统单号：{{item.serial}}</el-col>
 								<el-col :span="3" :title="item.projectNo">项目号：{{item.projectNo}}</el-col>
 								<el-col :span="2">订单量：{{item.count}} {{item.util}}</el-col>
 								<el-col :span="3">订单单价：{{item.price}}</el-col>
 								<el-col :span="3">采购单价：{{item.metaprice}}</el-col>
+=======
+                                <el-col :span="4">系统订单号：{{item.serial}}</el-col>
+								<el-col :span="4" :title="item.projectNo">项目号：{{item.projectNo}}</el-col>
+								<el-col :span="2">订单量：{{item.count}} {{item.util}}</el-col>
+								<el-col :span="3">订单单价：{{item.price}}</el-col>
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 								<el-col :span="3">制单日期：{{parseDate(item.orderDate)}}</el-col>
 								<el-col :span="3">交货日期：{{parseDate(item.deliveryDate)}}</el-col>
 							</el-row>
@@ -260,12 +267,17 @@
 							<div v-else>{{parseAllOrderCount()}}</div>
 						</template>
 					</el-table-column>
+<<<<<<< HEAD
 					<el-table-column prop="price" label="订单单价" width="80">
 						<template slot-scope="scope">
 							<span>{{scope.row.price}}</span>
 						</template>
 					</el-table-column>
 					<el-table-column prop="metaprice" label="采购单价" width="100">
+=======
+
+					<el-table-column prop="price" label="采购单价" width="100">
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 						<template slot-scope="scope">
 							<div v-if="scope.$index<crmOrderList.length-1">
 								<el-input-number size="mini" controls-position="right" :min="0" :step="0.1" v-model="scope.row.metaprice" @change="setRowMetaPrice(scope.row)" style="width:80px" />
@@ -281,6 +293,12 @@
 					<el-table-column prop="deliveryDate" label="交货日期" width="100">
 						<template slot-scope="scope">
                             <span>{{parseDate(scope.row.deliveryDate)}}</span>
+<<<<<<< HEAD
+=======
+							<!-- <div v-if="scope.$index<crmOrderList.length-1">
+								<el-date-picker size="mini" v-model="scope.row.deliveryDate" type="date" value-format="timestamp" placeholder="选择日期" :clearable="false" style="width:120px" />
+							</div> -->
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 						</template>
 					</el-table-column>
 					<el-table-column label="操作" fixed="right" align="center" width="70">
@@ -526,6 +544,7 @@ export default {
 		splitSerial(serial) {
 			let s = serial.split("-");
 			return s.length ? s[1] : serial;
+<<<<<<< HEAD
 		},
 		setRowMetaPrice(row){
 			if(row.children && row.children.length){
@@ -534,6 +553,10 @@ export default {
 				})
 			}
 		},
+=======
+        },
+        
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 		removeCrmOrder(row) {
 			let ids = row.children.map(item => {
 				return item.id;
@@ -675,7 +698,11 @@ export default {
             this.exportOrderIds = [];
             this.orderSerial = this.setOrderSerial();
             let exportData = [], allCount = 0, allMoney = 0;
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 			this.exportOrders.forEach(item => {
 				if (item && item.id && item.releaseCount>=0) {
                     item.orderSerial = this.orderSerial;
@@ -698,7 +725,11 @@ export default {
 			});
 			import("@/components/Export2Excel").then(excel => {
 				const tHeader = ["订单编号", "物料号", "物料名称", "规格型号", "数量", "单价", "金额", "交货日期"];
+<<<<<<< HEAD
 				const filterVal = ["orderSerial", "materialNo", "productName", "model", "releaseCount", "metaprice", "allPrice", "finishedDate"];
+=======
+				const filterVal = ["orderSerial", "materialNo", "productName", "model", "releaseCount", "price", "allPrice", "finishedDate"];
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 				const data = this.formatJson(filterVal, excelData);
 				const now = moment(this.finishedDate).format("YYYYMMDD");
 				excel.export_json_to_excel({
@@ -892,7 +923,11 @@ export default {
 			};
 			let data = await this.$axios.$post("mock/db", { data: params });
             this.sourceCrmOrderList = this.mergeOrder(data.list);
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 			if (this.sourceCrmOrderList.length) {
 				this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList));
 			}

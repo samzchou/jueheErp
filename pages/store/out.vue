@@ -83,7 +83,11 @@
             </div>
         </div>
 
+<<<<<<< HEAD
         <el-dialog :title="'送货清单--'+(needSource?'蒂森订单':'珏合订单')" append-to-body :visible.sync="openDialogVisible" @close="closeDialog" width="65%">
+=======
+        <el-dialog :title="'送货清单--'+(needSource?'蒂森订单':'珏合订单')" append-to-body :visible.sync="openDialogVisible" width="65%">
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 			<div class="compare" v-if="currItem">
 				<el-row :gutter="20">
 					<el-col :span="6">系统订单号：{{currItem.serial}}</el-col>
@@ -171,7 +175,10 @@ export default {
 			exportOrderIds:[],
             updateIds:[],
             isCanExport:false,
+<<<<<<< HEAD
             storeCalcLastId:0,
+=======
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
         }
     },
     methods:{
@@ -185,9 +192,12 @@ export default {
 			this.query.page = 1;
 			this.getList();
         },
+<<<<<<< HEAD
         closeDialog(){
             this.orderList = [];
         },
+=======
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
         checkSelectable(row) {
             return row.finished;
         },
@@ -237,7 +247,10 @@ export default {
                 this.orderList = [];
                 this.exportLoading = false;
                 this.openDialogVisible = false;
+<<<<<<< HEAD
                 this.addStoreCalc(result);
+=======
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
                 this.submitSearch(true);
             });
         },

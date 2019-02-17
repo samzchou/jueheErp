@@ -237,7 +237,11 @@
 							</el-row>
 						</template>
 					</el-table-column>
+<<<<<<< HEAD
 					<el-table-column :prop="needSource?'sourceserial':'serial'" :label="needSource?'蒂森生产订单':'珏合生产订单'" />
+=======
+					<el-table-column prop="sourceserial" label="蒂森订单号" />
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 					<el-table-column prop="materialNo" label="型号/物料号" width="120"/>
 					<el-table-column prop="productName" label="产品名称" />
 					<el-table-column prop="count" label="订单量" width="70">
@@ -361,7 +365,11 @@
                             </div>
                         </template>
                     </el-table-column>
+<<<<<<< HEAD
 				<el-table-column prop="releaseCount" label="实际生产量" width="100">
+=======
+				<el-table-column prop="releaseCount" label="实际生产量" width="120">
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 					<template slot-scope="scope">
 						<div v-if="scope.$index<sourceData.length-1">
 							<el-input-number v-if="scope.row.flowStateId==5" size="mini" controls-position="right" :min="0" @change="checkReleaseCount(scope.row, sourceData)" v-model="scope.row.releaseCount" style="width:80px" />
@@ -765,7 +773,11 @@ export default {
 			this.exportLoading = true;
 			import("@/components/Export2Excel").then(excel => {
 				const tHeader = ["制单号","型号/物料号", "产品名称", "交付日期", "数量", "单价", "合计"];
+<<<<<<< HEAD
 				const filterVal = ["orderSerial","materialNo", "productName", "finishedDate", "releaseCount", "metaprice", "allPrice"];
+=======
+				const filterVal = ["orderSerial","materialNo", "productName", "finishedDate", "releaseCount", "price", "allPrice"];
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 				//tHeader.unshift("系统订单号");
 				//filterVal.unshift("serial");
 				const data = this.formatJson(filterVal, excelData);

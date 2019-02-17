@@ -445,7 +445,11 @@ export default {
 					{ $match: match },
 					{
 						$group: {
+<<<<<<< HEAD
 							_id: groupId, // 按字段分组 { crmId: "$crmId", serial: "$serial" },
+=======
+							_id: groupId, // 按字段分组 { crmId: "$crmId", serial: "$serial" }, 
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 							id: { $first: "$id" },
 							isAdded: { $first: "$isAdded" },
                             orderIds: { $first: "$orderIds" },

@@ -107,6 +107,7 @@
 						</template>
 					</el-table-column>
 					<el-table-column prop="orderSerial" label="制单号" width="130" />
+<<<<<<< HEAD
                     <!-- <el-table-column prop="serial" label="系统订单号" width="120" />
 					<el-table-column prop="sourceserial" label="蒂森订单编号" width="120" /> -->
 					<el-table-column prop="materialNo" label="物料号" width="120" />
@@ -118,6 +119,18 @@
 							<div v-if="scope.$index<crmOrderList.length-1">
 								<el-input-number size="mini" v-if="!scope.row.isAdded" controls-position="right" :min="0" :step="0.1" v-model="scope.row.metaprice" @change="setRowData(scope.row)" style="width:80" />
 								<span v-else>{{scope.row.metaprice}}</span>
+=======
+                    <el-table-column prop="serial" label="系统订单号" width="120" />
+					<el-table-column prop="sourceserial" label="蒂森订单编号" width="120" />
+					<el-table-column prop="materialNo" label="物料号" width="120" />
+					<el-table-column prop="productName" label="物料名称" />
+					<el-table-column prop="model" label="规格型号" width="100" />
+					<el-table-column prop="price" label="采购单价" width="100">
+						<template slot-scope="scope">
+							<div v-if="scope.$index<crmOrderList.length-1">
+								<el-input-number size="mini" v-if="!scope.row.isAdded" controls-position="right" :min="0" :step="0.1" v-model="scope.row.price" @change="setRowData(scope.row)" style="width:80" />
+								<span v-else>{{scope.row.price}}</span>
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 							</div>
 						</template>
 					</el-table-column>
@@ -250,7 +263,11 @@ export default {
 
 			import('@/components/Export2Excel').then(excel => {
 				const tHeader = ['制单号', '物料号', '物料名称', '规格型号', '数量', '单价', '金额', '交货日期'];
+<<<<<<< HEAD
 				const filterVal = ['orderSerial', 'materialNo', 'productName', 'model', 'incount', 'metaprice', 'allPrice', 'finishedDate'];
+=======
+				const filterVal = ['orderSerial', 'materialNo', 'productName', 'model', 'incount', 'price', 'allPrice', 'finishedDate'];
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 				const data = this.formatJson(filterVal, _.cloneDeep(this.crmOrderList));
 				const now = moment(new Date()).format('YYYYMMDD');
 				excel.export_json_to_excel({
@@ -278,7 +295,10 @@ export default {
                         'orderSerial': item.orderSerial,
 						'incount': item.incount,
 						'price': item.price,
+<<<<<<< HEAD
 						'metaprice': item.metaprice,
+=======
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 						'finishedDate': this.currItem.finishedDate,
 						'updateByUser': this.$store.state.user.name
 					})

@@ -473,12 +473,49 @@ export default {
 						obj.notin = true;
 						this.notInList.push(obj);
 					}
+<<<<<<< HEAD
 					// 检查重复订单 notInList
 					if (this.checkModelNo(obj)) {
 						obj.isRepeat = "是";
 						this.uploadRepeatCount += 1;
 					}
 					listData.push(obj);
+=======
+				}
+				// 匹配产品分类和产品ID
+				let product = _.find(this.productList, {
+					name: obj.productName,
+					materialNo: obj.materialNo,
+					typeId: obj.typeId
+				});
+				//debugger
+				if (product) {
+                    let crm = _.find(this.setting.crm, { id: product.crmId });
+                    if(crm){
+                        if (_.findIndex(this.crmList, { id: product.crmId }) < 0) {
+                            this.crmList.push(crm);
+                        }
+                        obj = _.merge(obj, {
+                            metaprice: product.price,
+                            productId: product.id,
+                            ptypeId: product.ptypeId,
+                            crmId: product.crmId,
+                            crmName: crm.name
+                        });
+                    }else{
+                        obj.notin = true;
+					    this.notInList.push(obj);
+                    }
+					
+				} else {
+					obj.notin = true;
+					this.notInList.push(obj);
+				}
+				// 检查重复订单 notInList
+				if (this.checkModelNo(obj)) {
+					obj.isRepeat = "是";
+					this.uploadRepeatCount += 1;
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 				}
 			});
 			//console.log("this.sourceserialList", this.sourceserialList);

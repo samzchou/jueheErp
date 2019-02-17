@@ -285,7 +285,11 @@ export default {
                             }
                         }
                         this.$axios.$post("mock/db", { data: orderCn }).then(res2=>{
+<<<<<<< HEAD
 							this.inLoading = false;
+=======
+                            this.inLoading = false;
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
                             this.selectOrders = [];
                             this.crmOrderList = [];
                             this.openOrderVisible = false;
@@ -294,7 +298,11 @@ export default {
                         });
 					});
 				});
+<<<<<<< HEAD
 
+=======
+				
+>>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 			}).catch(() => {
 				this.inLoading = false;
 			});
