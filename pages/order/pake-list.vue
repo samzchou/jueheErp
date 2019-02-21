@@ -88,7 +88,7 @@ export default {
 					if (_.isArray(this.searchForm[k]) && (k === 'deliveryDate' || k === 'orderDate')) {
 						params[k] = {
 							$gte: this.searchForm[k][0],
-							$lte: this.searchForm[k][1]
+							$lte: this.searchForm[k][1] + 24*3600*1000
 						}
 					} 
 				}
@@ -167,7 +167,7 @@ export default {
 					if (_.isArray(this.searchForm[k]) && (k === 'deliveryDate' || k === 'orderDate')) {
 						params[k] = {
 							$gte: this.searchForm[k][0],
-							$lte: this.searchForm[k][1]
+							$lte: this.searchForm[k][1] + 24*3600*1000
 						}
 					} 
 				}

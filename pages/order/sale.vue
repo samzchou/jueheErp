@@ -197,7 +197,7 @@
 			</el-form>
 		</div>
 		<!--制定全部订单-->
-		<el-dialog :title="needSource?'蒂森生产订单':'珏合生产订单'" append-to-body :visible.sync="openDialogVisible" width="80%">
+		<el-dialog :title="needSource?'蒂森生产订单':'珏合生产订单'" append-to-body :visible.sync="openDialogVisible" width="90%">
 			<div class="form-dialog">
 				<el-form :inline="true" :model="dialogForm" ref="dialogForm" size="mini">
 					<el-form-item label="按客户：" prop="crmId">
@@ -237,12 +237,8 @@
 							</el-row>
 						</template>
 					</el-table-column>
-<<<<<<< HEAD
 					<el-table-column :prop="needSource?'sourceserial':'serial'" :label="needSource?'蒂森生产订单':'珏合生产订单'" />
-=======
-					<el-table-column prop="sourceserial" label="蒂森订单号" />
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
-					<el-table-column prop="materialNo" label="型号/物料号" width="120"/>
+					<el-table-column prop="materialNo" label="型号/物料号" width="100"/>
 					<el-table-column prop="productName" label="产品名称" />
 					<el-table-column prop="count" label="订单量" width="70">
 						<template slot-scope="scope">
@@ -250,7 +246,7 @@
 						</template>
 					</el-table-column>
 					<el-table-column prop="storeCount" label="库存量" width="60" />
-                    <el-table-column label="已制单未入库参考">
+                    <el-table-column label="已制单未入库参考" width="160">
                         <template slot-scope="scope">
                             <div v-if="scope.$index<crmOrderList.length-1">
                                 <span>订单量：{{scope.row.storeIn && scope.row.storeIn.count}}；</span>
@@ -258,10 +254,11 @@
                             </div>
                         </template>
                     </el-table-column>
-					<el-table-column prop="releaseCount" label="实际生产量" width="120">
+                    <el-table-column label="已制单未出库量" prop="rcount" width="120" />
+					<el-table-column prop="releaseCount" label="实际生产量" width="100">
 						<template slot-scope="scope">
 							<div v-if="scope.$index<crmOrderList.length-1">
-								<el-input-number size="mini" controls-position="right" :min="0" @change="checkReleaseCount(scope.row, crmOrderList)" v-model="scope.row.releaseCount" style="width:100" />
+								<el-input-number size="mini" controls-position="right" :min="0" @change="checkReleaseCount(scope.row, crmOrderList)" v-model="scope.row.releaseCount" style="width:80" />
 							</div>
 							<div v-else>{{scope.row.releaseCount}}</div>
 						</template>
@@ -274,13 +271,13 @@
 							</div>
 						</template>
 					</el-table-column>
-					<el-table-column prop="allPrice" label="订单金额" width="100">
+					<el-table-column prop="allPrice" label="订单金额" width="80">
 						<template slot-scope="scope">
 							<span v-if="scope.$index<crmOrderList.length-1">{{parseReleaseMoney(scope.row)}}</span>
 							<span v-else>{{scope.row.allPrice | currency}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="deliveryDate" label="交付日期" width="100">
+					<el-table-column prop="deliveryDate" label="交付日期" width="90">
 						<template slot-scope="scope">
 							<span>{{parseDate(scope.row.deliveryDate)}}</span>
 						</template>
@@ -297,7 +294,7 @@
 			</div>
 		</el-dialog>
 		<!--根据蒂森订单号-->
-		<el-dialog :title="'蒂森订单：'+currSerial" append-to-body :visible.sync="openSourceVisible" width="80%">
+		<el-dialog :title="'蒂森订单：'+currSerial" append-to-body :visible.sync="openSourceVisible" width="90%">
 			<div class="detail-container">
 				<el-row :gutter="20" v-if="detailItem">
 					<el-col :span="12">
@@ -345,12 +342,10 @@
 				</el-row>
 			</div>
 			<el-table size="mini" class="detail-table" ref="exportTable" :data="sourceData" border highlight-current-row fit stripe max-height="350" @selection-change="handleSelectionOrders" style="width:100%">
-				<el-table-column type="selection" width="55" align="center" :selectable="checkSelectable" />
-				<el-table-column label="物料号" prop="materialNo" width="120" />
+				<el-table-column type="selection" width="45" align="center" :selectable="checkSelectable" />
+				<el-table-column label="物料号" prop="materialNo" width="100" />
 				<el-table-column label="产品名称" prop="productName" />
-				<el-table-column label="图号/版本号" prop="caselNo" />
-				<el-table-column label="梯型" prop="model" width="100" />
-				<el-table-column label="梯号" prop="modelNo" width="80" />
+				<el-table-column label="梯型" prop="model" width="80" />
 				<el-table-column label="订单量" prop="count" width="70">
 					<template slot-scope="scope">
 						<span>{{scope.row.count}} {{scope.row.util}}</span>
@@ -358,18 +353,15 @@
 				</el-table-column>
 				<el-table-column label="库存" prop="storeCount" width="60" />
                 <el-table-column label="已制单未入库参考">
-                        <template slot-scope="scope">
-                            <div v-if="scope.$index<sourceData.length-1">
-                                <span>订单量：{{scope.row.storeIn && scope.row.storeIn.count}}；</span>
-                                <span>实际量：{{scope.row.storeIn && scope.row.storeIn.incount}}</span>
-                            </div>
-                        </template>
-                    </el-table-column>
-<<<<<<< HEAD
+                    <template slot-scope="scope">
+                        <div v-if="scope.$index<sourceData.length-1">
+                            <span>订单量：{{scope.row.storeIn && scope.row.storeIn.count}}；</span>
+                            <span>实际量：{{scope.row.storeIn && scope.row.storeIn.incount}}</span>
+                        </div>
+                    </template>
+                </el-table-column>
+                <el-table-column label="已制单未出库量" prop="rcount" width="120" />
 				<el-table-column prop="releaseCount" label="实际生产量" width="100">
-=======
-				<el-table-column prop="releaseCount" label="实际生产量" width="120">
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 					<template slot-scope="scope">
 						<div v-if="scope.$index<sourceData.length-1">
 							<el-input-number v-if="scope.row.flowStateId==5" size="mini" controls-position="right" :min="0" @change="checkReleaseCount(scope.row, sourceData)" v-model="scope.row.releaseCount" style="width:80px" />
@@ -684,7 +676,8 @@ export default {
 			let condition = {
 				type: "aggregate",
 				collectionName: "order",
-				data: _.merge({ flowStateId: row.flowStateId }, match),
+                //data: _.merge({ flowStateId: row.flowStateId }, match),
+                data: { flowStateId: {$gte:5,$lt:9}},
 				aggregate: [
 					{
 						$lookup: {
@@ -709,13 +702,23 @@ export default {
 							preserveNullAndEmptyArrays: true // 空的数组也拆分
 						}
 					},
-					{ $match: _.merge({ flowStateId: row.flowStateId }, match) },
+                    //{ $match: _.merge({ flowStateId: row.flowStateId }, match) },
+                    { $match: { flowStateId: {$gte:5,$lt:9}} },
 					{ $sort: { deliveryDate: 1 } }
 				]
-			};
+            };
+            //debugger
 			this.$axios.$post("mock/db", { data: condition }).then(result => {
-				let list = [], allcount = 0;
-				list = this.mergeOrder(result.list);
+                let list = [], allcount = 0;
+                let d = _.filter(result.list, {flowStateId:row.flowStateId});
+                if(this.needSource){
+                    d = _.filter(result.list, {sourceserial:row.sourceserial});
+                }else{
+                    d = _.filter(result.list, {seriral:row.seriral});
+                }
+                list = this.mergeOrder(d, result.list);
+                
+                //list = this.mergeOrder(result.list);
 				//console.log("listData", list);
 				list.forEach(item => {
 					item.allPrice = item.count * item.metaprice;
@@ -773,11 +776,7 @@ export default {
 			this.exportLoading = true;
 			import("@/components/Export2Excel").then(excel => {
 				const tHeader = ["制单号","型号/物料号", "产品名称", "交付日期", "数量", "单价", "合计"];
-<<<<<<< HEAD
 				const filterVal = ["orderSerial","materialNo", "productName", "finishedDate", "releaseCount", "metaprice", "allPrice"];
-=======
-				const filterVal = ["orderSerial","materialNo", "productName", "finishedDate", "releaseCount", "price", "allPrice"];
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 				//tHeader.unshift("系统订单号");
 				//filterVal.unshift("serial");
 				const data = this.formatJson(filterVal, excelData);
@@ -860,7 +859,7 @@ export default {
 				}
 			});
 			//debugger
-			console.log("storeData", storeData);
+			//console.log("storeData", storeData);
 			this.$axios.$post("mock/db", { data: cn }).then(result => {
 				// 注意此处需保存数据到仓库中
 				let condition = {
@@ -927,8 +926,9 @@ export default {
 				if (this.currItem && this.currItem.serial) {
 					bySerial = _.merge(bySerial, { serial: this.currItem.serial });
 				}
-			}
-			match = _.merge({ flowStateId: 5 }, bySerial, match);
+            }
+            match = _.merge({ flowStateId: {$gte:5,$lt:9} }, bySerial, match);
+            //match = _.merge({ flowStateId: 5 }, bySerial, match);
 			let params = {
 				type: "aggregate",
 				collectionName: "order",
@@ -962,14 +962,17 @@ export default {
 			};
             let data = await this.$axios.$post("mock/db", { data: params });
             //debugger
-			this.sourceCrmOrderList = this.mergeOrder(data.list);
+            //this.sourceOrderList = data.list;
+            let list = _.filter(data.list, { flowStateId: 5 }); 
+            this.sourceCrmOrderList = this.mergeOrder(list, data.list);
+			//this.sourceCrmOrderList = this.mergeOrder(data.list);
 			if (data.list.length) {
 				this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList));
 			}
 			this.searchLoading = false;
 		},
 		// 合并订单数量,根据类型，产品名称，物料号，价格，梯形、梯号、项目号
-		mergeOrder(lists) {
+		mergeOrder(lists, sdata) {
 			let listData = [];
 			lists.forEach(item => {
 				item.children = [];
@@ -990,10 +993,20 @@ export default {
                     item.storeIn = storeIn;
 					item.children.push(_.cloneDeep(item));
 					item.serial = item.serial.includes("-") ? item.serial.split("-")[1] : item.serial;
-					item.releaseCount = item.count;
+                    item.releaseCount = item.count;
+                    if(sdata && sdata.length){
+                        let rcount = 0;
+                        sdata.forEach(o=>{
+                            if(o.flowStateId>5 && item.materialNo == o.materialNo){
+                                rcount += o.count;
+                            }
+                        })
+                        item.rcount = rcount;
+                    }
 					listData.push(item);
 				}
-			});
+            });
+            console.log('listData',listData)
 			return listData;
         },
         uionStore(storeInArr){
@@ -1264,7 +1277,7 @@ export default {
 					) {
 						params[k] = {
 							$gte: this.searchForm[k][0],
-							$lte: this.searchForm[k][1]
+							$lte: this.searchForm[k][1] + 24*3600*1000
 						};
 					} else if (_.isArray(this.searchForm[k])) {
 						params[k] = { $in: this.searchForm[k] };

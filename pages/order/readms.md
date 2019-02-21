@@ -10,6 +10,14 @@
 ----实际库存需要有修改的功能，报废或者遗失，蒂森订单经常出现取消的情况
 1.库存表增加一个字段，定义常量类型（报废、遗失），备注说明
 
+db.counters.updateMany({model:{$in:['order','store','storeIn','finance','storeCalc','storeLoss']}},{$set:{"count":0}});
+db.order.remove({});
+db.store.remove({});
+db.storeIn.remove({});
+db.finance.remove({});
+db.storeCalc.remove({});
+db.storeLoss.remove({});
+
 config/
 navMenu.js
 
@@ -31,9 +39,33 @@ in-sale.vue
 calc.vue
 calc-list.vue
 
+pages/final/
+*
+
 数据表counter 加 storeCalc
 鞥家数据表storeCalc
 
 
-330107071/aa 6：10 24.63 2
-330208132/ 1：5 10.18 8.5
+330107071/aa 6：10 24.63 23.2       4
+330081087/aa 9:15 105.02 103.5      6
+330209612/ 3：5 296.88 260.5        2
+330044820/aa 6:10 70.9
+
+db.storeCalc.aggregate([
+    {$match: {typeId: 1, storeTypeId: 2, createDate: {$gte: 1550332800000, $lte: 1550419200000}}},
+    {
+        $group:{
+            _id:{ materialNo: "$materialNo" },
+            typeId: { $first: "$typeId" },
+			productName: { $first: "$productName" },
+            materialNo: { $first: "$materialNo" },
+			util: { $first: "$util" },
+			incount: { $sum: "$incount" },
+			outcount: { $sum: "$outcount" },
+			createDate: { $first: "$createDate" },
+			createByUser: { $first: "$createByUser" },
+			total: { $sum: 1 },
+			result: {"$push": "$$ROOT"}
+        }
+    }
+])

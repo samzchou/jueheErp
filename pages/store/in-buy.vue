@@ -98,13 +98,13 @@
 				<el-table ref="exportTable" :data="crmOrderList" border fit highlight-current-row stripe size="mini" max-height="350" v-loading="searchLoading" @selection-change="handleSelectionChange">
 					<el-table-column type="selection" width="40" align="center" v-if="currItem && !currItem.isAdded" :selectable="checkSelectable" />
 					<el-table-column type="index" width="50" align="center" />
-					<el-table-column prop="orderSerial" label="制单号" width="150" />
-					<el-table-column prop="materialNo" label="物料号" width="120" />
+					<el-table-column prop="orderSerial" label="制单号" width="140" />
+					<el-table-column prop="materialNo" label="物料号" width="100" />
 					<el-table-column prop="productName" label="物料名称" />
 					<el-table-column prop="model" label="规格型号" width="100" />
-					<el-table-column prop="price" label="订单单价" width="80" />
-					<el-table-column prop="metaprice" label="采购单价" width="80" />
-					<el-table-column prop="count" label="订单数量" width="90">
+					<el-table-column prop="price" label="订单单价" width="70" />
+					<el-table-column prop="metaprice" label="采购单价" width="70" />
+					<el-table-column prop="count" label="订单数量" width="80">
 						<template slot-scope="scope">
 							<span>{{scope.row.count}} {{scope.row.util}}</span>
 						</template>
@@ -211,8 +211,9 @@ export default {
             let storeIds = [], storeData = [], orderIds = [];
 			this.selectOrders.forEach((item, index) => {
 				if (item.id) {
+                    //debugger
                     storeIds.push(item.id);
-					orderIds = orderIds.concat(item.orderIds);
+                    orderIds = orderIds.concat(item.orderIds);
 					let obj = {
 						typeId: item.typeId,
 						storeTypeId: 1,
@@ -224,19 +225,22 @@ export default {
 						util: item.util,
 						count: item.incount,
 						incount: item.incount,
-						atcount: item.incount,
+                        atcount: item.incount,
 						createByUser: this.$store.state.user.name,
 						updateByUser: this.$store.state.user.name
 					};
 					if (item.store) {
-						obj.storeId = item.store.id;
+                        obj.storeId = item.store.id;
+                        obj.storeCount = item.store.count + item.incount;
 					} else {
 						this.storeLastId++;
-						obj.id = this.storeLastId;
+                        obj.id = this.storeLastId;
+                        obj.storeCount = item.incount;
 					}
 					storeData.push(obj);
 				}
             });
+            //return;
 			if (!storeIds.length) {
 				this.$message.error("请选择需要入库的订单！");
 				return;
@@ -285,11 +289,7 @@ export default {
                             }
                         }
                         this.$axios.$post("mock/db", { data: orderCn }).then(res2=>{
-<<<<<<< HEAD
 							this.inLoading = false;
-=======
-                            this.inLoading = false;
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
                             this.selectOrders = [];
                             this.crmOrderList = [];
                             this.openOrderVisible = false;
@@ -298,11 +298,7 @@ export default {
                         });
 					});
 				});
-<<<<<<< HEAD
 
-=======
-				
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 			}).catch(() => {
 				this.inLoading = false;
 			});
@@ -412,7 +408,7 @@ export default {
 					} else if (_.isArray(this.searchForm[k]) && k === "deliveryDate") {
 						params[k] = {
 							$gte: this.searchForm[k][0],
-							$lte: this.searchForm[k][1]
+							$lte: this.searchForm[k][1] + 24*3600*1000
 						};
 					} else if (_.isArray(this.searchForm[k])) {
 						params[k] = { $in: this.searchForm[k] };

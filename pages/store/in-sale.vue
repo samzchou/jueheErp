@@ -223,15 +223,17 @@ export default {
 						util: item.util,
                         count: item.incount,
                         incount: item.incount,
-						atcount: item.incount,
+                        atcount: item.incount,
 						createByUser: this.$store.state.user.name,
 						updateByUser: this.$store.state.user.name
 					};
 					if (item.store) {
-						obj.storeId = item.store.id;
+                        obj.storeId = item.store.id;
+                        obj.storeCount = item.store.count + item.incount;
 					} else {
 						this.storeLastId++;
-						obj.id = this.storeLastId;
+                        obj.id = this.storeLastId;
+                        obj.storeCount = item.incount;
 					}
 					storeData.push(obj);
 				}
@@ -401,7 +403,7 @@ export default {
 					} else if (_.isArray(this.searchForm[k]) && k === "deliveryDate") {
 						params[k] = {
 							$gte: this.searchForm[k][0],
-							$lte: this.searchForm[k][1]
+							$lte: this.searchForm[k][1] + 24*3600*1000
 						};
 					} else if (_.isArray(this.searchForm[k])) {
 						params[k] = { $in: this.searchForm[k] };
@@ -445,11 +447,7 @@ export default {
 					{ $match: match },
 					{
 						$group: {
-<<<<<<< HEAD
 							_id: groupId, // 按字段分组 { crmId: "$crmId", serial: "$serial" },
-=======
-							_id: groupId, // 按字段分组 { crmId: "$crmId", serial: "$serial" }, 
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 							id: { $first: "$id" },
 							isAdded: { $first: "$isAdded" },
                             orderIds: { $first: "$orderIds" },

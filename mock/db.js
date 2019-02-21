@@ -69,11 +69,7 @@ const dbFun = {
 		let total = 0;
         let condition = params.data || {};
 		let countTotal = await mongoDB[tn].distinct(params.distinct, condition);
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 		if(params.groupCount && countTotal.length){
 			let gtotal = await mongoDB[tn].aggregate(params.groupCount);
 			total = gtotal[0]['total'];
@@ -258,10 +254,10 @@ const dbFun = {
 				metaprice:item.metaprice,
 				util:item.util,
 				incount:item.incount,
-				outcount:item.outcount,
+				storeCount:item.storeCount,
 				createByUser:item.createByUser
 			}
-			let res = await mongoDB.storeCalc.create(calcItem);
+			let resCalc = await mongoDB.storeCalc.create(calcItem);
 			//console.log('addStore', calcItem, res)
 		}
 
@@ -320,11 +316,7 @@ const dbFun = {
     },
 	/*--------批量出库--------*/
     async outStore(params){
-<<<<<<< HEAD
 		const tn = params.collectionName;
-=======
-        const tn = params.collectionName;
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 		return new Promise((resolve, reject)=>{
 			mongoDB[tn].updateMany(params.data, params.set).then(res=>{
 				let aggregates = [
@@ -347,7 +339,6 @@ const dbFun = {
 						$group:{
 							_id:{ "id":"$id"},
 							"id":{"$first" :"$id"},
-<<<<<<< HEAD
 							"typeId":{"$first" :"$typeId"},
 							"productName":{"$first" :"$productName"},
 							"materialNo":{"$first" :"$materialNo"},
@@ -356,60 +347,29 @@ const dbFun = {
 							"util":{"$first" :"$util"},
 							"count":{"$first" :"$count"},
 							"storeId":{"$first" :"$store.id"},
-							"storecount":{"$first" :"$store.count"},
+							"storeCount":{"$first" :"$store.count"},
 							"atcount":{"$first" :"$store.atcount"},
 							"incount":{"$first" :"$store.incount"},
 							"outcount":{"$first" :"$store.outcount"}
 						}
 					},
 				];
-				
-
-=======
-						   "materialNo":{"$first" :"$materialNo"},
-						   "count":{"$first" :"$count"},
-						   "storeId":{"$first" :"$store.id"},
-						   "storecount":{"$first" :"$store.count"},
-						   "atcount":{"$first" :"$store.atcount"},
-						   "incount":{"$first" :"$store.incount"},
-						   "outcount":{"$first" :"$store.outcount"}
-						}
-					},
-				];
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 				mongoDB[tn].aggregate(aggregates).then(result=>{
 					for(let i=0; i<result.length; i++){
 						let item = result[i];
 						mongoDB.store.updateOne({id:item.storeId},{$inc:{count:-item.count,outcount:item.count},$set:{updateByUser:params.user,updateDate:new Date().getTime()}},{ upsert: true }).then(rs=>{
 							//console.log('updateOne', rs);
-<<<<<<< HEAD
 						});
-=======
-						})
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 					}
 					resolve( {
 						success:true,
 						response:result
 					})
 				});
-<<<<<<< HEAD
-
 			})
-
 		});
-
     },
 
-=======
-				
-			})
-			
-		});
-		
-    },
-	
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
     /*--------列出所有订单的指定字段列-------*/
     async getColumns(params){
         const tn = params.collectionName;

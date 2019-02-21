@@ -194,7 +194,7 @@
 				</el-form-item>
 			</el-form>
 		</div>
-		<el-dialog :title="'供应商采购清单--'+(needSource?'蒂森采购清单':'珏合采购清单')" append-to-body :visible.sync="openDialogVisible" width="80%">
+		<el-dialog :title="'供应商采购清单--'+(needSource?'蒂森采购清单':'珏合采购清单')" append-to-body :visible.sync="openDialogVisible" width="90%">
 			<div class="form-dialog">
 				<el-form :inline="true" :model="dialogForm" ref="dialogForm" size="mini">
 					<el-form-item label="供应商：" prop="crmId">
@@ -223,34 +223,26 @@
 					<el-table-column type="expand">
 						<template slot-scope="props">
 							<el-row :gutter="20" v-for="(item,idx) in props.row.children" :key="item.id">
-								<el-col :span="4" :title="item.sourceserial">
+								<el-col :span="5" :title="item.sourceserial">
 									<span style="width:30px">{{idx+1}}、</span>
-									<span>蒂森单号：{{item.sourceserial}}</span>
+									<span v-if="needSource">蒂森单号：{{item.sourceserial}}</span>
+                                    <span v-else>系统单号：{{item.serial}}</span>
 								</el-col>
-<<<<<<< HEAD
-                                <el-col :span="3">系统单号：{{item.serial}}</el-col>
-								<el-col :span="3" :title="item.projectNo">项目号：{{item.projectNo}}</el-col>
-								<el-col :span="2">订单量：{{item.count}} {{item.util}}</el-col>
+								<el-col :span="4" :title="item.projectNo">项目号：{{item.projectNo}}</el-col>
+								<el-col :span="3">订单量：{{item.count}} {{item.util}}</el-col>
 								<el-col :span="3">订单单价：{{item.price}}</el-col>
 								<el-col :span="3">采购单价：{{item.metaprice}}</el-col>
-=======
-                                <el-col :span="4">系统订单号：{{item.serial}}</el-col>
-								<el-col :span="4" :title="item.projectNo">项目号：{{item.projectNo}}</el-col>
-								<el-col :span="2">订单量：{{item.count}} {{item.util}}</el-col>
-								<el-col :span="3">订单单价：{{item.price}}</el-col>
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 								<el-col :span="3">制单日期：{{parseDate(item.orderDate)}}</el-col>
 								<el-col :span="3">交货日期：{{parseDate(item.deliveryDate)}}</el-col>
 							</el-row>
 						</template>
 					</el-table-column>
-					<!-- <el-table-column prop="serial" label="订单编号" width="120" /> -->
-					<el-table-column prop="materialNo" label="物料号" width="120" />
+					<el-table-column prop="materialNo" label="物料号" width="100" />
 					<el-table-column prop="productName" label="物料名称" />
-					<el-table-column prop="model" label="规格型号" width="100" />
-					<el-table-column prop="count" label="采购量" width="70"/>
+					<el-table-column prop="model" label="梯型" width="80" />
+					<el-table-column prop="count" label="采购量" width="60"/>
 					<el-table-column prop="storeCount" label="库存" width="60"/>
-                    <el-table-column label="已制单未入库参考">
+                    <el-table-column label="已制单未入库参考" width="160">
                         <template slot-scope="scope">
                             <div v-if="scope.$index<crmOrderList.length-1">
                                 <span>订单量：{{scope.row.storeIn && scope.row.storeIn.count}}；</span>
@@ -258,6 +250,7 @@
                             </div>
                         </template>
                     </el-table-column>
+                    <el-table-column prop="rcount" label="已制单未出库量" width="120"/>
 
 					<el-table-column prop="releaseCount" label="实际采购量" width="100">
 						<template slot-scope="scope">
@@ -267,38 +260,27 @@
 							<div v-else>{{parseAllOrderCount()}}</div>
 						</template>
 					</el-table-column>
-<<<<<<< HEAD
-					<el-table-column prop="price" label="订单单价" width="80">
+					<el-table-column prop="price" label="订单单价" width="70">
 						<template slot-scope="scope">
 							<span>{{scope.row.price}}</span>
 						</template>
 					</el-table-column>
 					<el-table-column prop="metaprice" label="采购单价" width="100">
-=======
-
-					<el-table-column prop="price" label="采购单价" width="100">
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 						<template slot-scope="scope">
 							<div v-if="scope.$index<crmOrderList.length-1">
 								<el-input-number size="mini" controls-position="right" :min="0" :step="0.1" v-model="scope.row.metaprice" @change="setRowMetaPrice(scope.row)" style="width:80px" />
 							</div>
 						</template>
 					</el-table-column>
-					<el-table-column prop="allPrice" label="采购金额" width="90">
+					<el-table-column prop="allPrice" label="采购金额" width="80">
 						<template slot-scope="scope">
 							<span v-if="scope.$index<crmOrderList.length-1">{{parseReleaseMoney(scope.row)}}</span>
 							<span v-else>{{parseAllOrderMoney()}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="deliveryDate" label="交货日期" width="100">
+					<el-table-column prop="deliveryDate" label="交货日期" width="90">
 						<template slot-scope="scope">
                             <span>{{parseDate(scope.row.deliveryDate)}}</span>
-<<<<<<< HEAD
-=======
-							<!-- <div v-if="scope.$index<crmOrderList.length-1">
-								<el-date-picker size="mini" v-model="scope.row.deliveryDate" type="date" value-format="timestamp" placeholder="选择日期" :clearable="false" style="width:120px" />
-							</div> -->
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 						</template>
 					</el-table-column>
 					<el-table-column label="操作" fixed="right" align="center" width="70">
@@ -544,7 +526,6 @@ export default {
 		splitSerial(serial) {
 			let s = serial.split("-");
 			return s.length ? s[1] : serial;
-<<<<<<< HEAD
 		},
 		setRowMetaPrice(row){
 			if(row.children && row.children.length){
@@ -553,10 +534,6 @@ export default {
 				})
 			}
 		},
-=======
-        },
-        
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 		removeCrmOrder(row) {
 			let ids = row.children.map(item => {
 				return item.id;
@@ -698,11 +675,7 @@ export default {
             this.exportOrderIds = [];
             this.orderSerial = this.setOrderSerial();
             let exportData = [], allCount = 0, allMoney = 0;
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 			this.exportOrders.forEach(item => {
 				if (item && item.id && item.releaseCount>=0) {
                     item.orderSerial = this.orderSerial;
@@ -725,11 +698,7 @@ export default {
 			});
 			import("@/components/Export2Excel").then(excel => {
 				const tHeader = ["订单编号", "物料号", "物料名称", "规格型号", "数量", "单价", "金额", "交货日期"];
-<<<<<<< HEAD
 				const filterVal = ["orderSerial", "materialNo", "productName", "model", "releaseCount", "metaprice", "allPrice", "finishedDate"];
-=======
-				const filterVal = ["orderSerial", "materialNo", "productName", "model", "releaseCount", "price", "allPrice", "finishedDate"];
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
 				const data = this.formatJson(filterVal, excelData);
 				const now = moment(this.finishedDate).format("YYYYMMDD");
 				excel.export_json_to_excel({
@@ -775,7 +744,7 @@ export default {
             let storeData = [];
 			arr.map(item => {
 				if (item.id) {
-					this.storeLastId++;
+                    this.storeLastId++;
 					storeData.push({
 						id: this.storeLastId,
 						isAdded: false,
@@ -796,7 +765,7 @@ export default {
 						metaprice: item.metaprice,
 						util: item.util,
 						count: item.count,
-						incount: item.releaseCount,
+                        incount: item.releaseCount,
                         deliveryDate: item.deliveryDate,
                         finishedDate: this.finishedDate,
 						createByUser: this.$store.state.user.name
@@ -887,8 +856,9 @@ export default {
 				if (this.currItem && this.currItem.serial) {
 					bySerial = _.merge(bySerial, { serial: this.currItem.serial });
 				}
-			}
-			match = _.merge({ flowStateId: 1 }, bySerial, match);
+            }
+            //match = _.merge({ flowStateId: 1 }, bySerial, match);
+            match = _.merge({ flowStateId: {$lt:9} }, bySerial, match);
 			let params = {
 				type: "aggregate",
 				collectionName: "order",
@@ -920,21 +890,22 @@ export default {
 					{ $match:match },
 					{ $sort: { deliveryDate: 1 } }
 				]
-			};
-			let data = await this.$axios.$post("mock/db", { data: params });
-            this.sourceCrmOrderList = this.mergeOrder(data.list);
-<<<<<<< HEAD
-
-=======
+            };
+            let data = await this.$axios.$post("mock/db", { data: params });
             
->>>>>>> a3581c9304bd3466bfa809e46d7effbc0224fa54
+            //this.sourceOrderList = data.list;
+            let list = _.filter(data.list, { flowStateId: 1 }); 
+            this.sourceCrmOrderList = this.mergeOrder(list, data.list);
+            
+            //this.sourceCrmOrderList = this.mergeOrder(data.list);
+
 			if (this.sourceCrmOrderList.length) {
 				this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList));
 			}
 			this.searchLoading = false;
 		},
 		// 合并订单数量,根据类型，产品名称，物料号，价格
-		mergeOrder(lists) {
+		mergeOrder(lists, sdata) {
 			let listData = [];
 			lists.forEach(item => {
 				item.children = [];
@@ -955,7 +926,16 @@ export default {
                     item.storeIn = storeIn;
 					item.children.push(_.cloneDeep(item));
 					item.serial = item.serial.includes("-") ? item.serial.split("-")[1] : item.serial;
-					item.releaseCount = item.count;
+                    item.releaseCount = item.count;
+                    if(sdata && sdata.length){
+                        let rcount = 0;
+                        sdata.forEach(o=>{
+                            if(o.flowStateId>1 && item.materialNo == o.materialNo){
+                                rcount += o.count;
+                            }
+                        })
+                        item.rcount = rcount;
+                    }
 					listData.push(item);
 				}
             });
@@ -1284,7 +1264,7 @@ export default {
 					) {
 						params[k] = {
 							$gte: this.searchForm[k][0],
-							$lte: this.searchForm[k][1]
+							$lte: this.searchForm[k][1] + 24*3600*1000
 						};
 					} else if (_.isArray(this.searchForm[k])) {
 						params[k] = { $in: this.searchForm[k] };

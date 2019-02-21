@@ -62,9 +62,19 @@
                         <span>{{scope.row.total}} 件</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="totalPrice" label="订单金额" width="100">
+                <el-table-column prop="orderTotalPrice" label="订单总额" width="120">
                     <template slot-scope="scope">
-                        <span>{{scope.row.totalPrice | currency}} </span>
+                        <span>{{scope.row.orderTotalPrice | currency}} </span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="payTotalPrice" label="销售总额" width="120">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.payTotalPrice | currency}} </span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="订单毛利" width="120">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.orderTotalPrice-scope.row.payTotalPrice | currency}} </span>
                     </template>
                 </el-table-column>
                 <el-table-column prop="finishedDate" label="制单交付日期" width="100">
@@ -115,13 +125,26 @@
                             <span>{{scope.row.incount}} {{scope.row.util}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="price" label="单价" width="70"/>
-                    <el-table-column prop="totalPrice" label="订单金额" width="100">
+                    <el-table-column prop="price" label="订单单价" width="70"/>
+                    <el-table-column prop="metaprice" label="采购单价" width="70"/>
+                    <el-table-column prop="orderPrice" label="订单金额" width="100">
+                        <template slot-scope="scope">
+                            <span v-if="scope.$index<orderCrmList.length-1">{{parseOrderMoney(scope.row)}}</span>
+                            <span v-else>{{scope.row.orderPrice | currency}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="totalPrice" label="销售金额" width="100">
                         <template slot-scope="scope">
                             <span v-if="scope.$index<orderCrmList.length-1">{{parseMoney(scope.row)}}</span>
                             <span v-else>{{scope.row.totalPrice | currency}}</span>
                         </template>
                     </el-table-column>
+                    <el-table-column prop="fitPrice" label="订单毛利" width="100">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.fitPrice | currency}}</span>
+                        </template>
+                    </el-table-column>
+
                     <el-table-column prop="finishedDate" label="制单交货日期" width="100">
                         <template slot-scope="scope">
                             <span v-if="scope.$index<orderCrmList.length-1">{{parseDate(scope.row.finishedDate)}}</span>
@@ -220,8 +243,8 @@ export default {
         exportOrder(){
             console.log(this.orderCrmList);
             import("@/components/Export2Excel").then(excel => {
-                const tHeader = ["制单号","订单编号","物料号","物料名称","规格型号","数量","单价","订单金额","制单交货日期","客户交货日期"];
-                const filterVal = ["orderSerial","sourceserial","materialNo","productName","model","incount","price","totalPrice","finishedDate","deliveryDate"];
+                const tHeader = ["制单号","订单编号","物料号","物料名称","规格型号","数量","订单单价","生产单价","订单金额","生产金额","订单毛利","制单交货日期","客户交货日期"];
+                const filterVal = ["orderSerial","sourceserial","materialNo","productName","model","incount","price","metaprice","orderPrice","totalPrice","fitPrice","finishedDate","deliveryDate"];
                 const data = this.formatJson(filterVal, _.cloneDeep(this.orderCrmList));
                 const now = moment(new Date()).format("YYYYMMDD");
                 excel.export_json_to_excel({
@@ -324,15 +347,22 @@ export default {
                 data: params
             };
             let result = await this.$axios.$post("mock/db", { data: condition });
-            let allCount = 0;
+            let allCount = 0, totalPrice=0, orderPrice=0, fitPrice=0;
             result.list.forEach(item=>{
                 allCount += item.incount;
+                item.orderPrice = item.incount * item.price;
+                item.totalPrice = item.incount * item.metaprice;
+                item.fitPrice = item.orderPrice-item.totalPrice;
+                orderPrice += item.incount * item.price;
+                totalPrice += item.incount * item.metaprice;
             })
             this.orderCrmList = result.list;
             this.orderCrmList.push({
                 orderSerial:'合计',
                 incount:allCount,
-                totalPrice:row.totalPrice
+                orderPrice:orderPrice,
+                totalPrice:totalPrice, //row.totalPrice
+                fitPrice:orderPrice-totalPrice
             })
             this.openDialogVisible = true;
             this.$nextTick(() => {
@@ -353,8 +383,11 @@ export default {
         parseDate(date, format){
             return moment(date).format(format||'YYYY-MM-DD');
         },
-        parseMoney(row){
+        parseOrderMoney(row){
             return this.$options.filters['currency'](row.incount*row.price);
+        },
+        parseMoney(row){
+            return this.$options.filters['currency'](row.incount*row.metaprice);
         },
        
         handleSizeChange(val){
@@ -374,7 +407,7 @@ export default {
                     }else if(_.isArray(this.searchForm[k]) && k==='finishedDate'){
                         params[k] = {
                             $gte:this.searchForm[k][0],
-                            $lte:this.searchForm[k][1]
+                            $lte:this.searchForm[k][1] + 24*3600*1000
                         }
                     }else if(_.isArray(this.searchForm[k])){
                         params[k] = {$in:this.searchForm[k]}
@@ -416,9 +449,12 @@ export default {
                             crmName: { $first: "$crmName" },
                             projectName: { $first: "$projectName" },
                             productName: { $first: "$productName" },
+                            price: { $first: "$price" },
+                            metaprice: { $first: "$metaprice" },
                             updateByUser: { $first: "$updateByUser" },
                             updateDate: { $first: "$updateDate" },
-                            totalPrice: { $sum: { $multiply: [ "$price", "$incount" ] } },
+                            orderTotalPrice: { $sum: { $multiply: [ "$price", "$incount" ] } },
+                            payTotalPrice: { $sum: { $multiply: [ "$metaprice", "$incount" ] } },
                             deliveryDate: { $first: "$deliveryDate" },
                             total: { $sum: 1 }
                         }
@@ -435,7 +471,7 @@ export default {
             this.listLoading = false;
             this.totalMoney = 0;
             result.list.forEach(item=>{
-                this.totalMoney += item.totalPrice;
+                this.totalMoney += item.payTotalPrice;
             })
             
         },

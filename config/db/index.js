@@ -855,6 +855,11 @@ module.exports = {
                 default:0,
 				label:'库存量'
             },
+			losscount:{
+				type: Number,
+                default:0,
+				label:'损耗量'
+			},
             atcount:{
 				type: Number,
                 default:0,
@@ -940,7 +945,12 @@ module.exports = {
             outcount:{
                 type: Number,
                 default:0,
-				label:'当前库量'
+				label:'当前出库量'
+            },
+            storeCount: {
+                type: Number,
+                default: 0,
+                label: '当前库存量'
             },
             createByUser:{
                 type: String,
@@ -953,6 +963,38 @@ module.exports = {
 				label:'创建日期'
             }
         },
+		/*----------仓库损耗数据-----------*/
+        storeLoss : {
+            id:{
+                type: Number,
+                default:0
+            },
+			materialNo : {
+                type:String,
+                default:'',
+				label:'物料号'
+            },
+            lostcount:{
+                type: Number,
+                default:0,
+				label:'遗失数量'
+            },
+			scrapcount:{
+                type: Number,
+                default:0,
+				label:'遗失数量'
+            },
+            createByUser:{
+                type: String,
+                default:'',
+				label:'创建人'
+            },
+            createDate:{
+                type: Number,
+                default:new Date().getTime(),
+				label:'创建日期'
+            }
+		},
         /*----------财务-----------*/
         finance : {
             id : {

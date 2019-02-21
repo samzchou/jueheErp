@@ -14,10 +14,10 @@
 						</el-select>
 					</el-form-item>
 					<el-form-item label="货品名称：" prop="productName">
-						<el-input v-model="searchForm.productName" clearable/>
+						<el-input v-model="searchForm.productName" clearable  style="width:140px"/>
 					</el-form-item>
 					<el-form-item label="物料号：" prop="materialNo">
-						<el-input v-model="searchForm.materialNo" clearable/>
+						<el-input v-model="searchForm.materialNo" clearable  style="width:140px"/>
 					</el-form-item>
 					<el-form-item label="库存小于：" prop="count">
 						<el-input v-model="searchForm.count" clearable style="width:70px" />
@@ -59,6 +59,18 @@
 							<span>{{scope.row.count}}</span>
 						</template>
 					</el-table-column>
+                    <el-table-column prop="losscount" label="遗失总量" width="100">
+						<template slot-scope="scope">
+							<span>{{scope.row.storeLoss?scope.row.storeLoss.lostcount:0}}</span>
+                            <el-button type="text" icon="el-icon-edit" style="margin-left:5px;" @click="updateloss(scope.row, 1)"/>
+						</template>
+					</el-table-column>
+                    <el-table-column prop="scrappcount" label="报废总量" width="100">
+						<template slot-scope="scope">
+							<span>{{scope.row.storeLoss?scope.row.storeLoss.scrapcount:0}}</span>
+                            <el-button type="text" icon="el-icon-edit" style="margin-left:5px;" @click="updateloss(scope.row, 2)"/>
+						</template>
+					</el-table-column>
 					<el-table-column prop="incount" label="未来10天内采购量">
 						<template slot-scope="scope">
 							<span :class="{'warning':scope.row.incount==0}">
@@ -80,102 +92,26 @@
 				<el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total"></el-pagination>
 			</div>
 		</div>
-		<el-dialog title="比较采购订单" append-to-body :visible.sync="openDialogVisible" width="60%">
-			<div style="margin-top:-10px" v-if="afterOrderItem">
-				<div style="padding:0 0 10px 0">供应商：{{afterOrderItem.crmName}}；采购货品：{{afterOrderItem.productName}}</div>
-				<div class="compare" style="border:1px solid #DDD">
-					<div>
-						<h3>即将采购订单</h3>
-						<ul>
-							<li>
-								<span>货品名称：</span>
-								<span>{{afterOrderItem.productName}}</span>
-							</li>
-							<li>
-								<span>订单号：</span>
-								<span>{{afterOrderItem.serial}}</span>
-							</li>
-							<li>
-								<span>物料号：</span>
-								<span>{{afterOrderItem.materialNo}}</span>
-							</li>
-							<li>
-								<span>项目号：</span>
-								<span>{{afterOrderItem.projectNo}}</span>
-							</li>
-							<li>
-								<span>项目名称：</span>
-								<span>{{afterOrderItem.projectName}}</span>
-							</li>
-							<li>
-								<span>单位：</span>
-								<span>{{afterOrderItem.util}}</span>
-							</li>
-							<li>
-								<span>采购数量：</span>
-								<span>{{afterOrderItem.count}}</span>
-							</li>
-							<li>
-								<span>单价：</span>
-								<span>{{afterOrderItem.price}}</span>
-							</li>
-							<li>
-								<span>制单日期：</span>
-								<span>{{parseDate(afterOrderItem.orderDate)}}</span>
-							</li>
-							<li>
-								<span>交付日期：</span>
-								<span>{{parseDate(afterOrderItem.deliveryDate)}}</span>
-							</li>
-						</ul>
-					</div>
-					<div>
-						<h3>库存货品</h3>
-						<ul>
-							<li>
-								<span>货品名称：</span>
-								<span>{{currItem.productName}}</span>
-							</li>
-							<li>
-								<span>订单号：</span>
-								<span>{{currItem.order.serial}}</span>
-							</li>
-							<li>
-								<span>物料号：</span>
-								<span>{{currItem.order.materialNo}}</span>
-							</li>
-							<li>
-								<span>项目号：</span>
-								<span>{{currItem.projectNo}}</span>
-							</li>
-							<li>
-								<span>项目名称：</span>
-								<span>{{currItem.projectName}}</span>
-							</li>
-							<li>
-								<span>单位：</span>
-								<span>{{currItem.order.util}}</span>
-							</li>
-							<li>
-								<span>库存数量：</span>
-								<span>{{currItem.incount}}</span>
-							</li>
-							<li>
-								<span>单价：</span>
-								<span>{{currItem.order.price}}</span>
-							</li>
-							<li>
-								<span>入库日期：</span>
-								<span>{{parseDate(currItem.createDate)}}</span>
-							</li>
-							<li>
-								<span>最后更新：</span>
-								<span>{{parseDate(currItem.updateDate)}}</span>
-							</li>
-						</ul>
-					</div>
+		<el-dialog title="更新库存遗失或损耗" append-to-body :visible.sync="openDialogVisible" width="480px">
+			<div style="margin-top:-10px" v-if="editRow">
+                <div style="padding-bottom:10px;line-height:20px;border-bottom:1px solid #DDD">
+                    物料名称：{{editRow.productName}}；<br/>物料号：{{editRow.materialNo}}；<br/>当前库存：{{editRow.count}}
+                </div>
+				<div class="compare" style="padding-top:10px">
+                    <el-form :model="lossForm"  ref="ruleForm" :inline="true" label-width="80px">
+                        <el-form-item label="遗失" prop="lostcount">
+                            <el-input-number size="mini" v-model="lossForm.lostcount" controls-position="right" :min="0" :step="1" @change="checkLoss" placeholder="请输入数量" />
+                        </el-form-item>
+                        <el-form-item label="报废" prop="scrapcount">
+                            <el-input-number size="mini" v-model="lossForm.scrapcount" controls-position="right" :min="0" :step="1" @change="checkLoss" placeholder="请输入数量" />
+                        </el-form-item>
+                    </el-form>
 				</div>
 			</div>
+            <div class="sub-btns">
+                <el-button size="mini" type="primary" @click="submitEdit">确定</el-button>
+                <el-button size="mini" @click="openDialogVisible=false">取消</el-button>
+            </div>
 		</el-dialog>
 	</section>
 </template>
@@ -205,7 +141,13 @@ export default {
 				materialNo: "",
 				productName: "",
 				count: ""
-			}
+            },
+            editRow:null,
+            lossForm:{
+                lostcount:0,
+                scrapcount:0
+            },
+            lossType:1,
 		};
 	},
 	methods: {
@@ -219,14 +161,53 @@ export default {
 		},
 		parseReleaseMoney(row) {
 			return this.$options.filters["currency"](row.outcount * row.order.price);
-		},
-		viewAfterOrder(row) {
-			this.afterOrderItem = _.find(this.afterOrderList, {
-				materialNo: row.order.materialNo
-			});
-			this.currItem = row;
-			this.openDialogVisible = true;
-		},
+        },
+        checkLoss(){
+            let count = this.editRow.count - this.lossForm.lostcount - this.lossForm.scrapcount;
+            if(count < 0){
+                this.$message.error('遗失与报废总量不能大于当前库存量');
+                return false;
+            }
+            console.log(count)
+            return true;
+        },
+        updateloss(row, typeId){
+            if(!row.storeLoss){
+                row.storeLoss = {lostcount:0,scrapcount:0,materialNo:row.materialNo};
+            }
+            this.lossForm = {...row.storeLoss};
+            this.editRow = _.cloneDeep(row);
+            this.lossType = typeId;
+            this.openDialogVisible = true;
+        },
+
+        submitEdit(){
+
+            let condition = {
+                type: "addData",
+                collectionName: "storeLoss",
+                updateDate: true,
+                notNotice:true,
+                data: _.merge(this.lossForm,{createByUser:this.$store.state.user.name})
+            };
+            if(this.editRow.storeLoss.id){
+                condition.type = "updateData";
+            }
+            // debugger
+
+            this.$axios.$post("mock/db", { data: condition }).then(res=>{
+                console.log('submitEdit', res);
+                if(res.id){
+                    this.lossForm = res;
+                }
+                this.$set(this.editRow,'storeLoss', this.lossForm);
+                let index = _.findIndex(this.gridList, {id:this.editRow.id});
+                this.$set(this.gridList, index, this.editRow);
+
+                this.openDialogVisible = false;
+            });
+        },  
+
 		// 比较物料号相同
 		parseMaterialNo(row) {
 			let order = _.find(this.afterOrderList, {
@@ -264,7 +245,7 @@ export default {
 					} else if (_.isArray(this.searchForm[k]) && k === "updateDate") {
 						params[k] = {
 							$gte: this.searchForm[k][0],
-							$lte: this.searchForm[k][1]
+							$lte: this.searchForm[k][1] + 24*3600*1000
 						};
 					} else if (_.isArray(this.searchForm[k])) {
 						params[k] = { $in: this.searchForm[k] };
@@ -301,13 +282,28 @@ export default {
 							foreignField: "materialNo",
 							as: "product"
 						}
-					},
+                    },
+                    
 					{
 						$unwind: {
 							path: "$product",
 							preserveNullAndEmptyArrays: true // 空的数组也拆分
 						}
-					},
+                    },
+                    {
+						$lookup: {
+							from: "storeLoss",
+							localField: "materialNo",
+							foreignField: "materialNo",
+							as: "storeLoss"
+						}
+                    },
+                    {
+						$unwind: {
+							path: "$storeLoss",
+							preserveNullAndEmptyArrays: true // 空的数组也拆分
+						}
+                    },
 
 					{ $sort: { materialNo: -1 } },
 					{ $skip: (this.query.page - 1) * this.query.pagesize },
