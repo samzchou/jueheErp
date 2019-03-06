@@ -42,7 +42,7 @@ calc-list.vue
 pages/final/
 *
 
-数据表counter 加 storeCalc
+数据表counter 加 storeCalc storeLoss
 鞥家数据表storeCalc
 
 

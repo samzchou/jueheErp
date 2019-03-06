@@ -53,7 +53,8 @@ export default {
             "icon":"rmb",
             "children":[
                 {"label":"应付款", "icon":"list-ul", "path":"/finial/payout"},
-                {"label":"应收款", "icon":"list-ul", "path":"/finial/payin"}
+                {"label":"应收款", "icon":"list-ul", "path":"/finial/payin"},
+				{"label":"发票管理", "icon":"list-ul", "path":"/finial/invoice"}
             ]
         }
     ]
