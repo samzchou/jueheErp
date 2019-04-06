@@ -42,19 +42,19 @@ export default {
             "children":[
                 {"label":"采购订单入库", "icon":"list-ul", "path":"/store/in-buy"},
                 {"label":"生产订单入库", "icon":"list-ul", "path":"/store/in-sale"},
-                {"label":"出库-送货单", "icon":"list-ul", "path":"/store/out"},
-                {"label":"已出库送货", "icon":"list-ul", "path":"/store/outsend"},
                 { "label":"库存清单明细", "icon":"list-ul", "path":"/store/calc-list"},
-				{"label":"库存盘点", "icon":"list-ul", "path":"/store/calc"}
+				{"label":"库存盘点", "icon":"list-ul", "path":"/store/calc"},
+                {"label":"出库-送货单", "icon":"list-ul", "path":"/store/out"},
+                {"label":"已出库送货", "icon":"list-ul", "path":"/store/outsend"}
             ]
         },
         {
             "label":"财务结算",
             "icon":"rmb",
             "children":[
-                {"label":"应付款", "icon":"list-ul", "path":"/finial/payout"},
-                {"label":"应收款", "icon":"list-ul", "path":"/finial/payin"},
-				{"label":"发票管理", "icon":"list-ul", "path":"/finial/invoice"}
+                {"label":"采购付款", "icon":"list-ul", "path":"/finial/payout"},
+                //{"label":"应收款", "icon":"list-ul", "path":"/finial/payin"},
+				{"label":"发票管理", "icon":"list-ul", "path":"/invoice"}
             ]
         }
     ]

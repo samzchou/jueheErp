@@ -159,7 +159,7 @@
                 </div>
                 <div>
                     <el-form size="mini" :inline="true" :model="payForm" :rules="payRules" ref="payForm" class="pay-form">
-                        <el-form-item label="付款发票号：" prop="invoiceNumber" v-if="!currItem.isPayed">
+                        <el-form-item label="付款发票号/单据号：" prop="invoiceNumber" v-if="!currItem.isPayed">
                             <el-input v-model="payForm.invoiceNumber" placeholder="请填写发票号或单据号" clearable />
                         </el-form-item>
                         <el-form-item label="备注：" prop="content" v-if="!currItem.isPayed">
@@ -275,24 +275,29 @@ export default {
             }
             this.$refs['payForm'].validate((valid) => {
                 if (valid) {
-                    let orderIds = [];
+                    let storeInIds = [],orderIds = [];
                     this.selectOrders.forEach(item=>{
-                        orderIds.push(item.id);
+                        storeInIds.push(item.id);
+                        orderIds = _.concat(orderIds, item.orderIds);
                     });
                     // 添加财务数据
                     let data = {
                         'payType':1,
-                        'orderIds':orderIds,
+                        'orderIds':storeInIds,
                         'orderSerial':this.currItem.orderSerial,
                         'serial':this.currItem.serial,
                         'sourceserial':this.currItem.sourceserial,
+                        "projectName": this.currItem.projectName,
                         'crmId':this.currItem.crmId,
                         'crmName':this.currItem.crmName,
                         'price':this.currItem.totalPrice,
+                        "deliveryDate":this.currItem.deliveryDate,
                         'invoiceNumber':this.payForm.invoiceNumber,
                         'createByUser':this.$store.state.user.name,
                         'content':this.payForm.content
                     };
+                    console.log(storeInIds, orderIds);
+
                     this.$confirm("此操作将订单更新为已经付款, 是否继续?", "提示", {
                         confirmButtonText: "确定",
                         cancelButtonText: "取消",
@@ -306,36 +311,55 @@ export default {
                             data: data
                         };
                         this.$axios.$post("mock/db", { data: cn }).then(result => {
-                            let condition = {
-                                type: "updatePatch",
-                                collectionName: "storeIn",
-                                notNotice: true,
-                                param: { id: { $in: orderIds } },
-                                set: {
-                                    $set: {
-                                        'isPayed': true,
-                                        'invoiceNumber':this.payForm.invoiceNumber,
-                                        'updateByUser': this.$store.state.user.name,
-                                        'updateDate': new Date().getTime()
-                                    }
-                                }
+                            // 更新已入库订单属性
+							let condition = {
+								type: "updatePatch",
+								collectionName: "storeIn",
+								param: { id: { $in: storeInIds } },
+								set: {
+									$set: {
+										'isPayed': true,
+										'invoiceNumber':this.payForm.invoiceNumber,
+										'updateByUser': this.$store.state.user.name,
+										'updateDate': new Date().getTime()
+									}
+								}
                             };
-                            console.log('condition', condition)
+                            console.log('condition', condition);
                             this.$axios.$post("mock/db", { data: condition }).then(result => {
-                                this.payLoading = false;
-                                this.selectOrders = [];
-                                this.orderCrmList= [];
-                                this.currItem = null;
-                                this.openDialogVisible = false;
-                                this.submitSearch(true);
+                                // 更新原始订单状态
+                                let orderCondition = {
+                                    type: "updatePatch",
+                                    collectionName: "order",
+                                    param: { id: { $in: orderIds } },
+                                    set: {
+                                        $set: {
+                                            'isPayed': true,
+                                            'flowStateId': 11,
+                                            'updateByUser': this.$store.state.user.name,
+                                            'updateDate': new Date().getTime()
+                                        }
+                                    }
+                                };
+                                this.$axios.$post("mock/db", { data: orderCondition }).then(res => {
+                                    this.payLoading = false;
+                                    this.selectOrders = [];
+                                    this.orderCrmList= [];
+                                    this.currItem = null;
+                                    this.openDialogVisible = false;
+                                    this.submitSearch(true);
+                                });
                             });
+                            
+
+                            
                         });
                     }).catch(() => {});
                 }
             });            
         },
         async showDetail(row){
-            debugger
+            //debugger
             let crm = _.find(this.setting.crm, { id: row.crmId });
             this.currItem = _.merge(row, {
                 contactName: crm.contactName,
@@ -445,7 +469,7 @@ export default {
                     { $match: param },
                     {
                         $group: {
-                            _id:{crmId:"$crmId",orderSerial:"$orderSerial",invoiceNumber:"$invoiceNumber"},
+                            _id:{crmId:"$crmId",orderSerial:"$orderSerial"},
                             id: { $first: "$id" },
                             isAdded: { $first: "$isAdded" },
                             isPayed: { $first: "$isPayed" },

@@ -34,21 +34,6 @@
 			</div>
 			<div id="printTable">
 				<el-table v-loading="listLoading" ref="detailStore" :data="gridList" border fit highlight-current-row stripe size="mini" max-height="500">
-                    <!-- <el-table-column type="expand">
-                        <template slot-scope="scope">
-                            <el-row :gutter="20" v-for="item in scope.row.result" :key="item.id">
-                                <el-col :span="5">物料名称：{{item.productName}}</el-col>
-                                <el-col :span="3">物料号：{{item.materialNo}}</el-col>
-                                <el-col :span="3">订单单价：{{item.price}}</el-col>
-                                <el-col :span="2">元单价：{{item.metaprice}}</el-col>
-                                <el-col :span="2">入库量：{{item.incount}}</el-col>
-                                <el-col :span="2">出库量：{{item.outcount}}</el-col>
-                                <el-col :span="2">库存结余：{{parseCount(scope.$index, scope.row.result)}}</el-col>
-                                <el-col :span="3">记录日期：{{parseDate(item.createDate)}}</el-col>
-                                <el-col :span="2">操作人：{{item.createByUser}}</el-col>
-                            </el-row>
-                        </template>
-                    </el-table-column> -->
 					<el-table-column label="No." fixed="left" align="center" width="50">
 						<template slot-scope="scope">
 							<span>{{scope.$index+(query.page - 1) * query.pagesize + 1}}</span>
@@ -57,9 +42,6 @@
 					<el-table-column label="库存来源" prop="typeId" width="100">
 						<template slot-scope="scope">{{parseType(scope.row.typeId)}}</template>
 					</el-table-column>
-                    <!-- <el-table-column label="出入库类型" prop="storeTypeId" width="100">
-						<template slot-scope="scope">{{parseStoreType(scope.row.storeTypeId)}}</template>
-					</el-table-column> -->
 					<el-table-column label="物料名称" prop="productName"/>
 					<el-table-column label="物料号/版本号" prop="materialNo" width="150" />
 					<el-table-column prop="util" label="单位" width="70">
@@ -69,14 +51,11 @@
 					</el-table-column>
 					<el-table-column prop="incount" label="入库量" width="80"/>
                     <el-table-column prop="outcount" label="出库量" width="80"/>
-                    <el-table-column prop="storeCount" label="库存结余" width="80">
-                        <template slot-scope="scope">
-							<span>{{scope.row.incount - scope.row.outcount}}</span>
-						</template>
-                    </el-table-column>
-					<el-table-column prop="createDate" label="记录时间" width="150">
+                    <el-table-column prop="losscount" label="遗失/报废" width="80"/>
+                    <el-table-column prop="storecount" label="库存" width="80"/>
+					<el-table-column prop="updateDate" label="最后更新" width="120">
 						<template slot-scope="scope">
-							<span>{{parseDate(scope.row.createDate,'YYYY-MM-DD HH:mm:ss')}}</span>
+							<span>{{parseDate(scope.row.updateDate)}}</span>
 						</template>
 					</el-table-column>
 					<el-table-column prop="createByUser" :label="searchForm.storeTypeId==1?'入库人':'出库人'" width="90" />
@@ -220,19 +199,12 @@ export default {
 		};
 	},
 	methods: {
+        setLoss(){
+
+        },
 		parseDate(date, format) {
 			return moment(date).format(format || "YYYY-MM-DD");
         },
-        /* parseStoreType(id){
-            return id==1?'入库':'出库';
-        },
-        parseCount(index, result){
-            debugger
-            if(index == 0){
-                return result[0]['incount'];
-            }
-            return result[index-1]['incount']-result[index-1]['outcount']-result[index]['incount']-result[index]['outcount'];
-        }, */
 		parseType(id) {
 			if (!id || id == "") return "";
 			let type = _.find(this.typeList, { id: id });
@@ -307,17 +279,6 @@ export default {
 		async getList(match = {}) {
 			this.listLoading = true;
 			let groupId = { materialNo: "$materialNo" };
-			/* let condition = {
-				type: "aggregate",
-				collectionName: "storeCalc",
-				data: _.merge(match),
-				aggregate: [
-                    { $match: match },
-                    { $sort: { id: 1 } },
-					{ $skip: (this.query.page - 1) * this.query.pagesize },
-					{ $limit: this.query.pagesize }
-				]
-            }; */
             let condition = {
 				type: "groupList",
 				collectionName: "storeCalc",
@@ -330,7 +291,6 @@ export default {
 				],
 				aggregate: [
                     { $match: match },
-                   
 					{
 						$group: {
 							"_id": groupId, // 按字段分组
@@ -342,14 +302,30 @@ export default {
 							"util": { $first: "$util" },
 							"incount": { $sum: "$incount" },
                             "outcount": { $sum: "$outcount" },
-                            "storeCount": { $first: "$storeCount" },
+                            /* "count": { $sum: "$outcount" },
+                            "losscount": { $sum: "$outcount" },
+                            "scrapcount": { $sum: "$outcount" }, */
+                            "storecount": { $first: "$storeCount" },
 							"createDate": { $first: "$createDate" },
 							"createByUser": { $first: "$createByUser" },
                             "total": { $sum: 1 },
                             "result": {"$push": "$$ROOT"}
 						}
                     },
-                    //{ $sort: { id: -1 } },
+                    {
+						$lookup: {
+							from: "store",
+							localField: "materialNo",
+							foreignField: "materialNo",
+							as: "store"
+						}
+					},
+					{
+						$unwind: {
+							path: "$store",
+							preserveNullAndEmptyArrays: true // 空的数组也拆分
+						}
+					},
                     { $sort: { createDate: -1 } },
 					{ $skip: (this.query.page - 1) * this.query.pagesize },
 					{ $limit: this.query.pagesize }
@@ -357,7 +333,11 @@ export default {
             };
 			let result = await this.$axios.$post("mock/db", { data: condition });
 			this.total = result.total;
-			this.gridList = result.list;
+			this.gridList = result.list.map(item=>{
+                item.losscount = (item.store.losscount||0) + (item.store.scrapcount||0);
+                item.storecount = item.incount - item.outcount - item.losscount;
+                return item;
+            });
 			this.listLoading = false;
 		},
 		async getSetting() {

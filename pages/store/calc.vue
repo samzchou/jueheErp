@@ -61,13 +61,13 @@
 					</el-table-column>
                     <el-table-column prop="losscount" label="遗失总量" width="100">
 						<template slot-scope="scope">
-							<span>{{scope.row.storeLoss?scope.row.storeLoss.lostcount:0}}</span>
+							<span>{{scope.row.losscount||0}}</span>
                             <el-button type="text" icon="el-icon-edit" style="margin-left:5px;" @click="updateloss(scope.row, 1)"/>
 						</template>
 					</el-table-column>
                     <el-table-column prop="scrappcount" label="报废总量" width="100">
 						<template slot-scope="scope">
-							<span>{{scope.row.storeLoss?scope.row.storeLoss.scrapcount:0}}</span>
+							<span>{{scope.row.scrapcount||0}}</span>
                             <el-button type="text" icon="el-icon-edit" style="margin-left:5px;" @click="updateloss(scope.row, 2)"/>
 						</template>
 					</el-table-column>
@@ -95,15 +95,15 @@
 		<el-dialog title="更新库存遗失或损耗" append-to-body :visible.sync="openDialogVisible" width="480px">
 			<div style="margin-top:-10px" v-if="editRow">
                 <div style="padding-bottom:10px;line-height:20px;border-bottom:1px solid #DDD">
-                    物料名称：{{editRow.productName}}；<br/>物料号：{{editRow.materialNo}}；<br/>当前库存：{{editRow.count}}
+                    物料名称：{{editRow.productName}}；<br/>物料号：{{editRow.materialNo}}；<br/>总入库：{{editRow.atcount}}；总出库：{{editRow.outcount}}；当前可用库存：{{getUseCount(editRow)}}；总遗失：{{editRow.losscount}}；总报废：{{editRow.scrapcount}}
                 </div>
 				<div class="compare" style="padding-top:10px">
                     <el-form :model="lossForm"  ref="ruleForm" :inline="true" label-width="80px">
-                        <el-form-item label="遗失" prop="lostcount">
-                            <el-input-number size="mini" v-model="lossForm.lostcount" controls-position="right" :min="0" :step="1" @change="checkLoss" placeholder="请输入数量" />
+                        <el-form-item label="总遗失" prop="lostcount">
+                            <el-input-number size="mini" v-model="lossForm.losscount" controls-position="right" :min="0" :step="1" @change="checkLoss" placeholder="请输入数量" />
                         </el-form-item>
-                        <el-form-item label="报废" prop="scrapcount">
-                            <el-input-number size="mini" v-model="lossForm.scrapcount" controls-position="right" :min="0" :step="1" @change="checkLoss" placeholder="请输入数量" />
+                        <el-form-item label="总报废" prop="scrapcount">
+                            <el-input-number size="mini" v-model="lossForm.scrapcount" controls-position="right" :min="0" :step="1" @change="checkScrap" placeholder="请输入数量" />
                         </el-form-item>
                     </el-form>
 				</div>
@@ -144,13 +144,16 @@ export default {
             },
             editRow:null,
             lossForm:{
-                lostcount:0,
+                losscount:0,
                 scrapcount:0
             },
             lossType:1,
 		};
 	},
 	methods: {
+        getUseCount(row){
+            return row.atcount - row.outcount - (row.losscount||0) - (row.scrapcount||0);
+        },
 		parseDate(date, format) {
 			return moment(date).format(format || "YYYY-MM-DD");
 		},
@@ -162,28 +165,45 @@ export default {
 		parseReleaseMoney(row) {
 			return this.$options.filters["currency"](row.outcount * row.order.price);
         },
-        checkLoss(){
-            let count = this.editRow.count - this.lossForm.lostcount - this.lossForm.scrapcount;
+        checkLoss(val){
+            this.editRow.losscount = val;
+            /* let count = this.editRow.count - this.lossForm.lostcount - this.lossForm.scrapcount;
             if(count < 0){
                 this.$message.error('遗失与报废总量不能大于当前库存量');
                 return false;
             }
             console.log(count)
-            return true;
+            return true; */
+        },
+        checkScrap(val){
+            this.editRow.scrapcount = val;
         },
         updateloss(row, typeId){
-            if(!row.storeLoss){
+            debugger
+            /* if(!row.storeLoss){
                 row.storeLoss = {lostcount:0,scrapcount:0,materialNo:row.materialNo};
             }
-            this.lossForm = {...row.storeLoss};
+            this.lossForm = {...row.storeLoss}; */
+            this.lossForm = {losscount:row.losscount||0, scrapcount:row.scrapcount||0};
+
             this.editRow = _.cloneDeep(row);
             this.lossType = typeId;
             this.openDialogVisible = true;
         },
-
+        // 更新遗失或报废
         submitEdit(){
-
+            let count = this.getUseCount(this.editRow);
             let condition = {
+                type: "updateData",
+                collectionName: "store",
+                updateDate: true,
+                data: _.merge(this.lossForm,{id:this.editRow.id,count:count,createByUser:this.$store.state.user.name})
+            };
+            debugger
+            this.$axios.$post("mock/db", { data: condition }).then(res=>{
+                this.openDialogVisible = false;
+            });
+            /* let condition = {
                 type: "addData",
                 collectionName: "storeLoss",
                 updateDate: true,
@@ -193,8 +213,6 @@ export default {
             if(this.editRow.storeLoss.id){
                 condition.type = "updateData";
             }
-            // debugger
-
             this.$axios.$post("mock/db", { data: condition }).then(res=>{
                 console.log('submitEdit', res);
                 if(res.id){
@@ -205,7 +223,7 @@ export default {
                 this.$set(this.gridList, index, this.editRow);
 
                 this.openDialogVisible = false;
-            });
+            }); */
         },  
 
 		// 比较物料号相同
@@ -304,7 +322,6 @@ export default {
 							preserveNullAndEmptyArrays: true // 空的数组也拆分
 						}
                     },
-
 					{ $sort: { materialNo: -1 } },
 					{ $skip: (this.query.page - 1) * this.query.pagesize },
 					{ $limit: this.query.pagesize }

@@ -858,7 +858,12 @@ module.exports = {
 			losscount:{
 				type: Number,
                 default:0,
-				label:'损耗量'
+				label:'遗失量'
+            },
+            scrapcount:{
+				type: Number,
+                default:0,
+				label:'报废量'
 			},
             atcount:{
 				type: Number,
@@ -1025,11 +1030,26 @@ module.exports = {
 				type:String,
                 default:'',
 				label:'原始订单号汇总，字符串split'
-			},
+            },
+            projectName:{
+                type:String,
+                default:'',
+				label:'项目名称'
+            },
+            projectNo:{
+                type:String,
+                default:'',
+				label:'项目号'
+            },
 			crmId:{
                 type: Number,
                 default:'',
 				label:'客户ID'
+            },
+            deliveryDate:{
+                type: Number,
+                default:new Date().getTime(),
+				label:'交货日期'
             },
             crmName:{
                 type: String,

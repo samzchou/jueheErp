@@ -37,6 +37,11 @@
             <div>
                 <el-table v-loading="listLoading" ref="detailStore" :data="gridList" border fit highlight-current-row stripe size="mini" max-height="500">
                     <el-table-column type="index" width="50" align="center"/>
+                    <el-table-column prop="flowStateId" label="状态" width="70">
+                        <template slot-scope="scope">
+							<span>{{parseState(scope.row.flowStateId)}}</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column prop="serial" label="系统订单号" width="150">
                         <template slot-scope="scope">
 							<span>{{scope.row.serial}}</span>
@@ -92,6 +97,7 @@
 export default {
     data(){
         return {
+            setting:{},
 			needSource:true,
             listLoading:false,
 			total:0,
@@ -126,7 +132,11 @@ export default {
 		splitSerial(serial){
 			let s = serial.split('-');
 			return s.length?s[1]:serial;
-		},
+        },
+        parseState(id){
+            let state = _.find(this.setting.flowState, {id:id})
+            return state.name || '';
+        },
         parseDate(date, format){
             if(!date) return '';
             return moment(date).format(format||'YYYY-MM-DD');
@@ -176,7 +186,7 @@ export default {
                 bySerial = {'sourceserial':''};
 				groupId = {"serial":"$serial","projectNo":"$projectNo"};
             }
-			match = _.merge({flowStateId:10}, bySerial, match);
+			match = _.merge({flowStateId:{$gte:10}}, bySerial, match);
             let condition = {
 				type:'groupList',
 				collectionName: 'order',
