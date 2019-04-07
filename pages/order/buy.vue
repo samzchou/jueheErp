@@ -849,7 +849,6 @@ export default {
 		async listOrderByCrm(match = {}) {
 			this.searchLoading = true;
 			this.crmOrderList = [];
-			//debugger
 			let bySerial = { sourceserial: { $ne: "" } };
 			if (!this.needSource) {
 				bySerial = { sourceserial: "" };
@@ -857,7 +856,6 @@ export default {
 					bySerial = _.merge(bySerial, { serial: this.currItem.serial });
 				}
             }
-            //match = _.merge({ flowStateId: 1 }, bySerial, match);
             match = _.merge({ flowStateId: {$lt:9} }, bySerial, match);
 			let params = {
 				type: "aggregate",
@@ -873,6 +871,12 @@ export default {
 						}
                     },
                     {
+						$unwind: {
+							path: "$store",
+							preserveNullAndEmptyArrays: true // 空的数组也拆分
+						}
+                    },
+                    {
                         "$lookup":{
                             "from":"storeIn",
                             "localField":"materialNo",
@@ -880,25 +884,16 @@ export default {
                             "as":"storeIn"
                         }
                     },
-					{
-						$unwind: {
-							// 拆分子数组
-							path: "$store",
-							preserveNullAndEmptyArrays: true // 空的数组也拆分
-						}
-                    },
+					
 					{ $match:match },
 					{ $sort: { deliveryDate: 1 } }
 				]
             };
             let data = await this.$axios.$post("mock/db", { data: params });
-            
-            //this.sourceOrderList = data.list;
+            //debugger
             let list = _.filter(data.list, { flowStateId: 1 }); 
             this.sourceCrmOrderList = this.mergeOrder(list, data.list);
             
-            //this.sourceCrmOrderList = this.mergeOrder(data.list);
-
 			if (this.sourceCrmOrderList.length) {
 				this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList));
 			}
@@ -955,9 +950,10 @@ export default {
             return obj;
         },
 		filterCrmOrderList(arr) {
-			let list = [],
-				allcount = 0;
+			let list = [], allcount = 0;
 			arr.forEach(item => {
+                /* item.losscount = item.store.losscount;
+                item.scrapcount = item.store.scrapcount; */
 				item.allPrice = item.count * item.price;
 				allcount += item.count;
 				list.push(item);

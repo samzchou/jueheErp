@@ -14,10 +14,10 @@
 						</el-select>
 					</el-form-item>
 					<el-form-item label="货品名称：" prop="productName">
-						<el-input v-model="searchForm.productName" clearable  style="width:140px"/>
+						<el-input v-model="searchForm.productName" clearable style="width:140px" />
 					</el-form-item>
 					<el-form-item label="物料号：" prop="materialNo">
-						<el-input v-model="searchForm.materialNo" clearable  style="width:140px"/>
+						<el-input v-model="searchForm.materialNo" clearable style="width:140px" />
 					</el-form-item>
 					<el-form-item label="库存小于：" prop="count">
 						<el-input v-model="searchForm.count" clearable style="width:70px" />
@@ -59,16 +59,16 @@
 							<span>{{scope.row.count}}</span>
 						</template>
 					</el-table-column>
-                    <el-table-column prop="losscount" label="遗失总量" width="100">
+					<el-table-column prop="losscount" label="遗失总量" width="100">
 						<template slot-scope="scope">
 							<span>{{scope.row.losscount||0}}</span>
-                            <el-button type="text" icon="el-icon-edit" style="margin-left:5px;" @click="updateloss(scope.row, 1)"/>
+							<el-button type="text" icon="el-icon-edit" style="margin-left:5px;" @click="updateloss(scope.row, 1)" />
 						</template>
 					</el-table-column>
-                    <el-table-column prop="scrappcount" label="报废总量" width="100">
+					<el-table-column prop="scrappcount" label="报废总量" width="100">
 						<template slot-scope="scope">
 							<span>{{scope.row.scrapcount||0}}</span>
-                            <el-button type="text" icon="el-icon-edit" style="margin-left:5px;" @click="updateloss(scope.row, 2)"/>
+							<el-button type="text" icon="el-icon-edit" style="margin-left:5px;" @click="updateloss(scope.row, 2)" />
 						</template>
 					</el-table-column>
 					<el-table-column prop="incount" label="未来10天内采购量">
@@ -88,30 +88,30 @@
 				</el-table>
 			</div>
 			<div class="page-container">
-                <div></div>
+				<div></div>
 				<el-pagination size="mini" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="query.page" :page-sizes="[20, 50, 100, 200]" :page-size="query.pagesize" layout="total,sizes,prev,pager,next" :total="total"></el-pagination>
 			</div>
 		</div>
 		<el-dialog title="更新库存遗失或损耗" append-to-body :visible.sync="openDialogVisible" width="480px">
 			<div style="margin-top:-10px" v-if="editRow">
-                <div style="padding-bottom:10px;line-height:20px;border-bottom:1px solid #DDD">
-                    物料名称：{{editRow.productName}}；<br/>物料号：{{editRow.materialNo}}；<br/>总入库：{{editRow.atcount}}；总出库：{{editRow.outcount}}；当前可用库存：{{getUseCount(editRow)}}；总遗失：{{editRow.losscount}}；总报废：{{editRow.scrapcount}}
-                </div>
+				<div style="padding-bottom:10px;line-height:20px;border-bottom:1px solid #DDD">
+					物料名称：{{editRow.productName}}；<br />物料号：{{editRow.materialNo}}；<br />总入库：{{editRow.atcount}}；总出库：{{editRow.outcount}}；当前可用库存：{{getUseCount(editRow)}}；总遗失：{{editRow.losscount}}；总报废：{{editRow.scrapcount}}
+				</div>
 				<div class="compare" style="padding-top:10px">
-                    <el-form :model="lossForm"  ref="ruleForm" :inline="true" label-width="80px">
-                        <el-form-item label="总遗失" prop="lostcount">
-                            <el-input-number size="mini" v-model="lossForm.losscount" controls-position="right" :min="0" :step="1" @change="checkLoss" placeholder="请输入数量" />
-                        </el-form-item>
-                        <el-form-item label="总报废" prop="scrapcount">
-                            <el-input-number size="mini" v-model="lossForm.scrapcount" controls-position="right" :min="0" :step="1" @change="checkScrap" placeholder="请输入数量" />
-                        </el-form-item>
-                    </el-form>
+					<el-form :model="lossForm" ref="ruleForm" :inline="true" label-width="80px">
+						<el-form-item label="总遗失" prop="lostcount">
+							<el-input-number size="mini" v-model="lossForm.losscount" controls-position="right" :min="0" :step="1" @change="checkLoss" placeholder="请输入数量" />
+						</el-form-item>
+						<el-form-item label="总报废" prop="scrapcount">
+							<el-input-number size="mini" v-model="lossForm.scrapcount" controls-position="right" :min="0" :step="1" @change="checkScrap" placeholder="请输入数量" />
+						</el-form-item>
+					</el-form>
 				</div>
 			</div>
-            <div class="sub-btns">
-                <el-button size="mini" type="primary" @click="submitEdit">确定</el-button>
-                <el-button size="mini" @click="openDialogVisible=false">取消</el-button>
-            </div>
+			<div class="sub-btns">
+				<el-button size="mini" type="primary" @click="submitEdit">确定</el-button>
+				<el-button size="mini" @click="openDialogVisible=false">取消</el-button>
+			</div>
 		</el-dialog>
 	</section>
 </template>
@@ -138,22 +138,22 @@ export default {
 			gridList: [],
 			searchForm: {
 				typeId: "",
-				materialNo: "",
+				materialNo: "330031003/ae",
 				productName: "",
 				count: ""
-            },
-            editRow:null,
-            lossForm:{
-                losscount:0,
-                scrapcount:0
-            },
-            lossType:1,
+			},
+			editRow: null,
+			lossForm: {
+				losscount: 0,
+				scrapcount: 0
+			},
+			lossType: 1,
 		};
 	},
 	methods: {
-        getUseCount(row){
-            return row.atcount - row.outcount - (row.losscount||0) - (row.scrapcount||0);
-        },
+		getUseCount(row) {
+            return row.incount - row.outcount - (row.losscount || 0) - (row.scrapcount || 0);
+		},
 		parseDate(date, format) {
 			return moment(date).format(format || "YYYY-MM-DD");
 		},
@@ -164,67 +164,36 @@ export default {
 		},
 		parseReleaseMoney(row) {
 			return this.$options.filters["currency"](row.outcount * row.order.price);
-        },
-        checkLoss(val){
-            this.editRow.losscount = val;
-            /* let count = this.editRow.count - this.lossForm.lostcount - this.lossForm.scrapcount;
-            if(count < 0){
-                this.$message.error('遗失与报废总量不能大于当前库存量');
-                return false;
-            }
-            console.log(count)
-            return true; */
-        },
-        checkScrap(val){
-            this.editRow.scrapcount = val;
-        },
-        updateloss(row, typeId){
-            debugger
-            /* if(!row.storeLoss){
-                row.storeLoss = {lostcount:0,scrapcount:0,materialNo:row.materialNo};
-            }
-            this.lossForm = {...row.storeLoss}; */
-            this.lossForm = {losscount:row.losscount||0, scrapcount:row.scrapcount||0};
-
-            this.editRow = _.cloneDeep(row);
-            this.lossType = typeId;
-            this.openDialogVisible = true;
-        },
-        // 更新遗失或报废
-        submitEdit(){
-            let count = this.getUseCount(this.editRow);
-            let condition = {
-                type: "updateData",
-                collectionName: "store",
-                updateDate: true,
-                data: _.merge(this.lossForm,{id:this.editRow.id,count:count,createByUser:this.$store.state.user.name})
-            };
-            debugger
-            this.$axios.$post("mock/db", { data: condition }).then(res=>{
-                this.openDialogVisible = false;
-            });
-            /* let condition = {
-                type: "addData",
-                collectionName: "storeLoss",
-                updateDate: true,
-                notNotice:true,
-                data: _.merge(this.lossForm,{createByUser:this.$store.state.user.name})
-            };
-            if(this.editRow.storeLoss.id){
-                condition.type = "updateData";
-            }
-            this.$axios.$post("mock/db", { data: condition }).then(res=>{
-                console.log('submitEdit', res);
-                if(res.id){
-                    this.lossForm = res;
-                }
-                this.$set(this.editRow,'storeLoss', this.lossForm);
-                let index = _.findIndex(this.gridList, {id:this.editRow.id});
-                this.$set(this.gridList, index, this.editRow);
-
-                this.openDialogVisible = false;
-            }); */
-        },  
+		},
+		checkLoss(val) {
+			this.editRow.losscount = val;
+		},
+		checkScrap(val) {
+			this.editRow.scrapcount = val;
+		},
+		updateloss(row, typeId) {
+			this.lossForm = { losscount: row.losscount || 0, scrapcount: row.scrapcount || 0 };
+			this.editRow = _.cloneDeep(row);
+			this.lossType = typeId;
+			this.openDialogVisible = true;
+		},
+		// 更新遗失或报废
+		submitEdit() {
+			let count = this.getUseCount(this.editRow);
+			let row = _.merge(this.lossForm, this.editRow, { count: count, updateByUser: this.$store.state.user.name, updateDate: new Date().getTime() });
+			let condition = {
+				type: "updateData",
+				collectionName: "store",
+				updateDate: true,
+				data: row
+			};
+			//console.log('submitEdit', row)
+			this.$axios.$post("mock/db", { data: condition }).then(res => {
+				this.openDialogVisible = false;
+				let index = _.findIndex(this.gridList, { id: row.id });
+				this.$set(this.gridList, index, row);
+			});
+		},
 
 		// 比较物料号相同
 		parseMaterialNo(row) {
@@ -263,7 +232,7 @@ export default {
 					} else if (_.isArray(this.searchForm[k]) && k === "updateDate") {
 						params[k] = {
 							$gte: this.searchForm[k][0],
-							$lte: this.searchForm[k][1] + 24*3600*1000
+							$lte: this.searchForm[k][1] + 24 * 3600 * 1000
 						};
 					} else if (_.isArray(this.searchForm[k])) {
 						params[k] = { $in: this.searchForm[k] };
@@ -300,28 +269,28 @@ export default {
 							foreignField: "materialNo",
 							as: "product"
 						}
-                    },
-                    
+					},
+
 					{
 						$unwind: {
 							path: "$product",
 							preserveNullAndEmptyArrays: true // 空的数组也拆分
 						}
-                    },
-                    {
+					},
+					{
 						$lookup: {
 							from: "storeLoss",
 							localField: "materialNo",
 							foreignField: "materialNo",
 							as: "storeLoss"
 						}
-                    },
-                    {
+					},
+					{
 						$unwind: {
 							path: "$storeLoss",
 							preserveNullAndEmptyArrays: true // 空的数组也拆分
 						}
-                    },
+					},
 					{ $sort: { materialNo: -1 } },
 					{ $skip: (this.query.page - 1) * this.query.pagesize },
 					{ $limit: this.query.pagesize }
@@ -330,6 +299,7 @@ export default {
 
 			let result = await this.$axios.$post("mock/db", { data: condition });
 			this.total = result.total;
+			//debugger
 			this.gridList = result.list;
 			this.listLoading = false;
 		},

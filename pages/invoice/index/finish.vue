@@ -2,6 +2,9 @@
     <section class="list-container">
         <div class="search-form">
 			<el-form :inline="true" :model="searchForm" ref="searchForm" size="mini" @keyup.native.enter="submitSearch">
+                <el-form-item label="发票号：" prop="invoiceNumber">
+					<el-input v-model="searchForm.invoiceNumber" clearable style="width:150px" />
+				</el-form-item>
 				<el-form-item label="系统订单号：" prop="serial">
 					<el-input v-model="searchForm.serial" clearable style="width:150px" />
 				</el-form-item>
@@ -14,9 +17,6 @@
 				<el-form-item label="项目名称：" prop="projectName">
 					<el-input v-model="searchForm.projectName" clearable style="width:150px" />
 				</el-form-item>
-				<!-- <el-form-item label="交付日期：" prop="deliveryDate">
-					<el-date-picker v-model="searchForm.deliveryDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px" />
-				</el-form-item> -->
                 <el-form-item label="开票日期：" prop="createDate">
 					<el-date-picker v-model="searchForm.createDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px" />
 				</el-form-item>
@@ -27,24 +27,8 @@
 		</div>
         <div class="table-content">
 			<el-table v-loading="listLoading" ref="detailStore" :data="gridList" border fit highlight-current-row stripe size="mini" max-height="500" style="width:100%" @selection-change="handleSelectionChange">
-				<!-- <el-table-column type="expand">
-                    <template slot-scope="scope">
-                        <el-row :gutter="20" v-for="(item,idx) in scope.row.result" :key="item.id">
-                            <el-col :span="3">
-                                <span style="width:30px">{{idx+1}}、</span>
-                                <span>ID：{{item.id}}</span>
-                            </el-col>
-                            <el-col :span="4">物料号：{{item.materialNo}}</el-col>
-                            <el-col :span="5">物料描述：{{item.productName}}</el-col>
-                            <el-col :span="3">订单量：{{item.count}}</el-col>
-                            <el-col :span="3">订单单价：{{item.price}}</el-col>
-                            <el-col :span="3">总价：{{parseMoney(item)}}</el-col>
-                        </el-row>
-                    </template>
-                </el-table-column>-->
                 <el-table-column type="selection" width="50" align="center" /> 
                 <el-table-column prop="invoiceNumber" label="发票号" width="150"/>
-                
                 <el-table-column prop="crmName" label="客户" width="150"/>
                 <el-table-column prop="createDate" label="开票日期" width="100">
 					<template slot-scope="scope">
@@ -67,13 +51,9 @@
 						<span>{{scope.row.sourceserial}}</span>
 					</template>
 				</el-table-column>
+                <el-table-column prop="projectNo" label="项目号" width="120" />
 				<el-table-column prop="projectName" label="项目名称" />
                 <el-table-column prop="content" label="备注" />
-				<!-- <el-table-column prop="deliveryDate" label="交付日期" width="100">
-					<template slot-scope="scope">
-						<span>{{parseDate(scope.row.deliveryDate)}}</span>
-					</template>
-				</el-table-column> -->
 			</el-table>
 			<div class="page-container">
 				<div>
@@ -91,6 +71,7 @@ export default {
 	data: () => ({
 		setting: {},
 		searchForm: {
+            invoiceNumber:'',
 			serial: '',
 			sourceserial: '',
 			projectNo: '',
@@ -161,7 +142,7 @@ export default {
 				if (this.searchForm[k] != '' && this.searchForm[k]) {
 					if (_.isNumber(this.searchForm[k])) {
 						params[k] = Number(this.searchForm[k]);
-					} else if (_.isArray(this.searchForm[k]) && (k === 'orderDate' || k === 'deliveryDate')) {
+					} else if (_.isArray(this.searchForm[k]) && (k === 'createDate')) {
 						params[k] = {
 							$gte: this.searchForm[k][0],
 							$lte: this.searchForm[k][1] + 24 * 3600 * 1000
@@ -194,7 +175,7 @@ export default {
 			let condition = {
                 type:'listData',
                 collectionName: 'finance',
-                data:{payType:2}
+                data:_.merge({payType:2}, match)
             }
 
             let result = await this.$axios.$post('mock/db', { data: condition });
