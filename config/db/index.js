@@ -383,7 +383,12 @@ module.exports = {
                 type: Number,
                 default:0
             },
-            isPayed:{
+            isCanceled:{
+                type: Boolean,
+                default:false,
+				label:'是否已取消'
+            },
+			isPayed:{
                 type: Boolean,
                 default:false,
 				label:'是否已付款'

@@ -68,7 +68,7 @@
 					</template>
 				</el-table-column>
 				<el-table-column prop="projectName" label="项目名称" />
-				<el-table-column prop="materialNo" label="物料号/版本号">
+				<el-table-column prop="materialNo" label="物料号/版本号" width="150">
 					<template slot-scope="scope">
 						<span>{{scope.row.materialNo}}</span>
 						<span v-if="needSource" style="margin-left:5px; color:#CCC">等...</span>
@@ -80,7 +80,7 @@
 						<span v-if="needSource" style="margin-left:5px; color:#CCC">等...</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="productName" label="订单产品名称">
+				<el-table-column prop="productName" label="订单产品名称" width="250">
 					<template slot-scope="scope">
 						<span>{{scope.row.productName}}</span>
 						<span v-if="needSource" style="margin-left:5px; color:#CCC">等...</span>
@@ -92,8 +92,8 @@
 						<span v-else>{{scope.row.count}} {{scope.row.util}}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="price" label="订单单价" width="80"/>
-				<el-table-column prop="metaprice" label="采购单价" width="80"/>
+				<el-table-column prop="price" label="订单单价" width="80" />
+				<el-table-column prop="metaprice" label="采购单价" width="80" />
 				<el-table-column prop="orderDate" label="制单日期" width="100">
 					<template slot-scope="scope">
 						<span>{{parseDate(scope.row.orderDate)}}</span>
@@ -104,8 +104,14 @@
 						<span>{{parseDate(scope.row.deliveryDate)}}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" fixed="right" align="center" :width="needSource?'120':'170'">
+				<el-table-column prop="isCanceled" label="订单取消" width="80">
 					<template slot-scope="scope">
+						<el-button v-if="!scope.row.isCanceled" size="mini" type="text" icon="my-icon-reply" @click="handleCancel(scope.row, true)">取消</el-button>
+						<el-button v-else size="mini" class="icon-link" icon="my-icon-share" @click="handleCancel(scope.row, false)">恢复</el-button>
+					</template>
+				</el-table-column>
+				<el-table-column label="操作" fixed="right" align="center" :width="needSource?'120':'150'">
+					<template slot-scope="scope" v-if="!scope.row.isCanceled">
 						<el-button size="mini" type="text" icon="el-icon-download" @click="showDetail(scope.row)">制单</el-button>
 						<el-button v-if="!needSource" size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">编辑</el-button>
 						<el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
@@ -202,7 +208,7 @@
 							<el-option v-for="(crm,idx) in orderCrmList" :key="idx" :label="crm.name" :value="crm.id" />
 						</el-select>
 					</el-form-item>
-					<el-form-item label="交货日期" prop="deliveryDate">
+					<el-form-item label="订单交货日期" prop="deliveryDate">
 						<el-date-picker v-model="dialogForm.deliveryDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px" />
 					</el-form-item>
 					<el-form-item>
@@ -219,17 +225,18 @@
 					<span style="font-weight:bold">订单总价：{{crmOrderList[crmOrderList.length-1]['allPrice'] | currency}}</span>
 				</div>
 				<el-table ref="exportTable" :data="crmOrderList" border fit highlight-current-row stripe size="mini" max-height="350" v-loading="searchLoading" @selection-change="handleSelectionOrders" style="width:100%">
-					<el-table-column type="selection" width="55" align="center" :selectable="checkSelectable" />
+					<el-table-column type="selection" width="50" align="center" :selectable="checkSelectable" />
 					<el-table-column type="expand">
 						<template slot-scope="props">
-							<el-row :gutter="20" v-for="(item,idx) in props.row.children" :key="item.id">
-								<el-col :span="5" :title="item.sourceserial">
+							<el-row :class="{'gray':item.isCanceled}" :gutter="20" v-for="(item,idx) in props.row.children" :key="item.id">
+								<el-col :span="4" :title="item.sourceserial">
 									<span style="width:30px">{{idx+1}}、</span>
 									<span v-if="needSource">蒂森单号：{{item.sourceserial}}</span>
-                                    <span v-else>系统单号：{{item.serial}}</span>
+									<span v-else>系统单号：{{item.serial}}</span>
 								</el-col>
+                                <el-col :span="2" :class="{'warning':item.isCanceled}">状态：{{item.isCanceled?'已取消':'正常'}}</el-col>
 								<el-col :span="4" :title="item.projectNo">项目号：{{item.projectNo}}</el-col>
-								<el-col :span="3">订单量：{{item.count}} {{item.util}}</el-col>
+								<el-col :span="2">订单量：{{item.count}} {{item.util}}</el-col>
 								<el-col :span="3">订单单价：{{item.price}}</el-col>
 								<el-col :span="3">采购单价：{{item.metaprice}}</el-col>
 								<el-col :span="3">制单日期：{{parseDate(item.orderDate)}}</el-col>
@@ -237,21 +244,25 @@
 							</el-row>
 						</template>
 					</el-table-column>
-					<el-table-column prop="materialNo" label="物料号" width="100" />
+                    <el-table-column prop="materialNo" label="物料号" width="100" />
 					<el-table-column prop="productName" label="物料名称" />
 					<el-table-column prop="model" label="梯型" width="80" />
-					<el-table-column prop="count" label="采购量" width="60"/>
-					<el-table-column prop="storeCount" label="库存" width="60"/>
-                    <el-table-column label="已制单未入库参考" width="160">
-                        <template slot-scope="scope">
-                            <div v-if="scope.$index<crmOrderList.length-1">
-                                <span>订单量：{{scope.row.storeIn && scope.row.storeIn.count}}；</span>
-                                <span>实际量：{{scope.row.storeIn && scope.row.storeIn.incount}}</span>
-                            </div>
-                        </template>
+					<el-table-column prop="count" label="采购总量" width="70" />
+					<el-table-column prop="storeCount" label="库存" width="60" />
+					<el-table-column label="已制单未入库参考" width="160">
+						<template slot-scope="scope">
+							<div v-if="scope.$index<crmOrderList.length-1">
+								<span>订单量：{{scope.row.storeIn && scope.row.storeIn.count}}；</span>
+								<span>实际量：{{scope.row.storeIn && scope.row.storeIn.incount}}</span>
+							</div>
+						</template>
+					</el-table-column>
+					<el-table-column prop="rcount" label="已制单未出库量" width="120" />
+                    <el-table-column prop="cancelTotal"  label="订单取消量" width="90">
+                        <template slot-scope="scope" v-if="scope.$index<crmOrderList.length-1">
+							<span v-if="scope.row.cancelTotal">{{scope.row.cancelTotal}}</span>
+						</template>
                     </el-table-column>
-                    <el-table-column prop="rcount" label="已制单未出库量" width="120"/>
-
 					<el-table-column prop="releaseCount" label="实际采购量" width="100">
 						<template slot-scope="scope">
 							<div v-if="scope.$index<crmOrderList.length-1">
@@ -280,7 +291,7 @@
 					</el-table-column>
 					<el-table-column prop="deliveryDate" label="交货日期" width="90">
 						<template slot-scope="scope">
-                            <span>{{parseDate(scope.row.deliveryDate)}}</span>
+							<span>{{parseDate(scope.row.deliveryDate)}}</span>
 						</template>
 					</el-table-column>
 					<el-table-column label="操作" fixed="right" align="center" width="70">
@@ -295,13 +306,13 @@
 					<span>合计：共汇总{{crmOrderList.length-1}}个采购订单；请勾选需要制定的采购订单</span>
 				</div>
 				<div>
-                    <span>采购制单交货日期：</span>
-                    <el-date-picker size="small" v-model="finishedDate" value-format="timestamp" :clearable="false" type="date" placeholder="选择日期" style="width:150px;margin-right:10px"/>
+					<span>采购制单交货日期：</span>
+					<el-date-picker size="small" v-model="finishedDate" value-format="timestamp" :clearable="false" type="date" placeholder="选择日期" style="width:150px;margin-right:10px" />
 					<el-button type="success" @click="exportOrder" icon="el-icon-document" :loading="exportLoading">制单采购</el-button>
 				</div>
 			</div>
 		</el-dialog>
-        <!--查看蒂森原始订单汇总-->
+		<!--查看蒂森原始订单汇总-->
 		<el-dialog :title="'蒂森订单：'+sourceserial+'；请点击供应商制定或查阅采购订单'" append-to-body :visible.sync="openSourceVisible" width="80%">
 			<div class="detail-container">
 				<el-row :gutter="20" v-if="detailItem">
@@ -333,6 +344,12 @@
 						<div>
 							<span class="tl">交货日期：</span>
 							{{parseDate(detailItem.deliveryDate)}}
+						</div>
+					</el-col>
+                    <el-col :span="12">
+						<div>
+							<span class="tl">订单状态：</span>
+							<span class="tl" :class="{'warning':detailItem.isCanceled}">{{detailItem.isCanceled?'已取消':'正常'}}</span>
 						</div>
 					</el-col>
 					<el-col :span="24">
@@ -382,7 +399,7 @@
 					<el-button v-if="detailItem && detailItem.flowStateId==1" type="danger" size="mini" @click="handleDelete(detailItem)">删除蒂森订单({{sourceserial}})</el-button>
 					<span v-else>已出单</span>
 				</div>
-				<div>
+				<div v-if="detailItem && !detailItem.isCanceled">
 					<el-form size="mini" :inline="true" :model="updateForm" :rules="updateRules">
 						<el-form-item label="修改交付日期：" prop="deliveryDate">
 							<el-date-picker v-model="updateForm.deliveryDate" value-format="timestamp" type="date" placeholder="选择日期" style="width:130px" />
@@ -405,8 +422,8 @@ export default {
 	components: { orderRow },
 	data() {
 		return {
-            finishedDate:new Date().getTime(),
-            orderSerial:"",
+			finishedDate: new Date().getTime(),
+			orderSerial: "",
 			openDialogVisible: false,
 			dialogTitle: "订单明细查阅",
 			currItem: null,
@@ -469,7 +486,7 @@ export default {
 				count: "",
 				util: "",
 				price: "",
-				metaprice:"",
+				metaprice: "",
 				content: ""
 			},
 			rules: {
@@ -523,13 +540,14 @@ export default {
 		};
 	},
 	methods: {
+        
 		splitSerial(serial) {
 			let s = serial.split("-");
 			return s.length ? s[1] : serial;
 		},
-		setRowMetaPrice(row){
-			if(row.children && row.children.length){
-				row.children.forEach(item=>{
+		setRowMetaPrice(row) {
+			if (row.children && row.children.length) {
+				row.children.forEach(item => {
 					item.metaprice = row.metaprice;
 				})
 			}
@@ -663,23 +681,23 @@ export default {
 			this.openSourceVisible = true;
 		},
 		checkSelectable(row) {
-            if(row.id){
-                let rc = row.storeIn.incount - row.storeIn.count + row.releaseCount + row.storeCount;
-                return rc >= row.count;
+			if (row.id) {
+				let rc = row.storeIn.incount - row.storeIn.count + row.releaseCount + row.storeCount + row.cancelTotal;
+				return rc >= row.count;
             }
 		},
 		handleSelectionOrders(orders) {
 			this.exportOrders = orders;
 		},
 		exportOrder() {
-            this.exportOrderIds = [];
-            this.orderSerial = this.setOrderSerial();
-            let exportData = [], allCount = 0, allMoney = 0;
+			this.exportOrderIds = [];
+			this.orderSerial = this.setOrderSerial();
+			let exportData = [], allCount = 0, allMoney = 0;
 
 			this.exportOrders.forEach(item => {
-				if (item && item.id && item.releaseCount>=0) {
-                    item.orderSerial = this.orderSerial;
-                    item.finishedDate = this.finishedDate;
+				if (item && item.id && item.releaseCount >= 0) {
+					item.orderSerial = this.orderSerial;
+					item.finishedDate = this.finishedDate;
 					this.exportOrderIds = this.exportOrderIds.concat(this.getChildrenByid(item.children));
 					allCount += item.releaseCount;
 					allMoney += item.allPrice;
@@ -718,15 +736,15 @@ export default {
 					return v[j];
 				})
 			);
-        },
-        setOrderSerial(){
-            let now = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+		},
+		setOrderSerial() {
+			let now = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
 			now = now.split(" ");
 			let dd = now[0].split("-");
 			let tt = now[1].split(":");
 			let serial = "JH" + dd[0] + "" + dd[1] + "" + dd[2] + "" + tt[0] + "" + tt[1] + "" + tt[2];
 			return serial;
-        },
+		},
 		// 更新客户订单状态（已发单）
 		updateOrderByCrm(arr) {
 			// 更新订单状态参数
@@ -736,22 +754,23 @@ export default {
 				notNotice: true,
 				param: {
 					crmId: this.dialogForm.crmId,
-					id: { $in: this.exportOrderIds }
+                    id: { $in: this.exportOrderIds },
+                    isCanceled : false
 				},
 				set: { $set: { flowStateId: 2 } }
 			};
 			//debugger
-            let storeData = [];
+			let storeData = [];
 			arr.map(item => {
 				if (item.id) {
-                    this.storeLastId++;
+					this.storeLastId++;
 					storeData.push({
 						id: this.storeLastId,
 						isAdded: false,
 						typeId: item.typeId,
 						orderId: item.id,
-                        orderIds: this.getChildrenByid(item.children),
-                        orderSerial:this.orderSerial,
+						orderIds: this.getChildrenByid(item.children),
+						orderSerial: this.orderSerial,
 						serial: item.serial,
 						sourceserial: item.sourceserial,
 						crmId: item.crmId,
@@ -765,16 +784,16 @@ export default {
 						metaprice: item.metaprice,
 						util: item.util,
 						count: item.count,
-                        incount: item.releaseCount,
-                        deliveryDate: item.deliveryDate,
-                        finishedDate: this.finishedDate,
+						incount: item.releaseCount,
+						deliveryDate: item.deliveryDate,
+						finishedDate: this.finishedDate,
 						createByUser: this.$store.state.user.name
 					});
 				}
 			});
-           /*  console.log("storeData", storeData);
-            debugger;
-            return; */
+			/*  console.log("storeData", storeData);
+			 debugger;
+			 return; */
 			this.$axios.$post("mock/db", { data: cn }).then(result => {
 				// 注意此处需保存数据到待入库仓库中
 				let condition = {
@@ -795,7 +814,9 @@ export default {
 			let ids = [];
 			if (arr && arr.length) {
 				arr.forEach(item => {
-					ids.push(item.id);
+                    if(!item.isCanceled){
+                        ids.push(item.id);
+                    }
 				});
 			}
 			return ids;
@@ -855,8 +876,8 @@ export default {
 				if (this.currItem && this.currItem.serial) {
 					bySerial = _.merge(bySerial, { serial: this.currItem.serial });
 				}
-            }
-            match = _.merge({ flowStateId: {$lt:9} }, bySerial, match);
+			}
+			match = _.merge({ flowStateId: { $lt: 9 } }, bySerial, match);
 			let params = {
 				type: "aggregate",
 				collectionName: "order",
@@ -869,31 +890,31 @@ export default {
 							"foreignField": "materialNo", //materialNo
 							"as": "store"
 						}
-                    },
-                    {
+					},
+					{
 						$unwind: {
 							path: "$store",
 							preserveNullAndEmptyArrays: true // 空的数组也拆分
 						}
-                    },
-                    {
-                        "$lookup":{
-                            "from":"storeIn",
-                            "localField":"materialNo",
-                            "foreignField":"materialNo",
-                            "as":"storeIn"
-                        }
-                    },
-					
-					{ $match:match },
+					},
+					{
+						"$lookup": {
+							"from": "storeIn",
+							"localField": "materialNo",
+							"foreignField": "materialNo",
+							"as": "storeIn"
+						}
+					},
+
+					{ $match: match },
 					{ $sort: { deliveryDate: 1 } }
 				]
-            };
-            let data = await this.$axios.$post("mock/db", { data: params });
-            //debugger
-            let list = _.filter(data.list, { flowStateId: 1 }); 
-            this.sourceCrmOrderList = this.mergeOrder(list, data.list);
-            
+			};
+			let data = await this.$axios.$post("mock/db", { data: params });
+			//debugger
+			let list = _.filter(data.list, { flowStateId: 1 });
+			this.sourceCrmOrderList = this.mergeOrder(list, data.list);
+
 			if (this.sourceCrmOrderList.length) {
 				this.filterCrmOrderList(_.cloneDeep(this.sourceCrmOrderList));
 			}
@@ -911,44 +932,47 @@ export default {
 					price: item.price
 				});
 				if (!!~dataIndex) {
-					listData[dataIndex]["children"].push(item);
+                    listData[dataIndex]["children"].push(item);
+                    listData[dataIndex]["cancelTotal"] += item.isCanceled?item.count:0;
 					listData[dataIndex]["sourceserial"] += "," + item.sourceserial;
-					listData[dataIndex]["projectNo"] += "," + item.projectNo;
-					listData[dataIndex]["count"] += item.count;
-					listData[dataIndex]["releaseCount"] += item.count;
+                    listData[dataIndex]["projectNo"] += "," + item.projectNo;
+                    listData[dataIndex]["count"] += item.count; //item.isCanceled?0:item.count;
+				    listData[dataIndex]["releaseCount"] += item.isCanceled?0:item.count;
+					
 				} else {
-                    let storeIn = this.uionStore(item.storeIn);
-                    item.storeIn = storeIn;
+                    item.cancelTotal = item.isCanceled?item.count:0;
+					let storeIn = this.uionStore(item.storeIn);
+					item.storeIn = storeIn;
 					item.children.push(_.cloneDeep(item));
 					item.serial = item.serial.includes("-") ? item.serial.split("-")[1] : item.serial;
-                    item.releaseCount = item.count;
-                    if(sdata && sdata.length){
-                        let rcount = 0;
-                        sdata.forEach(o=>{
-                            if(o.flowStateId>1 && item.materialNo == o.materialNo){
-                                rcount += o.count;
-                            }
-                        })
-                        item.rcount = rcount;
-                    }
+					item.releaseCount = item.isCanceled?0:item.count;
+					if (sdata && sdata.length) {
+						let rcount = 0;
+						sdata.forEach(o => {
+							if (o.flowStateId > 1 && item.materialNo == o.materialNo) {
+								rcount += o.count;
+							}
+						})
+						item.rcount = rcount;
+					}
 					listData.push(item);
 				}
-            });
-            //console.log('listData', listData)
+			});
+			//console.log('listData', listData)
 			return listData;
-        },
-        uionStore(storeInArr){
-            let obj = {count : 0, incount : 0};
-            if(storeInArr.length){
-                storeInArr.forEach(item=>{
-                    if(!item.isAdded){
-                        obj.count += item.count;
-                        obj.incount += item.incount;
-                    }
-                });
-            }
-            return obj;
-        },
+		},
+		uionStore(storeInArr) {
+			let obj = { count: 0, incount: 0 };
+			if (storeInArr.length) {
+				storeInArr.forEach(item => {
+					if (!item.isAdded) {
+						obj.count += item.count;
+						obj.incount += item.incount;
+					}
+				});
+			}
+			return obj;
+		},
 		filterCrmOrderList(arr) {
 			let list = [], allcount = 0;
 			arr.forEach(item => {
@@ -969,16 +993,16 @@ export default {
 				allPrice: this.currItem.crmOrderMoney
 			});
 			console.log("this.crmOrderList", list);
-			//debugger
 			this.crmOrderList = list;
-
 			this.$nextTick(() => {
 				this.checkedOrder(); //每次更新了数据，触发这个函数即可。
 			});
-		},
+        },
+        // 设置勾选为true
 		checkedOrder() {
+            //debugger
 			this.crmOrderList.forEach((item, i) => {
-				if (item.id) {
+				if (item.id && item.count>item.cancelTotal) {
 					this.$refs.exportTable.toggleRowSelection(this.crmOrderList[i], true);
 				}
 			});
@@ -1083,6 +1107,35 @@ export default {
 				content: ""
 			};
 		},
+		// 取消订单
+		handleCancel(row, flag) {
+			console.log('handleCancel', row);
+			this.$confirm('确定要'+(flag?'取消':'恢复')+'该订单?', '提示', {
+				confirmButtonText: '确定',
+				cancelButtonText: '取消',
+				type: 'warning'
+			}).then(() => {
+				let condition = {
+					type: 'updatePatch',
+					collectionName: 'order',
+					param: { "sourceserial": row.sourceserial },
+					set: {
+						$set: {
+							'isCanceled': flag
+						}
+					}
+				}
+				this.$axios.$post("mock/db", { data: condition }).then(result => {
+					//console.log('handleCancel', result);
+                    this.$message.error("已"+(flag?'取消':'恢复')+"订单");
+                    //this.submitSearch(true);
+                    row.isCanceled = flag;
+                    let index = _.findIndex(this.gridList, {id:row.id});
+                    this.$set(this.gridList, index, row);
+				});
+			}).catch(() => { });
+		},
+		// 更新订单
 		handleUpdate(row) {
 			this.openSourceVisible = false;
 			this.isEdit = true;
@@ -1118,11 +1171,7 @@ export default {
 		// 修改蒂森订单的交货日期
 		updateDeliveryDate() {
 			this.$confirm(
-				"此操作将修改订单号为:" +
-				this.detailItem.sourceserial +
-				"所有数据的交货日期(包括生产订单), 是否继续?",
-				"提示",
-				{
+				"此操作将修改订单号为:" + this.detailItem.sourceserial + "所有数据的交货日期(包括生产订单), 是否继续?", "提示", {
 					confirmButtonText: "确定",
 					cancelButtonText: "取消",
 					type: "warning"
@@ -1260,7 +1309,7 @@ export default {
 					) {
 						params[k] = {
 							$gte: this.searchForm[k][0],
-							$lte: this.searchForm[k][1] + 24*3600*1000
+							$lte: this.searchForm[k][1] + 24 * 3600 * 1000
 						};
 					} else if (_.isArray(this.searchForm[k])) {
 						params[k] = { $in: this.searchForm[k] };
@@ -1307,8 +1356,8 @@ export default {
 				type: "groupList",
 				collectionName: "order",
 				data: match,
-                distinct: "sourceserial",
-                groupCount: [
+				distinct: "sourceserial",
+				groupCount: [
 					{ $match: match },
 					{ $group: { _id: groupId } },
 					{ $group: { _id: null, total: { $sum: 1 } } }
@@ -1318,7 +1367,8 @@ export default {
 					{
 						$group: {
 							_id: groupId, // 按字段分组
-							id: { $first: "$id" },
+                            id: { $first: "$id" },
+                            isCanceled: { $first: "$isCanceled" },
 							typeId: { $first: "$typeId" },
 							ptypeId: { $first: "$ptypeId" },
 							flowStateId: { $first: "$flowStateId" },
@@ -1353,7 +1403,7 @@ export default {
 			};
 
 			let result = await this.$axios.$post("mock/db", { data: condition });
-			this.total = result.total;
+            this.total = result.total;
 			this.gridList = _.orderBy(result.list, ["crmId"], ["asc"]);
 			this.listLoading = false;
 		},

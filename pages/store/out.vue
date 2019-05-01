@@ -66,6 +66,15 @@
 							<span>{{parseDate(scope.row.deliveryDate)}}</span>
 						</template>
 					</el-table-column>
+					<el-table-column prop="isCanceled" label="取消送货" width="80">
+						<template slot-scope="scope">
+                            <div v-if="scope.row.finished">
+                                <el-button v-if="!scope.row.isCanceled" size="mini" type="text" icon="my-icon-reply" @click="handleCancel(scope.row, true)">取消</el-button>
+                                <el-button v-else size="mini" class="icon-link" icon="my-icon-share" @click="handleCancel(scope.row, false)">恢复</el-button>
+                            </div>
+                            <div v-else>订单已取消</div>
+						</template>
+					</el-table-column>
 					<el-table-column label="操作" fixed="right" align="center" width="120">
 						<template slot-scope="scope">
 							<el-button size="mini" type="text" :icon="scope.row.finished?'el-icon-download':'el-icon-view'" @click="showDetail(scope.row)">{{scope.row.finished?'制定送货单':'查看送货单'}}</el-button>
@@ -175,6 +184,38 @@ export default {
 		}
 	},
 	methods: {
+        // 取消订单
+		handleCancel(row, flag) {
+			console.log('handleCancel', row);
+			this.$confirm('确定要'+(flag?'取消':'恢复')+'该送货单?', '提示', {
+				confirmButtonText: '确定',
+				cancelButtonText: '取消',
+				type: 'warning'
+			}).then(() => {
+				let condition = {
+					type: 'updatePatch',
+					collectionName: 'order',
+					param: { "sourceserial": row.sourceserial },
+					set: {
+						$set: {
+							'isCanceled': flag
+						}
+					}
+				}
+				this.$axios.$post("mock/db", { data: condition }).then(result => {
+                    this.$message.error("已"+(flag?'取消':'恢复')+"送货单");
+                    row.isCanceled = flag;
+                    //debugger
+                    let orderIndex = _.findIndex(this.orderList, {id:row.id}); //
+                    if(!!~orderIndex && flag){
+                        this.$refs.detailStore.toggleRowSelection(row);
+                    }
+                    let index = _.findIndex(this.gridList, {id:row.id});
+                    this.$set(this.gridList, index, row);
+				});
+			}).catch(() => { });
+        },
+        
 		parseFlow(id) {
 			if (!id) return "";
 			let flow = _.find(this.setting.flowState, { id: id });
@@ -189,7 +230,7 @@ export default {
 			this.orderList = [];
 		},
 		checkSelectable(row) {
-			return row.finished;
+			return row.finished && !row.isCanceled;
 		},
 		handleSelectionChange(rows) {
 			this.orderList = rows;
@@ -297,7 +338,7 @@ export default {
 			})
 			return updateIds;
 		},
-		
+
 		async showDetail(row) {
 			this.currItem = row;
 			this.openDialogVisible = true;
@@ -399,7 +440,7 @@ export default {
 				bySerial = { 'sourceserial': '' };
 				groupId = { "serial": "$serial", "projectNo": "$projectNo" };
 			}
-			match = _.merge({ flowStateId: { $lt: 10 } }, bySerial, match);
+			match = _.merge({ flowStateId: { $lt: 10 }, }, bySerial, match);
 			let condition = {
 				type: 'groupList',
 				collectionName: 'order',
@@ -416,6 +457,7 @@ export default {
 						"$group": {
 							"_id": groupId, // 按字段分组
 							"id": { "$first": "$id" },
+							"isCanceled": { "$first": "$isCanceled" },
 							"serial": { "$first": "$serial" },
 							"sourceserial": { "$first": "$sourceserial" },
 							"materialNo": { "$first": "$materialNo" },
@@ -460,19 +502,19 @@ export default {
 				]
 			};
 			let result = await this.$axios.$post('mock/db', { data: condition });
-            this.total = result.total;
-            //let gridList = this.getIsCanExport(result.list);
+			this.total = result.total;
+			//let gridList = this.getIsCanExport(result.list);
 			this.gridList = result.list.map(item => {
 				item.finishCount = this.checkFinished(item);
 				item.finished = item.finishCount == item.total;
 				item.partName = "机房线槽总成";
 				item.boxCount = 1;
 				return item;
-            });
-            
+			});
+
 			this.listLoading = false;
-        },
-        async getIsCanExport(arr) {
+		},
+		async getIsCanExport(arr) {
 			let materialNoArr = [];
 			arr.forEach(item => {
 				item.result.forEach(o => {
@@ -490,16 +532,16 @@ export default {
 			let response = await this.$axios.$post('mock/db', { data: conditions });
 			//console.log('getIsCanExport', response);
 			arr.forEach(item => {
-				item.result.forEach((o,idx) => {
+				item.result.forEach((o, idx) => {
 					let store = _.find(response, { materialNo: o.materialNo });
 					//console.log(o.count, store.count);
 					if (o.count > store.count) {
-                        item.notExport = true;
+						item.notExport = true;
 						console.log("error", o.materialNo, idx)
 					}
 				})
-            });
-            console.log('getIsCanExport', arr);
+			});
+			console.log('getIsCanExport', arr);
 			return arr;
 		},
 		checkFinished(row) {

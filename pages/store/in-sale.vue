@@ -45,30 +45,31 @@
 						<div>{{scope.row.isAdded?'已入库':'未入库'}}</div>
 					</template>
 				</el-table-column>
-                <el-table-column prop="orderSerial" label="制单号" width="150" />
+                <el-table-column prop="orderSerial" label="制单号" width="150">
+					<template slot-scope="scope">
+						<el-button title="生产订单汇总" type="text" @click.stop="showDetail(scope.row)">{{scope.row.orderSerial}}</el-button>
+					</template>
+				</el-table-column>
+
 				<el-table-column prop="serial" label="系统订单号" width="120" />
 				<el-table-column label="蒂森订单号" width="250">
 					<template slot-scope="scope">
 						<span :title="scope.row.sourceserial">{{scope.row.sourceserial}}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="crmName" label="客户" width="250px">
-					<template slot-scope="scope">
-						<el-button title="生产订单汇总" type="text" @click.stop="showDetail(scope.row)">{{scope.row.crmName}}</el-button>
-					</template>
-				</el-table-column>
+				<el-table-column prop="crmName" label="客户" width="250"/>
 				<el-table-column prop="productName" label="订单产品名称">
 					<template slot-scope="scope">
 						<span>{{scope.row.productName}}</span>
 						<span style="margin-left:5px; color:#CCC">等...</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="count" label="总量" width="80px">
+				<el-table-column prop="count" label="总量" width="80">
 					<template slot-scope="scope">
 						<span>{{scope.row.total}} 件</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="finishedDate" label="交付日期" width="100px">
+				<el-table-column prop="finishedDate" label="交付日期" width="100">
 					<template slot-scope="scope">
 						<span>{{parseDate(scope.row.finishedDate)}}</span>
 					</template>
@@ -103,17 +104,13 @@
 					<el-table-column prop="model" label="规格型号" width="100" />
 					<el-table-column prop="price" label="订单单价" width="70" />
 					<el-table-column prop="metaprice" label="生产单价" width="70" />
-					<el-table-column prop="count" label="订单数量" width="90">
-						<template slot-scope="scope">
-							<span>{{scope.row.count}} {{scope.row.util}}</span>
-						</template>
-					</el-table-column>
+					<!-- <el-table-column prop="count" label="订单数量" width="90"/> -->
 					<el-table-column prop="count" label="当前库存" width="70">
 						<template slot-scope="scope">
 							<span v-if="scope.$index<crmOrderList.length-1">{{scope.row.store?scope.row.store.count:0}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="incount" label="入库数量" width="70" />
+                    <el-table-column prop="incount" label="入库数量" width="70" />
 					<el-table-column label="订单金额" width="100px">
 						<template slot-scope="scope">
 							<span v-if="scope.$index<crmOrderList.length-1">{{parseReleaseMoney(scope.row)}}</span>

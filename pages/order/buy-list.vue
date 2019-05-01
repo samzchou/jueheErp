@@ -31,7 +31,10 @@
 					<el-form-item label="物料号/版本号：" prop="materialNo">
 						<el-input v-model="searchForm.materialNo" clearable style="width:150px" />
 					</el-form-item>
-					<el-form-item label="制单交货日期：" prop="finishedDate">
+					<el-form-item label="制单日期：" prop="createDate">
+						<el-date-picker v-model="searchForm.createDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px" />
+					</el-form-item>
+					<el-form-item label="交货日期：" prop="finishedDate">
 						<el-date-picker v-model="searchForm.finishedDate" value-format="timestamp" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable editable unlink-panels style="width:250px" />
 					</el-form-item>
 					<el-form-item>
@@ -212,6 +215,7 @@ export default {
 				productName: '',
 				crmId: '',
 				materialNo: '',
+				createDate:'',
 				finishedDate: ''
 			},
 			searchLoading: false,
@@ -444,7 +448,7 @@ export default {
 				if (this.searchForm[k] && this.searchForm[k] != '') {
 					if (_.isNumber(this.searchForm[k])) {
 						params[k] = Number(this.searchForm[k]);
-					} else if (_.isArray(this.searchForm[k]) && k === 'deliveryDate') {
+					} else if (_.isArray(this.searchForm[k]) && (k === 'finishedDate' || k === 'createDate')) {
 						params[k] = {
 							$gte: this.searchForm[k][0],
 							$lte: this.searchForm[k][1] + 24*3600*1000
@@ -502,11 +506,12 @@ export default {
 							"productName": { "$first": "$productName" },
 							"materialNo": { "$first": "$materialNo" },
 							"projectName": { "$first": "$projectName" },
+							"createDate": { "$first": "$createDate" },
 							"finishedDate": { "$first": "$finishedDate" },
 							"total": { $sum: 1 }
 						}
 					},
-					{ "$sort": { 'finishedDate': 1, 'crmId': 1 } },
+					{ "$sort": { 'createDate': 1, 'crmId': 1 } },
 					{ "$skip": (this.query.page - 1) * this.query.pagesize },
 					{ "$limit": this.query.pagesize }
 				]

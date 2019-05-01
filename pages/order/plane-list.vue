@@ -28,11 +28,17 @@
 						<span>{{scope.$index+(query.page - 1) * query.pagesize + 1}} </span>
 					</template>
 				</el-table-column>
+                <el-table-column prop="isCanceled" label="订单状态" width="90">
+					<template slot-scope="scope">
+						<span :class="{'gray':scope.row.isCanceled}">{{scope.row.isCanceled?'已取消':'正常'}}</span>
+					</template>
+				</el-table-column>
 				<el-table-column prop="orderDate" label="下单日期" width="120">
 					<template slot-scope="scope">
 						<span>{{parseDate(scope.row.orderDate)}}</span>
 					</template>
 				</el-table-column>
+                <el-table-column prop="sourceserial" label="蒂森订单号" width="150" />
 				<el-table-column prop="projectName" label="项目名称"/>
 				<el-table-column prop="projectNo" label="项目号"  width="150"/>
 				<el-table-column prop="modelNo" label="梯号" width="80" />
@@ -190,14 +196,16 @@ export default {
 			let condition = {
 				type: 'groupList',
 				collectionName: 'order',
-				data: _.merge({ typeId: 2, productName:{$regex:'防护栏'} }, match),
+				data: _.merge({ typeId: 2 }, match), //{ typeId: 2, productName:{$regex:'防护栏'}
 				distinct: "projectNo",
 				aggregate: [
-					{ "$match": _.merge({ typeId: 2, productName:{$regex:'防护栏'} }, match) },
+					{ "$match": _.merge({ typeId: 2 }, match) },
 					{
 						"$group": {
 							"_id": { "projectNo": "$projectNo" }, // 按字段分组
-							"materialNo": { "$first": "$materialNo" },
+                            "isCanceled": { "$first": "$isCanceled" },
+                            "sourceserial": { "$first": "$sourceserial" },
+                            "materialNo": { "$first": "$materialNo" },
 							"caselNo": { "$first": "$caselNo" },
 							"projectNo": { "$first": "$projectNo" },
 							"projectName": { "$first": "$projectName" },

@@ -46,18 +46,18 @@
 						<div>{{scope.row.isAdded?'已入库':'未入库'}}</div>
 					</template>
 				</el-table-column>
-                <el-table-column prop="orderSerial" label="制单号" width="150" />
+                <el-table-column prop="orderSerial" label="制单号" width="150">
+                    <template slot-scope="scope">
+						<el-button type="text" @click.stop="showDetail(scope.row)">{{scope.row.orderSerial}}</el-button>
+					</template>
+                </el-table-column>
 				<el-table-column prop="serial" label="系统订单号" width="120" />
 				<el-table-column label="蒂森订单号" width="250">
 					<template slot-scope="scope">
 						<span :title="scope.row.sourceserial">{{scope.row.sourceserial}}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="crmName" label="供应商">
-					<template slot-scope="scope">
-						<el-button title="采购订单汇总" type="text" @click.stop="showDetail(scope.row)">{{scope.row.crmName}}</el-button>
-					</template>
-				</el-table-column>
+				<el-table-column prop="crmName" label="供应商"/>
 				<el-table-column prop="productName" label="订单产品名称" min-width="150">
 					<template slot-scope="scope">
 						<span>{{scope.row.productName}}</span>

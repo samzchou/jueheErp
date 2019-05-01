@@ -35,6 +35,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+	.warning{
+		color:red;
+	}
+	.gray{
+		color:#CCC;
+	}
 
     >i {
       font-size: 14px;
@@ -137,12 +143,17 @@
         border-top: 1px solid #DDD;
       }
       /deep/ .el-row{
-        //padding-bottom:20px;
+        &.gray{
+			color:#CCC;
+		}
         .el-col{
           line-height:30px;
           text-overflow: ellipsis;
           white-space: nowrap;
           overflow: hidden;
+		  &.warning{
+			color:red;
+		  }
         }
       }
     }
@@ -177,6 +188,9 @@
 
 .detail-container {
   /deep/ .el-row {
+	&.gray{
+		color:#CCC;
+	}
     .el-col {
       margin: 0 0 15px 0;
 
@@ -188,6 +202,9 @@
 
       .tl {
         font-weight: bold;
+		&.warning{
+			color:$c-danger;
+		}
       }
     }
   }

@@ -69,7 +69,7 @@
 					</template>
 				</el-table-column>
 				<el-table-column prop="projectName" label="项目名称" />
-				<el-table-column prop="materialNo" label="物料号/版本号">
+				<el-table-column prop="materialNo" label="物料号/版本号" width="150">
 					<template slot-scope="scope">
 						<span>{{scope.row.materialNo}}</span>
 						<span v-if="needSource" style="margin-left:5px; color:#CCC">等...</span>
@@ -80,7 +80,7 @@
 						<span>{{scope.row.crmName}}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="productName" label="订单产品名称">
+				<el-table-column prop="productName" label="订单产品名称" width="250">
 					<template slot-scope="scope">
 						<span>{{scope.row.productName}}</span>
 						<span v-if="needSource" style="margin-left:5px; color:#CCC">等...</span>
@@ -102,8 +102,14 @@
 						<span>{{parseDate(scope.row.deliveryDate)}}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" fixed="right" align="center" :width="needSource?'120':'170'">
+                <el-table-column prop="isCanceled" label="订单取消" width="80">
 					<template slot-scope="scope">
+						<el-button v-if="!scope.row.isCanceled" size="mini" type="text" icon="my-icon-reply" @click="handleCancel(scope.row, true)">取消</el-button>
+						<el-button v-else size="mini" class="icon-link" icon="my-icon-share" @click="handleCancel(scope.row, false)">恢复</el-button>
+					</template>
+				</el-table-column>
+				<el-table-column label="操作" fixed="right" align="center" :width="needSource?'120':'170'">
+					<template slot-scope="scope" v-if="!scope.row.isCanceled">
 						<div v-if="scope.row.flowStateId<7">
 							<span>
 								<el-button size="mini" type="text" icon="el-icon-document" @click="makeOrder(scope.row)">制单</el-button>
@@ -226,27 +232,26 @@
 						<template slot-scope="props">
 							<el-row :gutter="20" v-for="(item,idx) in props.row.children" :key="item.id">
 								<el-col :span="3">{{idx+1}}.订单号：{{needSource?item.sourceserial:item.serial}}</el-col>
-								<el-col :span="3">项目名称:{{item.projectName}}</el-col>
-								<el-col :span="2">规格/梯型:{{item.model}}</el-col>
-								<el-col :span="2">梯号:{{item.modelNo}}</el-col>
-								<el-col :span="2">数量:{{item.count}} {{item.util}}</el-col>
-								<el-col :span="3">订单单价:{{item.price}}</el-col>
-								<el-col :span="3">生产单价:{{item.metaprice}}</el-col>
-								<el-col :span="3">制单日期:{{parseDate(item.orderDate)}}</el-col>
-								<el-col :span="3">交付日期:{{parseDate(item.deliveryDate)}}</el-col>
+                                <el-col :span="2" :class="{'warning':item.isCanceled}">状态：{{item.isCanceled?'已取消':'正常'}}</el-col>
+								<el-col :span="5">项目名称：{{item.projectName}}</el-col>
+								<el-col :span="2">规格/梯型：{{item.model}}</el-col>
+								<el-col :span="2">梯号：{{item.modelNo}}</el-col>
+								<el-col :span="2">数量：{{item.count}}</el-col>
+								<el-col :span="3">制单日期：{{parseDate(item.orderDate)}}</el-col>
+								<el-col :span="3">交付日期：{{parseDate(item.deliveryDate)}}</el-col>
 							</el-row>
 						</template>
 					</el-table-column>
 					<el-table-column :prop="needSource?'sourceserial':'serial'" :label="needSource?'蒂森生产订单':'珏合生产订单'" />
 					<el-table-column prop="materialNo" label="型号/物料号" width="100"/>
 					<el-table-column prop="productName" label="产品名称" />
-					<el-table-column prop="count" label="订单量" width="70">
+					<el-table-column prop="count" label="订单总量" width="80">
 						<template slot-scope="scope">
-							<span>{{scope.row.count}} {{scope.row.util}}</span>
+							<span>{{scope.row.count}}</span>
 						</template>
 					</el-table-column>
 					<el-table-column prop="storeCount" label="库存量" width="60" />
-                    <el-table-column label="已制单未入库参考" width="160">
+                    <el-table-column label="已制单未入库参考" width="180">
                         <template slot-scope="scope">
                             <div v-if="scope.$index<crmOrderList.length-1">
                                 <span>订单量：{{scope.row.storeIn && scope.row.storeIn.count}}；</span>
@@ -255,6 +260,11 @@
                         </template>
                     </el-table-column>
                     <el-table-column label="已制单未出库量" prop="rcount" width="120" />
+                    <el-table-column prop="cancelTotal"  label="订单取消量" width="90">
+                        <template slot-scope="scope" v-if="scope.$index<crmOrderList.length-1">
+							<span v-if="scope.row.cancelTotal">{{scope.row.cancelTotal}}</span>
+						</template>
+                    </el-table-column>
 					<el-table-column prop="releaseCount" label="实际生产量" width="100">
 						<template slot-scope="scope">
 							<div v-if="scope.$index<crmOrderList.length-1">
@@ -339,6 +349,12 @@
 							{{detailItem.content}}
 						</div>
 					</el-col>
+                    <el-col :span="12">
+						<div>
+							<span class="tl">订单状态：</span>
+							<span class="tl" :class="{'warning':detailItem.isCanceled}">{{detailItem.isCanceled?'已取消':'正常'}}</span>
+						</div>
+					</el-col>
 				</el-row>
 			</div>
 			<el-table size="mini" class="detail-table" ref="exportTable" :data="sourceData" border highlight-current-row fit stripe max-height="350" @selection-change="handleSelectionOrders" style="width:100%">
@@ -364,7 +380,7 @@
 				<el-table-column prop="releaseCount" label="实际生产量" width="100">
 					<template slot-scope="scope">
 						<div v-if="scope.$index<sourceData.length-1">
-							<el-input-number v-if="scope.row.flowStateId==5" size="mini" controls-position="right" :min="0" @change="checkReleaseCount(scope.row, sourceData)" v-model="scope.row.releaseCount" style="width:80px" />
+							<el-input-number v-if="scope.row.flowStateId==5" size="mini" controls-position="right" :min="0" @change="checkReleaseCount(scope.row, sourceData)" v-model="scope.row.releaseCount" :disabled="scope.row.isCanceled" style="width:80px" />
 							<span v-else>{{scope.row.store.incount}}</span>
 						</div>
 						<div v-else>{{scope.row.releaseCount}}</div>
@@ -374,7 +390,7 @@
                 <el-table-column label="生产单价" prop="metaprice" width="100">
 					<template slot-scope="scope">
 						<div v-if="scope.$index<sourceData.length-1">
-							<el-input-number size="mini" controls-position="right" :min="0" :step="0.1" v-model="scope.row.metaprice" @change="setMetaPrice(scope.row, sourceData)" style="width:80px" />
+							<el-input-number size="mini" controls-position="right" :min="0" :step="0.1" v-model="scope.row.metaprice" @change="setMetaPrice(scope.row, sourceData)" :disabled="scope.row.isCanceled" style="width:80px" />
 						</div>
 					</template>
 				</el-table-column>
@@ -398,7 +414,7 @@
 					<el-button v-if="detailItem.flowStateId==5" type="danger" size="mini" @click="handleDeleteBySerial(detailItem)">删除该订单({{currSerial}})</el-button>
 					<span v-else>该订单已制单生产</span>
 				</div>
-				<div>
+				<div v-if="detailItem && !detailItem.isCanceled">
 					<el-form size="mini" :inline="true" :model="updateForm" :rules="updateRules">
 						<el-form-item label="交付日期：" prop="deliveryDate">
 							<el-date-picker v-model="updateForm.deliveryDate" value-format="timestamp" type="date" placeholder="选择日期" style="width:130px" @change="setFinishedDate"/>
@@ -524,7 +540,7 @@ export default {
 	methods: {
 		checkSelectable(row) {
 			if(row.id){
-                let rc = row.storeIn.incount - row.storeIn.count + row.releaseCount + row.storeCount;
+                let rc = row.storeIn.incount - row.storeIn.count + row.releaseCount + row.storeCount + row.cancelTotal;
                 return rc >= row.count;
             }
 		},
@@ -777,8 +793,6 @@ export default {
 			import("@/components/Export2Excel").then(excel => {
 				const tHeader = ["制单号","型号/物料号", "产品名称", "交付日期", "数量", "单价", "合计"];
 				const filterVal = ["orderSerial","materialNo", "productName", "finishedDate", "releaseCount", "metaprice", "allPrice"];
-				//tHeader.unshift("系统订单号");
-				//filterVal.unshift("serial");
 				const data = this.formatJson(filterVal, excelData);
 				const now = moment(new Date()).format("YYYYMMDD");
 				excel.export_json_to_excel({
@@ -805,7 +819,9 @@ export default {
 			let ids = [];
 			if (arr && arr.length) {
 				arr.forEach(item => {
-					ids.push(item.id);
+					if(!item.isCanceled){
+                        ids.push(item.id);
+                    }
 				});
 			} else {
 				ids.push(id);
@@ -822,7 +838,8 @@ export default {
 				notNotice: true,
 				param: {
 					crmId: this.dialogForm.crmId,
-					id: { $in: this.exportOrderIds }
+                    id: { $in: this.exportOrderIds },
+                    isCanceled : false
 				},
 				set: { $set: { flowStateId: 6 } }
 			};
@@ -983,17 +1000,19 @@ export default {
 					price: item.price
 				});
 				if (!!~dataIndex) {
-					listData[dataIndex]["children"].push(item);
+                    listData[dataIndex]["children"].push(item);
+                    listData[dataIndex]["cancelTotal"] += item.isCanceled?item.count:0;
 					listData[dataIndex]["sourceserial"] += "," + item.sourceserial;
 					listData[dataIndex]["projectNo"] += "," + item.projectNo;
 					listData[dataIndex]["count"] += item.count;
-					listData[dataIndex]["releaseCount"] += item.count;
+					listData[dataIndex]["releaseCount"] += item.isCanceled?0:item.count;
 				} else {
                     let storeIn = this.uionStore(item.storeIn);
                     item.storeIn = storeIn;
+                    item.cancelTotal = item.isCanceled?item.count:0;
 					item.children.push(_.cloneDeep(item));
 					item.serial = item.serial.includes("-") ? item.serial.split("-")[1] : item.serial;
-                    item.releaseCount = item.count;
+                    item.releaseCount = item.isCanceled?0:item.count;
                     if(sdata && sdata.length){
                         let rcount = 0;
                         sdata.forEach(o=>{
@@ -1047,7 +1066,7 @@ export default {
 		checkedOrder(table, arr) {
 			if (!table) return;
 			arr.forEach((item, i) => {
-				if (item.id) {
+				if (item.id && item.count>item.cancelTotal) {
 					this.$refs[table].toggleRowSelection(arr[i], true);
 				}
 			});
@@ -1137,6 +1156,33 @@ export default {
 				content: ""
 			};
 			this._getLastId();
+        },
+        // 取消订单
+		handleCancel(row, flag) {
+			console.log('handleCancel', row);
+			this.$confirm('确定要'+(flag?'取消':'恢复')+'该订单?', '提示', {
+				confirmButtonText: '确定',
+				cancelButtonText: '取消',
+				type: 'warning'
+			}).then(() => {
+				let condition = {
+					type: 'updatePatch',
+					collectionName: 'order',
+					param: { "sourceserial": row.sourceserial },
+					set: {
+						$set: {
+							'isCanceled': flag
+						}
+					}
+				}
+				this.$axios.$post("mock/db", { data: condition }).then(result => {
+					//console.log('handleCancel', result);
+                    this.$message.error("已"+(flag?'取消':'恢复')+"订单");
+                    row.isCanceled = flag;
+                    let index = _.findIndex(this.gridList, {id:row.id});
+                    this.$set(this.gridList, index, row);
+				});
+			}).catch(() => { });
 		},
 		handleUpdate(row) {
 			this.openSourceVisible = false;
@@ -1332,7 +1378,8 @@ export default {
 					{
 						$group: {
 							_id: groupId, // 按订单号字段分组
-							id: { $first: "$id" },
+                            id: { $first: "$id" },
+                            isCanceled:{ $first: "$isCanceled" },
 							typeId: { $first: "$typeId" },
 							ptypeId: { $first: "$ptypeId" },
 							flowStateId: { $first: "$flowStateId" },

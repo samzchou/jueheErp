@@ -109,6 +109,11 @@ export default {
                 this.$message.error("请选择日期范围");
                 return;
             }
+            if(this.searchForm.startDate > this.searchForm.endDate){
+                this.$message.error("截止日期不能小于起始日期");
+                return;
+            }
+
             let params = {
                 createDate:{
                     $gte: this.searchForm['startDate'],
@@ -123,13 +128,14 @@ export default {
 			let condition = {
                 type:'listData',
                 collectionName: 'finance',
-                data:{payType:2}
+                data:_.merge({payType:2}, match)
             }
             this.$axios.$post('mock/db', { data: condition }).then(res=>{
-                this.gridList = res.list;
-                if(this.gridList.length){
+                if(res.list.length){
+                    this.gridList = res.list;
                     this.exportExcel()
                 }else{
+                    this.$message.error("当前所选日期范围内没有数据！");
                     this.listLoading = false;
                 }
             });
